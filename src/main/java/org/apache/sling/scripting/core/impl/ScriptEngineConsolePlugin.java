@@ -18,7 +18,9 @@
  */
 package org.apache.sling.scripting.core.impl;
 
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -26,57 +28,59 @@ import java.util.List;
 
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
+import javax.servlet.Servlet;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
+import org.apache.felix.webconsole.AbstractWebConsolePlugin;
+import org.apache.felix.webconsole.WebConsoleConstants;
+import org.apache.sling.scripting.core.impl.jsr223.SlingScriptEngineManager;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceRegistration;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
-public class ScriptEngineConsolePlugin {
+@Component(
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Web Console Plugin for ScriptEngine implementations",
+                Constants.SERVICE_VENDOR + "=The Apache Software Foundation",
+                WebConsoleConstants.PLUGIN_LABEL + "=" + ScriptEngineConsolePlugin.CONSOLE_LABEL,
+                WebConsoleConstants.PLUGIN_TITLE + "=" + ScriptEngineConsolePlugin.CONSOLE_TITLE,
+                WebConsoleConstants.CONFIG_PRINTER_MODES + "=always",
+                WebConsoleConstants.PLUGIN_CATEGORY + "=Status"
+        },
+        service = { Servlet.class }
+)
+public class ScriptEngineConsolePlugin extends AbstractWebConsolePlugin {
 
-    // --------- setup and shutdown
+    public static final String CONSOLE_LABEL = "slingscripting";
+    public static final String CONSOLE_TITLE = "Script Engines";
 
-    private static ScriptEngineConsolePlugin INSTANCE;
+    @Reference
+    private SlingScriptEngineManager slingScriptEngineManager;
 
-    static void initPlugin(BundleContext context,
-            ScriptEngineManagerFactory scriptEngineManagerFactory) {
-        if (INSTANCE == null) {
-            ScriptEngineConsolePlugin tmp = new ScriptEngineConsolePlugin(
-                    scriptEngineManagerFactory);
-            tmp.activate(context);
-            INSTANCE = tmp;
-        }
-    }
-
-    static void destroyPlugin() {
-        if (INSTANCE != null) {
-            try {
-                INSTANCE.deactivate();
-            } finally {
-                INSTANCE = null;
-            }
-        }
-    }
-
-    private ServiceRegistration serviceRegistration;
-
-    private final ScriptEngineManagerFactory scriptEngineManagerFactory;
-
-    // private constructor to force using static setup and shutdown
-    private ScriptEngineConsolePlugin(
-            ScriptEngineManagerFactory scriptEngineManagerFactory) {
-        this.scriptEngineManagerFactory = scriptEngineManagerFactory;
-    }
-
+    @Override
     public String getTitle() {
-        return "Script Engines";
+        return CONSOLE_TITLE;
     }
 
-    public void printConfiguration(final PrintWriter pw) {
+    @Override
+    public String getLabel() {
+        return CONSOLE_LABEL;
+    }
+
+    @Override
+    protected void renderContent(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse)
+            throws IOException {
+        PrintWriter pw = httpServletResponse.getWriter();
+        pw.println("<div id='content' class='ui-widget'><br>");
+        pw.println("<pre>");
         pw.println("Available Script Engines");
         pw.println("========================");
 
-        ScriptEngineManager manager = scriptEngineManagerFactory.getScriptEngineManager();
-        List<?> factories = manager.getEngineFactories();
+        List<?> factories = slingScriptEngineManager.getEngineFactories();
         for (Iterator<?> fi = factories.iterator(); fi.hasNext();) {
 
             final ScriptEngineFactory factory = (ScriptEngineFactory) fi.next();
@@ -100,6 +104,8 @@ public class ScriptEngineConsolePlugin {
             pw.print("- Names : ");
             printArray(pw, factory.getNames());
         }
+        pw.println("</pre>");
+        pw.println("</div>");
     }
 
     private void printArray(PrintWriter pw, List<?> values) {
@@ -116,25 +122,4 @@ public class ScriptEngineConsolePlugin {
         }
     }
 
-    public void activate(BundleContext context) {
-        final Dictionary<String, Object> props = new Hashtable<String, Object>();
-        props.put(Constants.SERVICE_DESCRIPTION,
-            "Web Console Plugin for ScriptEngine implementations");
-        props.put(Constants.SERVICE_VENDOR, "The Apache Software Foundation");
-        props.put(Constants.SERVICE_PID, getClass().getName());
-
-        props.put("felix.webconsole.label", "slingscripting");
-        props.put("felix.webconsole.title", "Script Engines");
-        props.put("felix.webconsole.configprinter.modes", "always");
-
-        serviceRegistration = context.registerService(
-            this.getClass().getName(), this, props);
-    }
-
-    public void deactivate() {
-        if (serviceRegistration != null) {
-            serviceRegistration.unregister();
-            serviceRegistration = null;
-        }
-    }
 }

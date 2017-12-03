@@ -27,7 +27,7 @@ import org.apache.sling.commons.mime.MimeTypeProvider;
 import org.apache.sling.scripting.api.BindingsValuesProvider;
 import org.apache.sling.scripting.api.BindingsValuesProvidersByContext;
 import org.apache.sling.scripting.api.ScriptCache;
-import org.apache.sling.scripting.core.impl.helper.SlingScriptEngineManager;
+import org.apache.sling.scripting.core.impl.jsr223.SlingScriptEngineManager;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.ComponentContext;

@@ -18,6 +18,8 @@
  */
 package org.apache.sling.scripting.core.it;
 
+import java.util.Arrays;
+
 import org.apache.sling.testing.paxexam.TestSupport;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
@@ -28,6 +30,7 @@ import static org.apache.sling.testing.paxexam.SlingOptions.webconsole;
 import static org.ops4j.pax.exam.CoreOptions.composite;
 import static org.ops4j.pax.exam.CoreOptions.junitBundles;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
+import static org.ops4j.pax.exam.CoreOptions.vmOption;
 import static org.ops4j.pax.exam.cm.ConfigurationAdminOptions.factoryConfiguration;
 import static org.ops4j.pax.exam.cm.ConfigurationAdminOptions.newConfiguration;
 
@@ -35,7 +38,7 @@ public class ScriptingCoreTestSupport extends TestSupport {
 
     @Configuration
     public Option[] configuration() {
-        return new Option[]{
+        Option[] configuration = new Option[]{
             baseConfiguration(),
             launchpad(),
             // Sling Scripting Core
@@ -52,6 +55,17 @@ public class ScriptingCoreTestSupport extends TestSupport {
             // testing
             junitBundles()
         };
+        try {
+            Integer javaVersion = Integer.parseInt(System.getProperty("java.specification.version"));
+            if (javaVersion >= 9) {
+                Option[] java9AndBeyondConfiguration = Arrays.copyOf(configuration, configuration.length + 1);
+                java9AndBeyondConfiguration[java9AndBeyondConfiguration.length - 1] = vmOption("--add-modules=java.se.ee");
+                configuration = java9AndBeyondConfiguration;
+            }
+        } catch (NumberFormatException e) {
+            // ignore
+        }
+        return configuration;
     }
 
     protected Option launchpad() {
