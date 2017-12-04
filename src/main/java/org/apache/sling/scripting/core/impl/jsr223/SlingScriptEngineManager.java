@@ -48,6 +48,7 @@ import org.osgi.framework.BundleEvent;
 import org.osgi.framework.BundleListener;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceReference;
+import org.osgi.framework.wiring.BundleWiring;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -84,7 +85,18 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
     private final Map<ScriptEngineFactory, Map<String, Object>> factoriesProperties = new HashMap<>();
     private final Set<ServiceReference<ScriptEngineFactory>> serviceReferences = new HashSet<>();
 
-    private ScriptEngineManager internalManager = new ScriptEngineManager(SlingScriptEngineManager.class.getClassLoader());
+    private final ScriptEngineManager internalManager;
+    {
+        ClassLoader loader = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(null);
+            internalManager = new ScriptEngineManager(ClassLoader.getSystemClassLoader());
+        }
+        finally {
+            Thread.currentThread().setContextClassLoader(loader);
+        }
+    }
+
     private SortedSet<SortableScriptEngineFactory> factories = new TreeSet<>();
     private ComponentContext componentContext;
 
@@ -168,6 +180,7 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
     @Override
     public void bundleChanged(BundleEvent event) {
         if (event.getType() == BundleEvent.STARTED
+                && event.getBundle().getBundleId() > 0
                 && event.getBundle().getEntry(ENGINE_FACTORY_SERVICE) != null) {
             synchronized (this.engineSpiBundles) {
                 this.engineSpiBundles.add(event.getBundle());
@@ -224,44 +237,29 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
         readWriteLock.writeLock().lock();
         try {
             factories = new TreeSet<>();
-            internalManager = new ScriptEngineManager(SlingScriptEngineManager.class.getClassLoader());
             long fakeBundleIdCounter = Long.MIN_VALUE;
             // first add the platform factories
             for (ScriptEngineFactory factory : internalManager.getEngineFactories()) {
                 SortableScriptEngineFactory ssef = new SortableScriptEngineFactory(factory, fakeBundleIdCounter++, 0);
                 factories.add(ssef);
             }
-            // then factories from SPI Bundles
-            for (Bundle bundle : engineSpiBundles) {
-                URL url = bundle.getEntry(ENGINE_FACTORY_SERVICE);
-                InputStream ins = null;
-                try {
-                    ins = url.openStream();
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(ins, StandardCharsets.UTF_8));
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        if (!line.startsWith("#") && line.trim().length() > 0) {
-                            try {
-                                Class<ScriptEngineFactory> clazz = (Class<ScriptEngineFactory>) bundle.loadClass(line);
-                                SortableScriptEngineFactory ssef = new SortableScriptEngineFactory(clazz.getDeclaredConstructor()
-                                        .newInstance(), fakeBundleIdCounter++, 0);
-                                factories.add(ssef);
-                            } catch (Throwable t) {
-                                LOG.error("Cannot register ScriptEngineFactory " + line, t);
-                            }
+            ClassLoader loader = Thread.currentThread().getContextClassLoader();
+            try {
+                Thread.currentThread().setContextClassLoader(null);
+                // then factories from SPI Bundles
+                for (Bundle bundle : engineSpiBundles) {
+                    try {
+                        ScriptEngineManager manager = new ScriptEngineManager(bundle.adapt(BundleWiring.class).getClassLoader());
+                        for (ScriptEngineFactory factory : manager.getEngineFactories()) {
+                            factories.add(new SortableScriptEngineFactory(factory, fakeBundleIdCounter++, 0));
                         }
-                    }
-                } catch (IOException ioe) {
-                    LOG.error("Unable to process bundle " + bundle.getSymbolicName(), ioe);
-                } finally {
-                    if (ins != null) {
-                        try {
-                            ins.close();
-                        } catch (IOException ioe) {
-                            LOG.error("Unable to release stream resource.", ioe);
-                        }
+                    } catch (Exception ex) {
+                        LOG.error("Unable to process bundle " + bundle.getSymbolicName(), ex);
                     }
                 }
+            }
+            finally {
+                Thread.currentThread().setContextClassLoader(loader);
             }
             // and finally factories registered as OSGi services
             if (componentContext != null) {

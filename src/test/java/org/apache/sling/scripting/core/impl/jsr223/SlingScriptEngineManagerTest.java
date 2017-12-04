@@ -22,10 +22,13 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.security.SecureClassLoader;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -43,6 +46,7 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleEvent;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceRegistration;
+import org.osgi.framework.wiring.BundleWiring;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
@@ -127,15 +131,28 @@ public class SlingScriptEngineManagerTest {
 
     @Test
     public void testBundledScriptEngineFactory() throws Exception {
-        URL url = createFactoryFile().toURI().toURL();
+        final URL url = createFactoryFile().toURI().toURL();
         Bundle bundle = mock(Bundle.class);
-        when(bundle.getEntry(SlingScriptEngineManager.ENGINE_FACTORY_SERVICE)).thenReturn(url);
-        when(bundle.loadClass(SCRIPT_ENGINE_FACTORY.getName())).thenAnswer(new Answer<Class>() {
+        BundleWiring wiring = mock(BundleWiring.class);
+        ClassLoader loader = new SecureClassLoader(){
             @Override
-            public Class answer(InvocationOnMock invocation) {
-                return SCRIPT_ENGINE_FACTORY;
+            protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+                return name.equals(SCRIPT_ENGINE_FACTORY.getName()) ? SCRIPT_ENGINE_FACTORY : null;
             }
-        });
+
+            @Override
+            public Enumeration<URL> getResources(String name) throws IOException {
+                Vector v = new Vector();
+                v.add(url);
+                return v.elements();
+            }
+        };
+
+        when(bundle.getBundleId()).thenReturn(1L);
+        when(bundle.adapt(BundleWiring.class)).thenReturn(wiring);
+        when(wiring.getClassLoader()).thenReturn(loader);
+
+        when(bundle.getEntry(SlingScriptEngineManager.ENGINE_FACTORY_SERVICE)).thenReturn(url);
 
         BundleEvent bundleEvent = new BundleEvent(BundleEvent.STARTED, bundle);
         SlingScriptEngineManager slingScriptEngineManager = context.getService(SlingScriptEngineManager.class);
