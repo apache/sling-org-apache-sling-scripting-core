@@ -26,7 +26,7 @@ import static org.junit.Assert.fail;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
-import org.apache.sling.testing.mock.sling.junit.SlingContext;
+import org.apache.sling.testing.mock.osgi.junit.OsgiContext;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -35,7 +35,7 @@ import org.osgi.framework.Constants;
 public class ScriptHelperTest {
     
     @Rule
-    public SlingContext sling = new SlingContext();
+    public OsgiContext sling = new OsgiContext();
     
     private ScriptHelper sh;
     private final int [] RANKINGS = { 42, 62, -12, 76, -123, 0, 7432, -21 };

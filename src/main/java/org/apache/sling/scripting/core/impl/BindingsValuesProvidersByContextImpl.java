@@ -34,7 +34,7 @@ import javax.script.ScriptEngineFactory;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.scripting.api.BindingsValuesProvider;
 import org.apache.sling.scripting.api.BindingsValuesProvidersByContext;
-import org.apache.sling.scripting.core.impl.helper.SlingScriptEngineManager;
+import org.apache.sling.scripting.core.impl.jsr223.SlingScriptEngineManager;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceReference;
@@ -151,7 +151,7 @@ public class BindingsValuesProvidersByContextImpl implements BindingsValuesProvi
 
         // we load the compatible language ones first so that the most specific
         // overrides these
-        Map<Object, Object> factoryProps = scriptEngineManager.getProperties(scriptEngineFactory);
+        Map<String, Object> factoryProps = scriptEngineManager.getProperties(scriptEngineFactory);
         if (factoryProps != null) {
             String[] compatibleLangs = PropertiesUtil.toStringArray(factoryProps.get("compatible.javax.script.name"), new String[0]);
             for (final String name : compatibleLangs) {
