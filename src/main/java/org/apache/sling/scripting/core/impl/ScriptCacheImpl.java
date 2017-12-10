@@ -248,7 +248,9 @@ public class ScriptCacheImpl implements ScriptCache, ResourceChangeListener, Ext
                 resourceChangeListener = null;
             }
             internalMap.clear();
-            extensions.addAll(Arrays.asList(additionalExtensions));
+            if (additionalExtensions != null) {
+                extensions.addAll(Arrays.asList(additionalExtensions));
+            }
             if (!extensions.isEmpty()) {
                 Set<String> globPatterns = new HashSet<>(extensions.size());
                 for (String extension : extensions) {
