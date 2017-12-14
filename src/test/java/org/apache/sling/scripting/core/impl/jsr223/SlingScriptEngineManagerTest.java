@@ -53,6 +53,7 @@ import org.osgi.service.event.EventHandler;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -91,9 +92,9 @@ public class SlingScriptEngineManagerTest {
         );
 
         ScriptEngineFactory f1 = mockScriptEngineFactory("f1", "1.0", Collections.singletonList("f1"), "f1", "1.0", Collections
-                .singletonList("text"));
+                .singletonList("f1/text"));
         ScriptEngineFactory f2 = mockScriptEngineFactory("f2", "1.0", Collections.singletonList("f2"), "f2", "1.0", Collections
-                .singletonList("text"));
+                .singletonList("f2/text"));
 
         ServiceRegistration<ScriptEngineFactory> f1SR = context.bundleContext().registerService(ScriptEngineFactory.class, f1, new
                 Hashtable<String, Object>() {{
@@ -122,7 +123,13 @@ public class SlingScriptEngineManagerTest {
 
         assertEquals(f2, scriptEngineManager.getEngineByName("f2").getFactory());
         assertEquals(f2, scriptEngineManager.getEngineByExtension("f2").getFactory());
-        assertEquals(f2, scriptEngineManager.getEngineByMimeType("text").getFactory());
+        assertEquals(f2, scriptEngineManager.getEngineByMimeType("f2/text").getFactory());
+        assertNull("Did not expect references to the already unregistered f1 ScriptEngineFactory", scriptEngineManager.getEngineByName
+                ("f1"));
+        assertNull("Did not expect references to the already unregistered f1 ScriptEngineFactory", scriptEngineManager
+                .getEngineByExtension("f1"));
+        assertNull("Did not expect references to the already unregistered f1 ScriptEngineFactory", scriptEngineManager
+                .getEngineByMimeType("f1/text"));
 
         latch.await(2, TimeUnit.SECONDS);
         assertEquals("Expected a different number of processed " + SlingScriptEngineManager.EVENT_TOPIC_SCRIPT_MANAGER_UPDATED + " events.",
@@ -136,13 +143,13 @@ public class SlingScriptEngineManagerTest {
         BundleWiring wiring = mock(BundleWiring.class);
         ClassLoader loader = new SecureClassLoader(){
             @Override
-            protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+            protected Class<?> loadClass(String name, boolean resolve) {
                 return name.equals(SCRIPT_ENGINE_FACTORY.getName()) ? SCRIPT_ENGINE_FACTORY : null;
             }
 
             @Override
-            public Enumeration<URL> getResources(String name) throws IOException {
-                Vector v = new Vector();
+            public Enumeration<URL> getResources(String name) {
+                Vector<URL> v = new Vector<>();
                 v.add(url);
                 return v.elements();
             }
@@ -167,6 +174,12 @@ public class SlingScriptEngineManagerTest {
         factories = slingScriptEngineManager.getEngineFactories();
         assertEquals("Expected 1 ScriptEngineFactory.", 1, factories.size());
         assertEquals("Oracle Nashorn", factories.get(0).getEngineName());
+        assertNull("Did not expect references to the already unregistered DummyScriptEngineFactory", slingScriptEngineManager
+                .getEngineByExtension("dummy"));
+        assertNull("Did not expect references to the already unregistered DummyScriptEngineFactory",
+                slingScriptEngineManager.getEngineByMimeType("application/x-dummy"));
+        assertNull("Did not expect references to the already unregistered DummyScriptEngineFactory",
+                slingScriptEngineManager.getEngineByName("Dummy"));
     }
 
     private ScriptEngineFactory mockScriptEngineFactory(String engineName, String engineVersion, List<String> extensions, String

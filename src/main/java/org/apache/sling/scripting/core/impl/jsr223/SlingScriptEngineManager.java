@@ -18,12 +18,6 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.scripting.core.impl.jsr223;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Dictionary;
@@ -85,18 +79,7 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
     private final Map<ScriptEngineFactory, Map<String, Object>> factoriesProperties = new HashMap<>();
     private final Set<ServiceReference<ScriptEngineFactory>> serviceReferences = new HashSet<>();
 
-    private final ScriptEngineManager internalManager;
-    {
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        try {
-            Thread.currentThread().setContextClassLoader(null);
-            internalManager = new ScriptEngineManager(ClassLoader.getSystemClassLoader());
-        }
-        finally {
-            Thread.currentThread().setContextClassLoader(loader);
-        }
-    }
-
+    private ScriptEngineManager internalManager;
     private SortedSet<SortableScriptEngineFactory> factories = new TreeSet<>();
     private ComponentContext componentContext;
 
@@ -236,6 +219,7 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
     private void updateFactories() {
         readWriteLock.writeLock().lock();
         try {
+            internalManager = getInternalScriptEngineManager();
             factories = new TreeSet<>();
             long fakeBundleIdCounter = Long.MIN_VALUE;
             // first add the platform factories
@@ -286,6 +270,17 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
             }
         } finally {
             readWriteLock.writeLock().unlock();
+        }
+    }
+
+    private ScriptEngineManager getInternalScriptEngineManager() {
+        ClassLoader loader = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(null);
+            return new ScriptEngineManager(ClassLoader.getSystemClassLoader());
+        }
+        finally {
+            Thread.currentThread().setContextClassLoader(loader);
         }
     }
 
