@@ -1,0 +1,25 @@
+Bundle-Category: sling
+
+Bundle-Description: ${project.description}
+
+Bundle-DocURL: https://sling.apache.org
+
+Bundle-License: Apache License, Version 2.0
+
+Bundle-Vendor: The Apache Software Foundation
+
+Conditional-Package:\
+  org.apache.felix.utils.json.*
+
+-baseline: *
+
+-exportcontents: ${packages;VERSIONED}
+
+-includeresource:\
+  @org.apache.sling.commons.osgi-*.jar!/org/apache/sling/commons/osgi/PropertiesUtil.*
+
+-removeheaders:\
+  Embed-Dependency,\
+  Embed-Transitive,\
+  Include-Resource,\
+  Private-Package
