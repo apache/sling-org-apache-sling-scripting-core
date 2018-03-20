@@ -57,7 +57,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component(
-        service = {ScriptEngineManager.class, SlingScriptEngineManager.class, BundleListener.class},
+        service = {ScriptEngineManager.class, SlingScriptEngineManager.class },
         reference = @Reference(
                 name = "ScriptEngineFactory",
                 bind = "bindScriptEngineFactory",
