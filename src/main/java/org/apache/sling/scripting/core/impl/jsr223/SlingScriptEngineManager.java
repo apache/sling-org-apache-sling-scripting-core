@@ -46,6 +46,7 @@ import org.osgi.framework.wiring.BundleWiring;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
@@ -56,7 +57,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component(
-        service = {ScriptEngineManager.class, SlingScriptEngineManager.class},
+        service = {ScriptEngineManager.class, SlingScriptEngineManager.class, BundleListener.class},
         reference = @Reference(
                 name = "ScriptEngineFactory",
                 bind = "bindScriptEngineFactory",
@@ -192,7 +193,13 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
     @Activate
     private void activate(ComponentContext componentContext) {
         this.componentContext = componentContext;
+        componentContext.getBundleContext().addBundleListener(this);
         updateFactories();
+    }
+
+    @Deactivate
+    private void deactivate(ComponentContext componentContext) {
+        componentContext.getBundleContext().removeBundleListener(this);
     }
 
     private void bindScriptEngineFactory(final ServiceReference<ScriptEngineFactory> serviceReference,
