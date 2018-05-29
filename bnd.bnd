@@ -11,15 +11,11 @@ Bundle-Vendor: The Apache Software Foundation
 Conditional-Package:\
   org.apache.felix.utils.json.*
 
--baseline: *
-
 -exportcontents: ${packages;VERSIONED}
 
 -includeresource:\
   @org.apache.sling.commons.osgi-*.jar!/org/apache/sling/commons/osgi/PropertiesUtil.*
 
 -removeheaders:\
-  Embed-Dependency,\
-  Embed-Transitive,\
   Include-Resource,\
   Private-Package
