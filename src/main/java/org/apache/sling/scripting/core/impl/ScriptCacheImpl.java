@@ -30,7 +30,6 @@ import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import javax.annotation.Nonnull;
 import javax.script.Compilable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
@@ -49,6 +48,7 @@ import org.apache.sling.scripting.api.ScriptCache;
 import org.apache.sling.scripting.core.impl.helper.CachingMap;
 import org.apache.sling.scripting.core.impl.jsr223.SlingScriptEngineManager;
 import org.apache.sling.serviceusermapping.ServiceUserMapped;
+import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceRegistration;
@@ -169,7 +169,7 @@ public class ScriptCacheImpl implements ScriptCache, ResourceChangeListener, Ext
     }
 
     @Override
-    public void onChange(@Nonnull List<ResourceChange> list) {
+    public void onChange(@NotNull List<ResourceChange> list) {
         for (final ResourceChange change : list) {
             Runnable eventTask = new Runnable() {
                 @Override

@@ -19,12 +19,11 @@ package org.apache.sling.scripting.core.impl;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Map;
-import javax.annotation.Nonnull;
-
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.wrappers.ResourceResolverWrapper;
 import org.apache.sling.scripting.api.resource.ScriptingResourceResolverProvider;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +40,7 @@ public class ScriptingResourceResolver extends ResourceResolverWrapper {
         this.delegate = delegate;
     }
 
-    @Nonnull
+    @NotNull
     @Override
     public ResourceResolver clone(Map<String, Object> authenticationInfo) throws LoginException {
         return new ScriptingResourceResolver(shouldLogClosing, delegate.clone(null));
