@@ -8,6 +8,9 @@ Bundle-License: Apache License, Version 2.0
 
 Bundle-Vendor: The Apache Software Foundation
 
+Import-Package:\
+  org.apache.felix.webconsole;resolution:=optional,*
+
 Conditional-Package:\
   org.apache.felix.utils.json.*
 
