@@ -233,37 +233,39 @@ public class ScriptCacheImpl implements ScriptCache, ResourceChangeListener, Ext
                 resolver.close();
             }
         }
-
-        configureCache();
         active = true;
+        configureCache();
     }
 
     private void configureCache() {
         writeLock.lock();
         try {
-            if (resourceChangeListener != null) {
-                resourceChangeListener.unregister();
-                resourceChangeListener = null;
-            }
-            internalMap.clear();
-            if (additionalExtensions != null) {
-                extensions.addAll(Arrays.asList(additionalExtensions));
-            }
-            if (!extensions.isEmpty()) {
-                Set<String> globPatterns = new HashSet<>(extensions.size());
-                for (String extension : extensions) {
-                    globPatterns.add("glob:**/*." + extension);
+            if (active) {
+                if (resourceChangeListener != null) {
+                    resourceChangeListener.unregister();
+                    resourceChangeListener = null;
                 }
-                Dictionary<String, Object> resourceChangeListenerProperties = new Hashtable<>();
-                resourceChangeListenerProperties.put(ResourceChangeListener.PATHS, globPatterns.toArray(new String[globPatterns.size()]));
-                resourceChangeListenerProperties.put(ResourceChangeListener.CHANGES,
-                        new String[]{ResourceChange.ChangeType.CHANGED.name(), ResourceChange.ChangeType.REMOVED.name()});
-                resourceChangeListener =
-                        bundleContext.registerService(
-                                ResourceChangeListener.class,
-                                this,
-                                resourceChangeListenerProperties
-                        );
+                internalMap.clear();
+                if (additionalExtensions != null) {
+                    extensions.addAll(Arrays.asList(additionalExtensions));
+                }
+                if (!extensions.isEmpty()) {
+                    Set<String> globPatterns = new HashSet<>(extensions.size());
+                    for (String extension : extensions) {
+                        globPatterns.add("glob:**/*." + extension);
+                    }
+                    Dictionary<String, Object> resourceChangeListenerProperties = new Hashtable<>();
+                    resourceChangeListenerProperties
+                            .put(ResourceChangeListener.PATHS, globPatterns.toArray(new String[globPatterns.size()]));
+                    resourceChangeListenerProperties.put(ResourceChangeListener.CHANGES,
+                            new String[]{ResourceChange.ChangeType.CHANGED.name(), ResourceChange.ChangeType.REMOVED.name()});
+                    resourceChangeListener =
+                            bundleContext.registerService(
+                                    ResourceChangeListener.class,
+                                    this,
+                                    resourceChangeListenerProperties
+                            );
+                }
             }
         } finally {
             writeLock.unlock();
@@ -272,16 +274,21 @@ public class ScriptCacheImpl implements ScriptCache, ResourceChangeListener, Ext
 
     @Deactivate
     protected void deactivate() {
-        internalMap.clear();
-        if (resourceChangeListener != null) {
-            resourceChangeListener.unregister();
-            resourceChangeListener = null;
+        writeLock.lock();
+        try {
+            internalMap.clear();
+            if (resourceChangeListener != null) {
+                resourceChangeListener.unregister();
+                resourceChangeListener = null;
+            }
+            if (threadPool != null) {
+                threadPoolManager.release(threadPool);
+                threadPool = null;
+            }
+            active = false;
+        } finally {
+            writeLock.unlock();
         }
-        if (threadPool != null) {
-            threadPoolManager.release(threadPool);
-            threadPool = null;
-        }
-        active = false;
     }
 
     @Override
@@ -291,10 +298,8 @@ public class ScriptCacheImpl implements ScriptCache, ResourceChangeListener, Ext
             ScriptEngine scriptEngine = factory.getScriptEngine();
             if (scriptEngine instanceof Compilable) {
                 extensions.addAll(factory.getExtensions());
-                if (active) {
-                    configureCache();
-                }
             }
         }
+        configureCache();
     }
 }
