@@ -293,13 +293,19 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
 
     private void registerAssociations(ScriptEngineFactory factory) {
         for (String extension : factory.getExtensions()) {
-            internalManager.registerEngineExtension(extension, factory);
+            if (extension != null && !extension.isEmpty()) {
+                internalManager.registerEngineExtension(extension, factory);
+            }
         }
         for (String mimeType : factory.getMimeTypes()) {
-            internalManager.registerEngineMimeType(mimeType, factory);
+            if (mimeType != null && !mimeType.isEmpty()) {
+                internalManager.registerEngineMimeType(mimeType, factory);
+            }
         }
         for (String name : factory.getNames()) {
-            internalManager.registerEngineName(name, factory);
+            if (name != null && !name.isEmpty()) {
+                internalManager.registerEngineName(name, factory);
+            }
         }
     }
 

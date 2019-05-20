@@ -72,15 +72,20 @@ public class SlingScriptEngineManagerTest {
 
     @Test
     public void testPlatformScriptEngines() {
+        int jvmProvidedScriptEngineFactoryCount = jvmProvidedScriptEngineFactoryCount();
         ScriptEngineManager scriptEngineManager = context.getService(ScriptEngineManager.class);
         assertNotNull("Expected a ScriptEngineManager would be already registered.", scriptEngineManager);
-        assertEquals("The ScriptEngineManager should have had 1 ScriptEngineFactory registered.", 1, scriptEngineManager
-                .getEngineFactories().size());
+        {
+            int expectedScriptEngineFactories = jvmProvidedScriptEngineFactoryCount;
+            assertEquals("The ScriptEngineManager should have had " + expectedScriptEngineFactories + " ScriptEngineFactory registered.", expectedScriptEngineFactories, scriptEngineManager
+                    .getEngineFactories().size());
+        }
     }
 
     @Test
     public void testOSGiRegisteredFactoriesDifferentServiceRanking() throws Exception {
-        int expectedEvents = 3;
+        int jvmProvidedScriptEngineFactoryCount = jvmProvidedScriptEngineFactoryCount();
+        int expectedEvents = jvmProvidedScriptEngineFactoryCount + 1;
         CountDownLatch latch = new CountDownLatch(expectedEvents);
         TestEventHandler eventHandler = new TestEventHandler
                 (latch, "org/apache/sling/scripting/core/impl/jsr223/SlingScriptEngineManager/UPDATED");
@@ -108,9 +113,12 @@ public class SlingScriptEngineManagerTest {
         ScriptEngineManager scriptEngineManager = context.getService(ScriptEngineManager.class);
         assertNotNull("Expected a ScriptEngineManager would be already registered.", scriptEngineManager);
         List<ScriptEngineFactory> factories = scriptEngineManager.getEngineFactories();
-        assertEquals("The ScriptEngineManager should have had 3 ScriptEngineFactories registered.", 3, factories.size());
-        assertEquals(f1.getEngineName(), factories.get(2).getEngineName());
-        assertEquals(f2.getEngineName(), factories.get(1).getEngineName());
+        {
+            int expectedScriptEngineFactories = jvmProvidedScriptEngineFactoryCount + 2;
+            assertEquals("The ScriptEngineManager should have had " + expectedScriptEngineFactories + " ScriptEngineFactories registered.", expectedScriptEngineFactories, factories.size());
+        }
+        assertEquals(f1.getEngineName(), factories.get(jvmProvidedScriptEngineFactoryCount + 1).getEngineName());
+        assertEquals(f2.getEngineName(), factories.get(jvmProvidedScriptEngineFactoryCount).getEngineName());
 
         SlingScriptEngineManager slingScriptEngineManager = context.getService(SlingScriptEngineManager.class);
         assertEquals(2, slingScriptEngineManager.getProperties(f1).get(Constants.SERVICE_RANKING));
@@ -118,8 +126,11 @@ public class SlingScriptEngineManagerTest {
         f1SR.unregister();
 
         factories = scriptEngineManager.getEngineFactories();
-        assertEquals("The ScriptEngineManager should have had 2 ScriptEngineFactories registered.", 2, factories.size());
-        assertEquals(f2.getEngineName(), factories.get(1).getEngineName());
+        {
+            int expectedScriptEngineFactories = jvmProvidedScriptEngineFactoryCount + 1;
+            assertEquals("The ScriptEngineManager should have had " + expectedScriptEngineFactories + " ScriptEngineFactories registered.", expectedScriptEngineFactories, factories.size());
+        }
+        assertEquals(f2.getEngineName(), factories.get(jvmProvidedScriptEngineFactoryCount).getEngineName());
 
         assertEquals(f2, scriptEngineManager.getEngineByName("f2").getFactory());
         assertEquals(f2, scriptEngineManager.getEngineByExtension("f2").getFactory());
@@ -138,6 +149,7 @@ public class SlingScriptEngineManagerTest {
 
     @Test
     public void testBundledScriptEngineFactory() throws Exception {
+        int jvmProvidedScriptEngineFactoryCount = jvmProvidedScriptEngineFactoryCount();
         final URL url = createFactoryFile().toURI().toURL();
         Bundle bundle = mock(Bundle.class);
         BundleWiring wiring = mock(BundleWiring.class);
@@ -166,20 +178,37 @@ public class SlingScriptEngineManagerTest {
         assertNotNull("Expected that the SlingScriptEngineManager would already be registered.", slingScriptEngineManager);
         slingScriptEngineManager.bundleChanged(bundleEvent);
         List<ScriptEngineFactory> factories = slingScriptEngineManager.getEngineFactories();
-        assertEquals("Expected 2 ScriptEngineFactories.", 2, factories.size());
-        assertEquals("Dummy Scripting Engine", factories.get(1).getEngineName());
+        {
+            int expectedScriptEngineFactories = jvmProvidedScriptEngineFactoryCount + 1;
+            assertEquals("Expected " + expectedScriptEngineFactories + " ScriptEngineFactories.", expectedScriptEngineFactories, factories.size());
+        }
+        assertEquals("Dummy Scripting Engine", factories.get(jvmProvidedScriptEngineFactoryCount).getEngineName());
 
         bundleEvent = new BundleEvent(BundleEvent.STOPPED, bundle);
         slingScriptEngineManager.bundleChanged(bundleEvent);
         factories = slingScriptEngineManager.getEngineFactories();
-        assertEquals("Expected 1 ScriptEngineFactory.", 1, factories.size());
-        assertEquals("Oracle Nashorn", factories.get(0).getEngineName());
+        {
+            int expectedScriptEngineFactories = jvmProvidedScriptEngineFactoryCount;
+            assertEquals("Expected " + expectedScriptEngineFactories + " ScriptEngineFactory.", expectedScriptEngineFactories, factories.size());
+        }
+        //assertEquals("Oracle Nashorn", factories.get(0).getEngineName());
         assertNull("Did not expect references to the already unregistered DummyScriptEngineFactory", slingScriptEngineManager
                 .getEngineByExtension("dummy"));
         assertNull("Did not expect references to the already unregistered DummyScriptEngineFactory",
                 slingScriptEngineManager.getEngineByMimeType("application/x-dummy"));
         assertNull("Did not expect references to the already unregistered DummyScriptEngineFactory",
                 slingScriptEngineManager.getEngineByName("Dummy"));
+    }
+
+    private int jvmProvidedScriptEngineFactoryCount() {
+        ClassLoader loader = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(null);
+            return new ScriptEngineManager(ClassLoader.getSystemClassLoader()).getEngineFactories().size();
+        }
+        finally {
+            Thread.currentThread().setContextClassLoader(loader);
+        }
     }
 
     private ScriptEngineFactory mockScriptEngineFactory(String engineName, String engineVersion, List<String> extensions, String
