@@ -40,8 +40,6 @@ import org.apache.sling.testing.mock.osgi.junit.OsgiContext;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleEvent;
 import org.osgi.framework.Constants;
@@ -75,17 +73,15 @@ public class SlingScriptEngineManagerTest {
         int jvmProvidedScriptEngineFactoryCount = jvmProvidedScriptEngineFactoryCount();
         ScriptEngineManager scriptEngineManager = context.getService(ScriptEngineManager.class);
         assertNotNull("Expected a ScriptEngineManager would be already registered.", scriptEngineManager);
-        {
-            int expectedScriptEngineFactories = jvmProvidedScriptEngineFactoryCount;
-            assertEquals("The ScriptEngineManager should have had " + expectedScriptEngineFactories + " ScriptEngineFactory registered.", expectedScriptEngineFactories, scriptEngineManager
-                    .getEngineFactories().size());
-        }
+        assertEquals("The ScriptEngineManager should have had " + jvmProvidedScriptEngineFactoryCount + " ScriptEngineFactory registered.", jvmProvidedScriptEngineFactoryCount, scriptEngineManager.getEngineFactories().size());
     }
 
     @Test
     public void testOSGiRegisteredFactoriesDifferentServiceRanking() throws Exception {
+        int numberOfOSGiRegisteredFactories = 2;
         int jvmProvidedScriptEngineFactoryCount = jvmProvidedScriptEngineFactoryCount();
-        int expectedEvents = jvmProvidedScriptEngineFactoryCount + 1;
+        // we register 2 factories, then unregister 1 of them
+        int expectedEvents = 3;
         CountDownLatch latch = new CountDownLatch(expectedEvents);
         TestEventHandler eventHandler = new TestEventHandler
                 (latch, "org/apache/sling/scripting/core/impl/jsr223/SlingScriptEngineManager/UPDATED");
@@ -113,24 +109,20 @@ public class SlingScriptEngineManagerTest {
         ScriptEngineManager scriptEngineManager = context.getService(ScriptEngineManager.class);
         assertNotNull("Expected a ScriptEngineManager would be already registered.", scriptEngineManager);
         List<ScriptEngineFactory> factories = scriptEngineManager.getEngineFactories();
-        {
-            int expectedScriptEngineFactories = jvmProvidedScriptEngineFactoryCount + 2;
-            assertEquals("The ScriptEngineManager should have had " + expectedScriptEngineFactories + " ScriptEngineFactories registered.", expectedScriptEngineFactories, factories.size());
-        }
-        assertEquals(f1.getEngineName(), factories.get(jvmProvidedScriptEngineFactoryCount + 1).getEngineName());
-        assertEquals(f2.getEngineName(), factories.get(jvmProvidedScriptEngineFactoryCount).getEngineName());
+        int expectedScriptEngineFactories = numberOfOSGiRegisteredFactories + jvmProvidedScriptEngineFactoryCount;
+        assertEquals("The ScriptEngineManager should have had " + expectedScriptEngineFactories + " ScriptEngineFactories registered.", expectedScriptEngineFactories, factories.size());
+        assertEquals(f1.getEngineName(), factories.get(expectedScriptEngineFactories - 1).getEngineName());
+        assertEquals(f2.getEngineName(), factories.get(expectedScriptEngineFactories - 2).getEngineName());
 
         SlingScriptEngineManager slingScriptEngineManager = context.getService(SlingScriptEngineManager.class);
         assertEquals(2, slingScriptEngineManager.getProperties(f1).get(Constants.SERVICE_RANKING));
 
         f1SR.unregister();
+        expectedScriptEngineFactories--;
 
         factories = scriptEngineManager.getEngineFactories();
-        {
-            int expectedScriptEngineFactories = jvmProvidedScriptEngineFactoryCount + 1;
-            assertEquals("The ScriptEngineManager should have had " + expectedScriptEngineFactories + " ScriptEngineFactories registered.", expectedScriptEngineFactories, factories.size());
-        }
-        assertEquals(f2.getEngineName(), factories.get(jvmProvidedScriptEngineFactoryCount).getEngineName());
+        assertEquals("The ScriptEngineManager should have had " + expectedScriptEngineFactories + " ScriptEngineFactories registered.", expectedScriptEngineFactories, factories.size());
+        assertEquals(f2.getEngineName(), factories.get(expectedScriptEngineFactories - 1).getEngineName());
 
         assertEquals(f2, scriptEngineManager.getEngineByName("f2").getFactory());
         assertEquals(f2, scriptEngineManager.getEngineByExtension("f2").getFactory());
@@ -178,20 +170,16 @@ public class SlingScriptEngineManagerTest {
         assertNotNull("Expected that the SlingScriptEngineManager would already be registered.", slingScriptEngineManager);
         slingScriptEngineManager.bundleChanged(bundleEvent);
         List<ScriptEngineFactory> factories = slingScriptEngineManager.getEngineFactories();
-        {
-            int expectedScriptEngineFactories = jvmProvidedScriptEngineFactoryCount + 1;
-            assertEquals("Expected " + expectedScriptEngineFactories + " ScriptEngineFactories.", expectedScriptEngineFactories, factories.size());
-        }
-        assertEquals("Dummy Scripting Engine", factories.get(jvmProvidedScriptEngineFactoryCount).getEngineName());
+        int expectedScriptEngineFactories = jvmProvidedScriptEngineFactoryCount + 1;
+        assertEquals("Expected " + expectedScriptEngineFactories + " ScriptEngineFactories.", expectedScriptEngineFactories, factories.size());
+        assertEquals("Dummy Scripting Engine", factories.get(expectedScriptEngineFactories - 1).getEngineName());
 
         bundleEvent = new BundleEvent(BundleEvent.STOPPED, bundle);
         slingScriptEngineManager.bundleChanged(bundleEvent);
+        expectedScriptEngineFactories--;
+
         factories = slingScriptEngineManager.getEngineFactories();
-        {
-            int expectedScriptEngineFactories = jvmProvidedScriptEngineFactoryCount;
-            assertEquals("Expected " + expectedScriptEngineFactories + " ScriptEngineFactory.", expectedScriptEngineFactories, factories.size());
-        }
-        //assertEquals("Oracle Nashorn", factories.get(0).getEngineName());
+        assertEquals("Expected " + expectedScriptEngineFactories + " ScriptEngineFactory.", expectedScriptEngineFactories, factories.size());
         assertNull("Did not expect references to the already unregistered DummyScriptEngineFactory", slingScriptEngineManager
                 .getEngineByExtension("dummy"));
         assertNull("Did not expect references to the already unregistered DummyScriptEngineFactory",
@@ -230,16 +218,9 @@ public class SlingScriptEngineManagerTest {
     private File createFactoryFile() throws IOException {
         File tempFile = File.createTempFile("scriptEngine", "tmp");
         tempFile.deleteOnExit();
-
-        FileOutputStream fos = null;
-        try {
-            fos = new FileOutputStream(tempFile);
+        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
             fos.write("#I'm a test-comment\n".getBytes());
             fos.write(SCRIPT_ENGINE_FACTORY.getName().getBytes());
-        } finally {
-            if (fos != null) {
-                fos.close();
-            }
         }
         return tempFile;
     }
@@ -251,7 +232,7 @@ public class SlingScriptEngineManagerTest {
         CountDownLatch latch;
         int processedEvents = 0;
 
-        public TestEventHandler(CountDownLatch latch, String topic) {
+        TestEventHandler(CountDownLatch latch, String topic) {
             this.topic = topic;
             this.latch = latch;
         }

@@ -296,21 +296,21 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
             if (extension != null && !extension.isEmpty()) {
                 internalManager.registerEngineExtension(extension, factory);
             } else {
-                LOG.warn("Could not register an empty or null extension for script engine factory {}", factory.getEngineName());
+                LOG.warn("Could not register an empty or null extension for script engine factory {}.", factory.getEngineName());
             }
         }
         for (String mimeType : factory.getMimeTypes()) {
             if (mimeType != null && !mimeType.isEmpty()) {
                 internalManager.registerEngineMimeType(mimeType, factory);
             } else {
-                LOG.warn("Could not register an empty or null mime type for script engine factory {}", factory.getEngineName());
+                LOG.warn("Could not register an empty or null mime type for script engine factory {}.", factory.getEngineName());
             }
         }
         for (String name : factory.getNames()) {
             if (name != null && !name.isEmpty()) {
                 internalManager.registerEngineName(name, factory);
             } else {
-                LOG.warn("Could not register an empty or null engine name for script engine factory {}", factory.getEngineName());
+                LOG.warn("Could not register an empty or null engine name for script engine factory {}.", factory.getEngineName());
             }
         }
     }
