@@ -242,7 +242,7 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
                     try {
                         ScriptEngineManager manager = new ScriptEngineManager(bundle.adapt(BundleWiring.class).getClassLoader());
                         for (ScriptEngineFactory factory : manager.getEngineFactories()) {
-                            factories.add(new SortableScriptEngineFactory(factory, fakeBundleIdCounter++, 0));
+                            factories.add(new SortableScriptEngineFactory(factory, bundle.getBundleId(), 0));
                         }
                     } catch (Exception ex) {
                         LOG.error("Unable to process bundle " + bundle.getSymbolicName(), ex);

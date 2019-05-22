@@ -169,6 +169,6 @@ public class SortableScriptEngineFactoryTest {
     }
 
     private SortableScriptEngineFactory getCompareFactory(long bundleId, int serviceRanking) {
-        return new SortableScriptEngineFactory(null, bundleId, serviceRanking);
+        return new SortableScriptEngineFactory(mock(ScriptEngineFactory.class), bundleId, serviceRanking);
     }
 }

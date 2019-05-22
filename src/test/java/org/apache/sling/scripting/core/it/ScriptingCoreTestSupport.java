@@ -28,6 +28,7 @@ import static org.apache.sling.testing.paxexam.SlingOptions.sling;
 import static org.apache.sling.testing.paxexam.SlingOptions.versionResolver;
 import static org.apache.sling.testing.paxexam.SlingOptions.webconsole;
 import static org.ops4j.pax.exam.CoreOptions.composite;
+import static org.ops4j.pax.exam.CoreOptions.frameworkProperty;
 import static org.ops4j.pax.exam.CoreOptions.junitBundles;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.vmOption;
@@ -56,19 +57,30 @@ public class ScriptingCoreTestSupport extends TestSupport {
             junitBundles()
         };
         try {
-            Integer javaVersion = Integer.parseInt(System.getProperty("java.specification.version"));
-            if (javaVersion >= 9) {
-                Option[] java9AndBeyondConfiguration = Arrays.copyOf(configuration, configuration.length + 1);
-                java9AndBeyondConfiguration[java9AndBeyondConfiguration.length - 1] = vmOption("--add-modules=java.se.ee");
-                configuration = java9AndBeyondConfiguration;
+            int javaVersion = Integer.parseInt(System.getProperty("java.specification.version"));
+            if (javaVersion >= 9 && javaVersion < 11) {
+                configuration = Arrays.copyOf(configuration, configuration.length + 1);
+                configuration[configuration.length - 1] = vmOption("--add-modules=java.se.ee");
+            }
+            if (javaVersion >= 11) {
+                configuration = Arrays.copyOf(configuration, configuration.length + 1);
+                configuration[configuration.length -1] = composite(
+                        frameworkProperty("org.osgi.framework.system.packages.extra")
+                                .value("javax.xml.stream;version=\"1.1.0\",javax.xml.stream.events;" +
+                                        "version=\"1.1.0\""),
+                        mavenBundle("org.apache.geronimo.specs", "geronimo-annotation_1.3_spec", "1.1"),
+                        mavenBundle("org.apache.geronimo.specs", "geronimo-activation_1.1_spec", "1.1"),
+                        mavenBundle("org.apache.servicemix.specs", "org.apache.servicemix.specs.jaxb-api-2.2", "2.9.0"),
+                        mavenBundle("org.apache.servicemix.bundles", "org.apache.servicemix.bundles.jaxb-impl", "2.2.11_1")
+                );
             }
         } catch (NumberFormatException e) {
-            // ignore
+            // do nothing
         }
         return configuration;
     }
 
-    protected Option launchpad() {
+    private Option launchpad() {
         versionResolver.setVersion("org.apache.felix", "org.apache.felix.http.jetty", "3.1.6"); // Java 7
         versionResolver.setVersion("org.apache.felix", "org.apache.felix.http.whiteboard", "2.3.2"); // Java 7
         final int httpPort = findFreePort();

@@ -23,6 +23,8 @@ import java.util.List;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 
+import org.jetbrains.annotations.NotNull;
+
 public class SortableScriptEngineFactory implements ScriptEngineFactory, Comparable {
 
     private final ScriptEngineFactory delegate;
@@ -47,7 +49,7 @@ public class SortableScriptEngineFactory implements ScriptEngineFactory, Compara
      * @param bundleId       the bundle id of the bundle registering the {@link ScriptEngineFactory}
      * @param serviceRanking the service ranking of the {@link ScriptEngineFactory}
      */
-    SortableScriptEngineFactory(ScriptEngineFactory delegate, long bundleId, int serviceRanking) {
+    SortableScriptEngineFactory(@NotNull ScriptEngineFactory delegate, long bundleId, int serviceRanking) {
         this.delegate = delegate;
         this.bundleId = bundleId;
         this.serviceRanking = serviceRanking;
@@ -114,7 +116,7 @@ public class SortableScriptEngineFactory implements ScriptEngineFactory, Compara
     }
 
     @Override
-    public int compareTo(Object o) {
+    public int compareTo(@NotNull Object o) {
         SortableScriptEngineFactory other = (SortableScriptEngineFactory) o;
         if (equals(other)) {
             return 0;
@@ -130,5 +132,22 @@ public class SortableScriptEngineFactory implements ScriptEngineFactory, Compara
             return 1;
         }
         return -1;
+    }
+
+    @Override
+    public int hashCode() {
+        return delegate.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj instanceof SortableScriptEngineFactory) {
+            SortableScriptEngineFactory other = (SortableScriptEngineFactory) obj;
+            return this.delegate.equals(other.delegate);
+        }
+        return false;
     }
 }
