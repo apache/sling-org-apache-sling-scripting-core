@@ -28,6 +28,7 @@ import static org.apache.sling.testing.paxexam.SlingOptions.webconsole;
 import static org.ops4j.pax.exam.CoreOptions.composite;
 import static org.ops4j.pax.exam.CoreOptions.junitBundles;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
+import static org.ops4j.pax.exam.CoreOptions.options;
 import static org.ops4j.pax.exam.cm.ConfigurationAdminOptions.factoryConfiguration;
 import static org.ops4j.pax.exam.cm.ConfigurationAdminOptions.newConfiguration;
 
@@ -35,7 +36,7 @@ public class ScriptingCoreTestSupport extends TestSupport {
 
     @Configuration
     public Option[] configuration() {
-        return new Option[]{
+        return options(
             baseConfiguration(),
             launchpad(),
             // Sling Scripting Core
@@ -51,7 +52,7 @@ public class ScriptingCoreTestSupport extends TestSupport {
             mavenBundle().groupId("org.apache.felix").artifactId("org.apache.felix.webconsole.plugins.ds").version(versionResolver),
             // testing
             junitBundles()
-        };
+        );
     }
 
     private Option launchpad() {
