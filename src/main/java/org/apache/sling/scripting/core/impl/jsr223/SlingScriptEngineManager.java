@@ -72,13 +72,13 @@ import org.slf4j.LoggerFactory;
 )
 public class SlingScriptEngineManager extends ScriptEngineManager implements BundleListener {
 
+    private ScriptEngineManager internalManager;
+
     private final Set<Bundle> engineSpiBundles = new HashSet<>();
-    private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-    private final Map<ScriptEngineFactory, Map<String, Object>> factoriesProperties = new HashMap<>();
+
     private final Set<ServiceReference<ScriptEngineFactory>> serviceReferences = new HashSet<>();
 
-    private ScriptEngineManager internalManager;
-    private SortedSet<SortableScriptEngineFactory> factories = new TreeSet<>();
+    private final SortedSet<SortableScriptEngineFactory> factories = new TreeSet<>();
 
     private BundleContext bundleContext;
 
@@ -92,6 +92,8 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
     static final String EVENT_TOPIC_SCRIPT_MANAGER_UPDATED = "org/apache/sling/scripting/core/impl/jsr223/SlingScriptEngineManager/UPDATED";
 
     static final String ENGINE_FACTORY_SERVICE = "META-INF/services/" + ScriptEngineFactory.class.getName();
+
+    private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
     private final Logger logger = LoggerFactory.getLogger(SlingScriptEngineManager.class);
 
@@ -187,10 +189,10 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
         }
     }
 
-    public Map<String, Object> getProperties(ScriptEngineFactory factory) {
+    public Map<String, Object> getServiceProperties(final ScriptEngineFactory factory) {
         readWriteLock.readLock().lock();
         try {
-            return factoriesProperties.get(factory);
+            return factories.stream().filter(f -> f.getDelegate().equals(factory)).findFirst().map(SortableScriptEngineFactory::getServiceProperties).orElse(null);
         } finally {
             readWriteLock.readLock().unlock();
         }
@@ -231,11 +233,11 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
         readWriteLock.writeLock().lock();
         try {
             internalManager = getInternalScriptEngineManager();
-            factories = new TreeSet<>();
+            factories.clear();
             long fakeBundleIdCounter = Long.MIN_VALUE;
             // first add the platform factories
             for (final ScriptEngineFactory factory : internalManager.getEngineFactories()) {
-                final SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(factory, fakeBundleIdCounter++, 0);
+                final SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(factory, fakeBundleIdCounter++, 0, null);
                 factories.add(sortableScriptEngineFactory);
             }
             // then factories from SPI Bundles
@@ -246,7 +248,7 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
                     try {
                         final ScriptEngineManager manager = new ScriptEngineManager(bundle.adapt(BundleWiring.class).getClassLoader());
                         for (final ScriptEngineFactory factory : manager.getEngineFactories()) {
-                            final SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(factory, bundle.getBundleId(), 0);
+                            final SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(factory, bundle.getBundleId(), 0, null);
                             factories.add(sortableScriptEngineFactory);
                         }
                     } catch (Exception ex) {
@@ -259,16 +261,14 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
             }
             // and finally factories registered as OSGi services
             if (bundleContext != null) {
-                factoriesProperties.clear();
                 for (final ServiceReference<ScriptEngineFactory> serviceReference : serviceReferences) {
                     final ScriptEngineFactory scriptEngineFactory = bundleContext.getService(serviceReference);
-                    final SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(scriptEngineFactory, serviceReference.getBundle().getBundleId(), PropertiesUtil.toInteger(serviceReference.getProperty(Constants.SERVICE_RANKING), 0));
-                    factories.add(sortableScriptEngineFactory);
                     final Map<String, Object> factoryProperties = new HashMap<>(serviceReference.getPropertyKeys().length);
                     for (final String key : serviceReference.getPropertyKeys()) {
                         factoryProperties.put(key, serviceReference.getProperty(key));
                     }
-                    factoriesProperties.put(scriptEngineFactory, factoryProperties);
+                    final SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(scriptEngineFactory, serviceReference.getBundle().getBundleId(), PropertiesUtil.toInteger(serviceReference.getProperty(Constants.SERVICE_RANKING), 0), factoryProperties);
+                    factories.add(sortableScriptEngineFactory);
                 }
             }
             // register the associations at the end, so that the priority sorting is taken into consideration

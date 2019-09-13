@@ -115,7 +115,7 @@ public class SlingScriptEngineManagerTest {
         assertEquals(f2.getEngineName(), factories.get(expectedScriptEngineFactories - 2).getEngineName());
 
         SlingScriptEngineManager slingScriptEngineManager = context.getService(SlingScriptEngineManager.class);
-        assertEquals(2, slingScriptEngineManager.getProperties(f1).get(Constants.SERVICE_RANKING));
+        assertEquals(2, slingScriptEngineManager.getServiceProperties(f1).get(Constants.SERVICE_RANKING));
 
         f1SR.unregister();
         expectedScriptEngineFactories--;

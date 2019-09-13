@@ -151,9 +151,9 @@ public class BindingsValuesProvidersByContextImpl implements BindingsValuesProvi
 
         // we load the compatible language ones first so that the most specific
         // overrides these
-        Map<String, Object> factoryProps = scriptEngineManager.getProperties(scriptEngineFactory);
-        if (factoryProps != null) {
-            String[] compatibleLangs = PropertiesUtil.toStringArray(factoryProps.get("compatible.javax.script.name"), new String[0]);
+        final Map<String, Object> factoryProperties = scriptEngineManager.getServiceProperties(scriptEngineFactory);
+        if (factoryProperties != null) {
+            String[] compatibleLangs = PropertiesUtil.toStringArray(factoryProperties.get("compatible.javax.script.name"), new String[0]);
             for (final String name : compatibleLangs) {
                 final Map<ServiceReference, BindingsValuesProvider> langProviders = bvpc.getLangBindingsValuesProviders().get(name);
                 if (langProviders != null) {

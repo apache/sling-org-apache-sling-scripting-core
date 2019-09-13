@@ -19,17 +19,20 @@
 package org.apache.sling.scripting.core.impl.jsr223;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class SortableScriptEngineFactory implements ScriptEngineFactory, Comparable {
 
     private final ScriptEngineFactory delegate;
     private final int serviceRanking;
     private final long bundleId;
+    private final Map<String, Object> properties;
 
     /**
      * Constructor for implicit {@link ScriptEngineFactory} provided by the platform.
@@ -40,6 +43,7 @@ public class SortableScriptEngineFactory implements ScriptEngineFactory, Compara
         this.delegate = delegate;
         serviceRanking = 0;
         bundleId = 0;
+        properties = null;
     }
 
     /**
@@ -49,10 +53,11 @@ public class SortableScriptEngineFactory implements ScriptEngineFactory, Compara
      * @param bundleId       the bundle id of the bundle registering the {@link ScriptEngineFactory}
      * @param serviceRanking the service ranking of the {@link ScriptEngineFactory}
      */
-    SortableScriptEngineFactory(@NotNull ScriptEngineFactory delegate, long bundleId, int serviceRanking) {
+    SortableScriptEngineFactory(@NotNull ScriptEngineFactory delegate, long bundleId, int serviceRanking, @Nullable Map<String, Object> properties) {
         this.delegate = delegate;
         this.bundleId = bundleId;
         this.serviceRanking = serviceRanking;
+        this.properties = properties;
     }
 
     @Override
@@ -115,6 +120,14 @@ public class SortableScriptEngineFactory implements ScriptEngineFactory, Compara
         return delegate.getScriptEngine();
     }
 
+    @NotNull ScriptEngineFactory getDelegate() {
+        return delegate;
+    }
+
+    @Nullable Map<String, Object> getServiceProperties() {
+        return properties;
+    }
+
     @Override
     public int compareTo(@NotNull Object o) {
         SortableScriptEngineFactory other = (SortableScriptEngineFactory) o;
@@ -150,4 +163,5 @@ public class SortableScriptEngineFactory implements ScriptEngineFactory, Compara
         }
         return false;
     }
+
 }
