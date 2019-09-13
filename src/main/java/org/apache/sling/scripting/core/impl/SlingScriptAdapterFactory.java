@@ -28,6 +28,7 @@ import org.apache.sling.scripting.api.BindingsValuesProvider;
 import org.apache.sling.scripting.api.BindingsValuesProvidersByContext;
 import org.apache.sling.scripting.api.ScriptCache;
 import org.apache.sling.scripting.core.impl.jsr223.SlingScriptEngineManager;
+import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.ComponentContext;
@@ -83,19 +84,18 @@ public class SlingScriptAdapterFactory implements AdapterFactory, MimeTypeProvid
 
     @Override
     @SuppressWarnings("unchecked")
-    public <AdapterType> AdapterType getAdapter(Object adaptable, Class<AdapterType> type) {
+    public <AdapterType> AdapterType getAdapter(@NotNull final Object adaptable, @NotNull final Class<AdapterType> type) {
 
-        Resource resource = (Resource) adaptable;
-        String path = resource.getPath();
-        String ext = path.substring(path.lastIndexOf('.') + 1);
+        final Resource resource = (Resource) adaptable;
+        final String path = resource.getPath();
+        final String ext = path.substring(path.lastIndexOf('.') + 1);
 
-        ScriptEngine engine = scriptEngineManager.getEngineByExtension(ext);
+        final List<ScriptEngine> engines = scriptEngineManager.getEnginesByExtension(ext);
+        final ScriptEngine engine = engines.size() > 0 ? engines.get(0) : null;
         if (engine != null) {
-            final Collection<BindingsValuesProvider> bindingsValuesProviders =
-                    bindingsValuesProviderTracker.getBindingsValuesProviders(engine.getFactory(), BINDINGS_CONTEXT);
+            final Collection<BindingsValuesProvider> bindingsValuesProviders = bindingsValuesProviderTracker.getBindingsValuesProviders(engine.getFactory(), BINDINGS_CONTEXT);
             // unchecked cast
-            return (AdapterType) new DefaultSlingScript(this.bundleContext,
-                    resource, engine, bindingsValuesProviders, this.serviceCache, scriptCache);
+            return (AdapterType) new DefaultSlingScript(this.bundleContext, resource, engine, bindingsValuesProviders, this.serviceCache, scriptCache);
         }
 
         return null;

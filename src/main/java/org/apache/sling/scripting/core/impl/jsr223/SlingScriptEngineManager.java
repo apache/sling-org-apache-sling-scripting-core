@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
@@ -107,6 +108,18 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
         }
     }
 
+    public List<ScriptEngine> getEnginesByName(final String shortName) {
+        readWriteLock.readLock().lock();
+        try {
+            return factories.stream()
+                .filter(factory -> factory.getEngineName().contains(shortName))
+                .map(factory -> factory.getDelegate().getScriptEngine())
+                .collect(Collectors.toList());
+        } finally {
+            readWriteLock.readLock().unlock();
+        }
+    }
+
     @Override
     public ScriptEngine getEngineByExtension(String extension) {
         readWriteLock.readLock().lock();
@@ -117,11 +130,35 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
         }
     }
 
+    public List<ScriptEngine> getEnginesByExtension(final String extension) {
+        readWriteLock.readLock().lock();
+        try {
+            return factories.stream()
+                .filter(factory -> factory.getExtensions().contains(extension))
+                .map(factory -> factory.getDelegate().getScriptEngine())
+                .collect(Collectors.toList());
+        } finally {
+            readWriteLock.readLock().unlock();
+        }
+    }
+
     @Override
     public ScriptEngine getEngineByMimeType(String mimeType) {
         readWriteLock.readLock().lock();
         try {
             return internalManager.getEngineByMimeType(mimeType);
+        } finally {
+            readWriteLock.readLock().unlock();
+        }
+    }
+
+    public List<ScriptEngine> getEnginesByMimeType(final String mimeType) {
+        readWriteLock.readLock().lock();
+        try {
+            return factories.stream()
+                .filter(factory -> factory.getMimeTypes().contains(mimeType))
+                .map(factory -> factory.getDelegate().getScriptEngine())
+                .collect(Collectors.toList());
         } finally {
             readWriteLock.readLock().unlock();
         }
