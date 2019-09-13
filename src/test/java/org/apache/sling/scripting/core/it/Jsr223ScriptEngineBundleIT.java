@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.sling.scripting.core.impl.jsr223;
+package org.apache.sling.scripting.core.it;
 
 import java.util.ArrayList;
 import java.util.List;
