@@ -1,0 +1,6 @@
+{
+  "sling:scripting": [
+    "html=The HTL Templating Language:1.4",
+    "js=ECMAScript:partial ECMAScript 2015 support"
+  ]
+}

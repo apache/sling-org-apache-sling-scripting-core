@@ -71,6 +71,9 @@ public class SlingScriptAdapterFactory implements AdapterFactory, MimeTypeProvid
     @Reference
     private SlingScriptEngineManager scriptEngineManager;
 
+    @Reference
+    private volatile SlingScriptEnginePicker scriptEnginePicker;
+
     /**
      * The BindingsValuesProviderTracker
      */
@@ -88,10 +91,10 @@ public class SlingScriptAdapterFactory implements AdapterFactory, MimeTypeProvid
 
         final Resource resource = (Resource) adaptable;
         final String path = resource.getPath();
-        final String ext = path.substring(path.lastIndexOf('.') + 1);
+        final String extension = path.substring(path.lastIndexOf('.') + 1);
 
-        final List<ScriptEngine> engines = scriptEngineManager.getEnginesByExtension(ext);
-        final ScriptEngine engine = engines.size() > 0 ? engines.get(0) : null;
+        final List<ScriptEngine> engines = scriptEngineManager.getEnginesByExtension(extension);
+        final ScriptEngine engine = scriptEnginePicker.pickScriptEngine(engines, resource, extension);
         if (engine != null) {
             final Collection<BindingsValuesProvider> bindingsValuesProviders = bindingsValuesProviderTracker.getBindingsValuesProviders(engine.getFactory(), BINDINGS_CONTEXT);
             // unchecked cast

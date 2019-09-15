@@ -1,0 +1,6 @@
+{
+  "sling:scripting": [
+    "html=Thymeleaf:3.0",
+    "js=ECMAScript:partial ECMAScript 2015 support"
+  ]
+}

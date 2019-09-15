@@ -1,0 +1,14 @@
+{
+    "jcr:primaryType": "nt:unstructured",
+    "title": "Apache Sling Scripting",
+    "htl": {
+        "jcr:primaryType": "nt:unstructured",
+        "sling:resourceType": "htl/page",
+        "title": "Sling Scripting HTL"
+    },
+    "thymeleaf": {
+        "jcr:primaryType": "nt:unstructured",
+        "sling:resourceType": "thymeleaf/page",
+        "title": "Sling Scripting Thymeleaf"
+    }
+}
