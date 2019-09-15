@@ -94,7 +94,14 @@ public class SlingScriptAdapterFactory implements AdapterFactory, MimeTypeProvid
         final String extension = path.substring(path.lastIndexOf('.') + 1);
 
         final List<ScriptEngine> engines = scriptEngineManager.getEnginesByExtension(extension);
-        final ScriptEngine engine = scriptEnginePicker.pickScriptEngine(engines, resource, extension);
+        final ScriptEngine engine;
+        if (engines.size() == 0) {
+            return null;
+        } else if (engines.size() == 1) {
+            engine = engines.get(0);
+        } else {
+            engine = scriptEnginePicker.pickScriptEngine(engines, resource, extension);
+        }
         if (engine != null) {
             final Collection<BindingsValuesProvider> bindingsValuesProviders = bindingsValuesProviderTracker.getBindingsValuesProviders(engine.getFactory(), BINDINGS_CONTEXT);
             // unchecked cast
