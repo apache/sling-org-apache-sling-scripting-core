@@ -18,74 +18,73 @@
  */
 package org.apache.sling.scripting.core.it;
 
-import java.util.ArrayList;
 import java.util.List;
+
 import javax.inject.Inject;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
-import org.apache.sling.scripting.core.it.ScriptingCoreTestSupport;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
-import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.InvalidSyntaxException;
 
-/** Verify that adding a JSR223 script engine bundle causes the corresponding
- *  ScriptEngineFactory service to be registered (SLING-7545)
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
+import static org.ops4j.pax.exam.CoreOptions.options;
+
+/**
+ * Verify that adding a JSR223 script engine bundle causes the corresponding
+ * ScriptEngineFactory service to be registered (SLING-7545)
  */
 @RunWith(PaxExam.class)
-public class Jsr223ScriptEngineBundleIT  extends ScriptingCoreTestSupport{
+public class Jsr223ScriptEngineBundleIT extends ScriptingCoreTestSupport {
 
     @Inject
     private BundleContext bundleContext;
-    
+
     @Inject
     private ScriptEngineManager scriptEngineManager;
-    
-    private final String TEST_BUNDLE_ID = "groovy-all";
-    private final String TEST_ENGINE_NAME = "Groovy Scripting Engine";
 
-    @Override
+    private static final String TEST_BUNDLE_ID = "groovy-all";
+
+    private static final String TEST_ENGINE_NAME = "Groovy Scripting Engine";
+
     @Configuration
     public Option[] configuration() {
-        final ArrayList<Option> result = new ArrayList<>();
-        for(Option o : super.configuration()) {
-            result.add(o);
-        }
-        result.add(mavenBundle().groupId("org.codehaus.groovy").artifactId(TEST_BUNDLE_ID).version("2.4.14"));
-        return result.toArray(new Option[result.size()]);
+        return options(
+            baseConfiguration(),
+            mavenBundle().groupId("org.codehaus.groovy").artifactId(TEST_BUNDLE_ID).version("2.4.14")
+        );
     }
 
     @Test
     public void testScriptEngineFactoryPresent() throws InvalidSyntaxException {
-        
+
         // The added bundle should be active
         Bundle testBundle = null;
-        for(Bundle b : bundleContext.getBundles()) {
-            if(b.getSymbolicName().equals(TEST_BUNDLE_ID)) {
+        for (Bundle b : bundleContext.getBundles()) {
+            if (b.getSymbolicName().equals(TEST_BUNDLE_ID)) {
                 testBundle = b;
             }
         }
         assertNotNull("Expecting bundle to be present:" + TEST_BUNDLE_ID, testBundle);
         assertEquals("Expecting bundle to be active:" + TEST_BUNDLE_ID, Bundle.ACTIVE, testBundle.getState());
-        
+
         // And the corresponding ScriptEngineFactory activated
         ScriptEngineFactory testFactory = null;
         List<ScriptEngineFactory> fac = scriptEngineManager.getEngineFactories();
-        for(ScriptEngineFactory f : fac) {
-            if(f.getEngineName().equals(TEST_ENGINE_NAME)) {
+        for (ScriptEngineFactory f : fac) {
+            if (f.getEngineName().equals(TEST_ENGINE_NAME)) {
                 testFactory = f;
             }
         }
-        assertNotNull(
-                "Expecting ScriptEngineFactory to be active: " + TEST_ENGINE_NAME, 
-                testFactory);
+        assertNotNull("Expecting ScriptEngineFactory to be active: " + TEST_ENGINE_NAME, testFactory);
     }
+
 }

@@ -18,17 +18,6 @@
  */
 package org.apache.sling.scripting.core.it;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.ops4j.pax.exam.CoreOptions.bundle;
-import static org.ops4j.pax.exam.CoreOptions.junitBundles;
-import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
-import static org.ops4j.pax.exam.CoreOptions.options;
-import static org.ops4j.pax.exam.CoreOptions.provision;
-import static org.ops4j.pax.exam.CoreOptions.systemProperty;
-import static org.ops4j.pax.exam.CoreOptions.when;
-
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -45,11 +34,11 @@ import javax.script.ScriptEngineFactory;
 
 import org.apache.sling.scripting.api.BindingsValuesProvider;
 import org.apache.sling.scripting.api.BindingsValuesProvidersByContext;
-import org.apache.sling.scripting.core.it.ScriptingCoreTestSupport;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.util.Filter;
@@ -57,8 +46,12 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceRegistration;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.ops4j.pax.exam.CoreOptions.options;
+
 @RunWith(PaxExam.class)
-public class BindingsValuesProvidersByContextIT  extends ScriptingCoreTestSupport{
+public class BindingsValuesProvidersByContextIT extends ScriptingCoreTestSupport {
 
     @Inject
     @Filter(timeout = 300000)
@@ -76,18 +69,24 @@ public class BindingsValuesProvidersByContextIT  extends ScriptingCoreTestSuppor
 
     @After
     public void cleanup() {
-        for(ServiceRegistration reg : regs) {
+        for (ServiceRegistration reg : regs) {
             reg.unregister();
         }
     }
 
+    @Configuration
+    public Option[] configuration() {
+        return options(
+            baseConfiguration()
+        );
+    }
 
     private Dictionary<String, Object> getProperties(String context, String engineName) {
         final Dictionary<String, Object> props = new Hashtable<String, Object>();
-        if(context != null) {
+        if (context != null) {
             props.put(BindingsValuesProvider.CONTEXT, context.split(","));
         }
-        if(engineName != null) {
+        if (engineName != null) {
             props.put(ScriptEngine.NAME, engineName);
         }
         return props;
@@ -206,16 +205,16 @@ public class BindingsValuesProvidersByContextIT  extends ScriptingCoreTestSuppor
 
     private String asString(Collection<?> data, boolean sortList) {
         final List<String> maybeSorted = new ArrayList<String>();
-        for(Object o : data) {
+        for (Object o : data) {
             maybeSorted.add(o.toString());
         }
-        if(sortList) {
+        if (sortList) {
             Collections.sort(maybeSorted);
         }
 
         final StringBuilder sb = new StringBuilder();
-        for(String str : maybeSorted) {
-            if(sb.length() > 0) {
+        for (String str : maybeSorted) {
+            if (sb.length() > 0) {
                 sb.append(",");
             }
             sb.append(str);
@@ -248,7 +247,7 @@ public class BindingsValuesProvidersByContextIT  extends ScriptingCoreTestSuppor
         addBVP("foo", null, "js");
         addBVP("bar", null, null);
         addBVP("r1", "request", "js");
-        addBVP("r2", "request",  null);
+        addBVP("r2", "request", null);
         addBVP("o1", "other", "js");
         addBVP("o2", "other", null);
         addBVP("o3", "other,request", null);
@@ -269,7 +268,7 @@ public class BindingsValuesProvidersByContextIT  extends ScriptingCoreTestSuppor
         addBVP("foo", null, "js");
         addMap("bar", null, null);
         addMap("r1", "request", "js");
-        addMap("r2", "request",  null);
+        addMap("r2", "request", null);
         addMap("o1", "other", "js");
         addBVP("o2", "other", null);
         addMap("o3", "other,request", null);
@@ -311,4 +310,5 @@ public class BindingsValuesProvidersByContextIT  extends ScriptingCoreTestSuppor
         addBVPWithServiceRanking("genericOne", "request", null, -42);
         assertEquals("genericOne,genericTwo,genericThree,first,second,last", asString(bvpProvider.getBindingsValuesProviders(factory("js"), "request"), false));
     }
+
 }

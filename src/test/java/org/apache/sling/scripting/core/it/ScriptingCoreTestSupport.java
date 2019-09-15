@@ -18,52 +18,78 @@
  */
 package org.apache.sling.scripting.core.it;
 
-import org.apache.sling.testing.paxexam.TestSupport;
-import org.ops4j.pax.exam.Configuration;
-import org.ops4j.pax.exam.Option;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
-import static org.apache.sling.testing.paxexam.SlingOptions.sling;
+import org.apache.sling.testing.paxexam.TestSupport;
+import org.ops4j.pax.exam.Option;
+import org.ops4j.pax.exam.options.CompositeOption;
+import org.ops4j.pax.exam.options.ModifiableCompositeOption;
+
+import static org.apache.sling.testing.paxexam.SlingOptions.slingResourcePresence;
+import static org.apache.sling.testing.paxexam.SlingOptions.slingScripting;
 import static org.apache.sling.testing.paxexam.SlingOptions.versionResolver;
-import static org.apache.sling.testing.paxexam.SlingOptions.webconsole;
 import static org.ops4j.pax.exam.CoreOptions.composite;
 import static org.ops4j.pax.exam.CoreOptions.junitBundles;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
-import static org.ops4j.pax.exam.CoreOptions.options;
-import static org.ops4j.pax.exam.cm.ConfigurationAdminOptions.factoryConfiguration;
 import static org.ops4j.pax.exam.cm.ConfigurationAdminOptions.newConfiguration;
 
 public class ScriptingCoreTestSupport extends TestSupport {
 
-    @Configuration
-    public Option[] configuration() {
-        return options(
-            baseConfiguration(),
-            launchpad(),
+    final int httpPort = findFreePort();
+
+    final Option scriptingCore = mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.scripting.core").version(versionResolver.getVersion("org.apache.sling", "org.apache.sling.scripting.core"));
+
+    public ModifiableCompositeOption baseConfiguration() {
+        final Option slingScripting = slingScripting().remove(scriptingCore);
+        return composite(
+            super.baseConfiguration(),
+            // Sling Scripting
+            slingScripting,
+            newConfiguration("org.apache.felix.http")
+                .put("org.osgi.service.http.port", httpPort)
+                .asOption(),
             // Sling Scripting Core
             testBundle("bundle.filename"),
-            mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.scripting.api").versionAsInProject(),
-            factoryConfiguration("org.apache.sling.serviceusermapping.impl.ServiceUserMapperImpl.amended")
-                .put("user.mapping", new String[]{
-                    "org.apache.sling.scripting.core=sling-scripting"
-                })
-                .asOption(),
             // debugging
             mavenBundle().groupId("org.apache.felix").artifactId("org.apache.felix.inventory").version(versionResolver),
             mavenBundle().groupId("org.apache.felix").artifactId("org.apache.felix.webconsole.plugins.ds").version(versionResolver),
             // testing
+            slingResourcePresence(),
+            mavenBundle().groupId("org.jsoup").artifactId("jsoup").versionAsInProject(),
+            mavenBundle().groupId("org.apache.servicemix.bundles").artifactId("org.apache.servicemix.bundles.hamcrest").versionAsInProject(),
             junitBundles()
         );
     }
 
-    private Option launchpad() {
-        final int httpPort = findFreePort();
-        return composite(
-            sling(),
-            webconsole(),
-            newConfiguration("org.apache.felix.http")
-                .put("org.osgi.service.http.port", httpPort)
-                .asOption()
-        );
+    // move below helpers for deep removal to Pax Exam
+
+    private static List<Option> expand(final Option[] options) {
+        final List<Option> expanded = new ArrayList<>();
+        if (options != null) {
+            for (final Option option : options) {
+                if (option != null) {
+                    if (option instanceof CompositeOption) {
+                        expanded.addAll(Arrays.asList(((CompositeOption) option).getOptions()));
+                    } else {
+                        expanded.add(option);
+                    }
+                }
+            }
+        }
+        return expanded;
+    }
+
+    static Option[] remove(final Option[] options, final Option option) {
+        final List<Option> expanded = expand(options);
+        if (option instanceof CompositeOption) {
+            expanded.removeAll(Arrays.asList(((CompositeOption) option).getOptions()));
+        } else {
+            expanded.removeAll(Collections.singleton(option));
+        }
+        return expanded.toArray(new Option[0]);
     }
 
 }
