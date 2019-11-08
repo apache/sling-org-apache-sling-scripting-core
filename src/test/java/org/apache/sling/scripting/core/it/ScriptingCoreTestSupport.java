@@ -40,14 +40,20 @@ public class ScriptingCoreTestSupport extends TestSupport {
 
     final int httpPort = findFreePort();
 
-    final Option scriptingCore = mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.scripting.core").version(versionResolver.getVersion("org.apache.sling", "org.apache.sling.scripting.core"));
+    final Option scriptingCore = mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.scripting.core").version(versionResolver);
+    final Option slingApi = mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.api").version(versionResolver);
+    final Option osgiConverter = mavenBundle().groupId("org.osgi").artifactId("org.osgi.util.converter").version("1.0.0");
+
+
 
     public ModifiableCompositeOption baseConfiguration() {
         final Option slingScripting = slingScripting().remove(scriptingCore);
         return composite(
             super.baseConfiguration(),
             // Sling Scripting
-            slingScripting,
+            composite(remove(new Option[] {slingScripting}, slingApi)),
+            mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.api").versionAsInProject(),
+            osgiConverter,
             newConfiguration("org.apache.felix.http")
                 .put("org.osgi.service.http.port", httpPort)
                 .asOption(),
@@ -82,12 +88,14 @@ public class ScriptingCoreTestSupport extends TestSupport {
         return expanded;
     }
 
-    static Option[] remove(final Option[] options, final Option option) {
+    static Option[] remove(final Option[] options, final Option ... toRemove) {
         final List<Option> expanded = expand(options);
-        if (option instanceof CompositeOption) {
-            expanded.removeAll(Arrays.asList(((CompositeOption) option).getOptions()));
-        } else {
-            expanded.removeAll(Collections.singleton(option));
+        for (Option toRemoveOption : toRemove) {
+            if (toRemoveOption instanceof CompositeOption) {
+                expanded.removeAll(Arrays.asList(((CompositeOption) toRemoveOption).getOptions()));
+            } else {
+                expanded.removeAll(Collections.singleton(toRemoveOption));
+            }
         }
         return expanded.toArray(new Option[0]);
     }

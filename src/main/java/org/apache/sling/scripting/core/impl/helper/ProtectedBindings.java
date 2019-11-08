@@ -25,7 +25,10 @@ import java.util.Set;
 
 import javax.script.Bindings;
 
-public class ProtectedBindings implements Bindings {
+import org.apache.sling.api.scripting.LazyBindings;
+import org.jetbrains.annotations.NotNull;
+
+public class ProtectedBindings extends LazyBindings implements Bindings {
 
     private final Bindings wrapped;
     private final Set<String> protectedKeys;
@@ -90,6 +93,7 @@ public class ProtectedBindings implements Bindings {
      *
      * @return an unmodifiable Set view of the map
      */
+    @NotNull
     public Set<Entry<String, Object>> entrySet() {
         return Collections.unmodifiableSet(wrapped.entrySet());
     }
@@ -107,6 +111,7 @@ public class ProtectedBindings implements Bindings {
      *
      * @return an unmodifiable Set view of the map's keys
      */
+    @NotNull
     public Set<String> keySet() {
         return Collections.unmodifiableSet(wrapped.keySet());
     }
@@ -124,6 +129,7 @@ public class ProtectedBindings implements Bindings {
      *
      * @return an unmodifiable Collection view of the map's values
      */
+    @NotNull
     public Collection<Object> values() {
         return Collections.unmodifiableCollection(wrapped.values());
     }

@@ -53,7 +53,6 @@ import javax.script.Invocable;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
-import javax.script.SimpleBindings;
 import javax.servlet.Servlet;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -69,6 +68,7 @@ import org.apache.sling.api.resource.ResourceMetadata;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceWrapper;
 import org.apache.sling.api.resource.SyntheticResource;
+import org.apache.sling.api.scripting.LazyBindings;
 import org.apache.sling.api.scripting.ScriptEvaluationException;
 import org.apache.sling.api.scripting.SlingBindings;
 import org.apache.sling.api.scripting.SlingScript;
@@ -209,7 +209,7 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
                 private Writer writer = (Writer) b.get(OUT);
                 private Writer errorWriter = new LogWriter((Logger) b.get(LOG));
                 private Reader reader = (Reader)b.get(READER);
-                private Bindings slingScope = new SimpleBindings();
+                private Bindings slingScope = new LazyBindings();
 
 
                 /**
@@ -631,7 +631,7 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
 
     Bindings verifySlingBindings(final SlingBindings slingBindings) throws IOException {
 
-    	final Bindings bindings = new SimpleBindings();
+        final Bindings bindings = new LazyBindings();
 
         final SlingHttpServletRequest request = slingBindings.getRequest();
 

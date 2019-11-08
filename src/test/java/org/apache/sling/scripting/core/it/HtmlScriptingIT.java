@@ -28,6 +28,7 @@ import org.apache.sling.api.servlets.ServletResolver;
 import org.apache.sling.resource.presence.ResourcePresence;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
@@ -43,8 +44,10 @@ import org.osgi.service.http.HttpService;
 import static org.apache.sling.testing.paxexam.SlingOptions.slingQuickstartOakTar;
 import static org.apache.sling.testing.paxexam.SlingOptions.slingScriptingSightly;
 import static org.apache.sling.testing.paxexam.SlingOptions.slingScriptingThymeleaf;
+import static org.apache.sling.testing.paxexam.SlingOptions.versionResolver;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.options;
 import static org.ops4j.pax.exam.cm.ConfigurationAdminOptions.factoryConfiguration;
 
@@ -83,6 +86,11 @@ public class HtmlScriptingIT extends ScriptingCoreTestSupport {
     @Filter(value = "(path=/content/scripting)")
     private ResourcePresence scripting;
 
+    private Option slingResourceResolver =
+            mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.resourceresolver").version(versionResolver);
+    private Option slingServletsResolver =
+            mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.servlets.resolver").version(versionResolver);
+
     @Configuration
     public Option[] configuration() {
         final String workingDirectory = workingDirectory();
@@ -99,8 +107,10 @@ public class HtmlScriptingIT extends ScriptingCoreTestSupport {
                 .asOption(),
             factoryConfiguration("org.apache.sling.resource.presence.internal.ResourcePresenter")
                 .put("path", "/content/scripting")
-                .asOption()
-        ), scriptingCore);
+                .asOption(),
+            mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.resourceresolver").versionAsInProject(),
+            mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.servlets.resolver").versionAsInProject()
+        ), scriptingCore, slingApi, slingResourceResolver, slingServletsResolver);
     }
 
     @ProbeBuilder
