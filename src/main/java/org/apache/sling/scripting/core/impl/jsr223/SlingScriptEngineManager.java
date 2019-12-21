@@ -66,6 +66,7 @@ import org.slf4j.LoggerFactory;
         name = "ScriptEngineFactory",
         bind = "bindScriptEngineFactory",
         unbind = "unbindScriptEngineFactory",
+        updated = "updatedScriptEngineFactory",
         service = ScriptEngineFactory.class,
         cardinality = ReferenceCardinality.MULTIPLE,
         policy = ReferencePolicy.DYNAMIC
@@ -264,6 +265,11 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
         }
         updateFactories();
         postEvent(SlingScriptConstants.TOPIC_SCRIPT_ENGINE_FACTORY_REMOVED, factory);
+    }
+
+    private void updatedScriptEngineFactory(final ServiceReference<ScriptEngineFactory> serviceReference, final ScriptEngineFactory factory) {
+        updateFactories();
+        postEvent("javax/script/ScriptEngineFactory/CHANGED", factory); // TODO SlingScriptConstants.TOPIC_SCRIPT_ENGINE_FACTORY_CHANGED
     }
 
     private void updateFactories() {

@@ -28,6 +28,7 @@ import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.options.CompositeOption;
 import org.ops4j.pax.exam.options.ModifiableCompositeOption;
 
+import static org.apache.sling.testing.paxexam.SlingOptions.awaitility;
 import static org.apache.sling.testing.paxexam.SlingOptions.slingResourcePresence;
 import static org.apache.sling.testing.paxexam.SlingOptions.slingScripting;
 import static org.apache.sling.testing.paxexam.SlingOptions.versionResolver;
@@ -66,7 +67,8 @@ public class ScriptingCoreTestSupport extends TestSupport {
             slingResourcePresence(),
             mavenBundle().groupId("org.jsoup").artifactId("jsoup").versionAsInProject(),
             mavenBundle().groupId("org.apache.servicemix.bundles").artifactId("org.apache.servicemix.bundles.hamcrest").versionAsInProject(),
-            junitBundles()
+            junitBundles(),
+            awaitility()
         );
     }
 
