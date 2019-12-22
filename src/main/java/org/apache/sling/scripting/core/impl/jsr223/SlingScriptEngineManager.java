@@ -269,7 +269,7 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
 
     private void updatedScriptEngineFactory(final ServiceReference<ScriptEngineFactory> serviceReference, final ScriptEngineFactory factory) {
         updateFactories();
-        postEvent("javax/script/ScriptEngineFactory/CHANGED", factory); // TODO SlingScriptConstants.TOPIC_SCRIPT_ENGINE_FACTORY_CHANGED
+        postEvent("javax/script/ScriptEngineFactory/UPDATED", factory); // TODO SlingScriptConstants.TOPIC_SCRIPT_ENGINE_FACTORY_UPDATED
     }
 
     private void updateFactories() {
