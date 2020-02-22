@@ -18,14 +18,8 @@
  */
 package org.apache.sling.scripting.core.it;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 import org.apache.sling.testing.paxexam.TestSupport;
 import org.ops4j.pax.exam.Option;
-import org.ops4j.pax.exam.options.CompositeOption;
 import org.ops4j.pax.exam.options.ModifiableCompositeOption;
 
 import static org.apache.sling.testing.paxexam.SlingOptions.awaitility;
@@ -42,19 +36,15 @@ public class ScriptingCoreTestSupport extends TestSupport {
     final int httpPort = findFreePort();
 
     final Option scriptingCore = mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.scripting.core").version(versionResolver);
-    final Option slingApi = mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.api").version(versionResolver);
-    final Option osgiConverter = mavenBundle().groupId("org.osgi").artifactId("org.osgi.util.converter").version("1.0.0");
-
-
 
     public ModifiableCompositeOption baseConfiguration() {
-        final Option slingScripting = slingScripting().remove(scriptingCore);
+        versionResolver.setVersionFromProject("org.apache.sling", "org.apache.sling.api");
+        versionResolver.setVersionFromProject("org.apache.sling", "org.apache.sling.resourceresolver");
+        versionResolver.setVersionFromProject("org.apache.sling", "org.apache.sling.servlets.resolver");
         return composite(
             super.baseConfiguration(),
             // Sling Scripting
-            composite(remove(new Option[] {slingScripting}, slingApi)),
-            mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.api").versionAsInProject(),
-            osgiConverter,
+            slingScripting(),
             newConfiguration("org.apache.felix.http")
                 .put("org.osgi.service.http.port", httpPort)
                 .asOption(),
@@ -69,37 +59,11 @@ public class ScriptingCoreTestSupport extends TestSupport {
             mavenBundle().groupId("org.apache.servicemix.bundles").artifactId("org.apache.servicemix.bundles.hamcrest").versionAsInProject(),
             junitBundles(),
             awaitility()
+        ).add(
+            mavenBundle().groupId("org.apache.felix").artifactId("org.apache.felix.converter").version("1.0.12") // new Sling API dependency
+        ).remove(
+            scriptingCore
         );
-    }
-
-    // move below helpers for deep removal to Pax Exam
-
-    private static List<Option> expand(final Option[] options) {
-        final List<Option> expanded = new ArrayList<>();
-        if (options != null) {
-            for (final Option option : options) {
-                if (option != null) {
-                    if (option instanceof CompositeOption) {
-                        expanded.addAll(Arrays.asList(((CompositeOption) option).getOptions()));
-                    } else {
-                        expanded.add(option);
-                    }
-                }
-            }
-        }
-        return expanded;
-    }
-
-    static Option[] remove(final Option[] options, final Option ... toRemove) {
-        final List<Option> expanded = expand(options);
-        for (Option toRemoveOption : toRemove) {
-            if (toRemoveOption instanceof CompositeOption) {
-                expanded.removeAll(Arrays.asList(((CompositeOption) toRemoveOption).getOptions()));
-            } else {
-                expanded.removeAll(Collections.singleton(toRemoveOption));
-            }
-        }
-        return expanded.toArray(new Option[0]);
     }
 
 }
