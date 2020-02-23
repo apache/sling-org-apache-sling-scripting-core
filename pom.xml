@@ -311,7 +311,7 @@
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.resourceresolver</artifactId>
-            <version>1.6.17-SNAPSHOT</version>
+            <version>1.6.16</version>
             <scope>test</scope>
         </dependency>
         <dependency>
