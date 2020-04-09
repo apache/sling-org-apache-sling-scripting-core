@@ -129,14 +129,9 @@ public class ScriptCacheImpl implements ScriptCache, ResourceChangeListener, Ext
     public void putScript(CachedScript script) {
         writeLock.lock();
         try {
-            for (String searchPath : searchPaths) {
-                if (script.getScriptPath().startsWith(searchPath)) {
-                    SoftReference<CachedScript> reference = new SoftReference<>(script);
-                    internalMap.put(script.getScriptPath(), reference);
-                    LOGGER.debug("Added script {} to script cache.", script.getScriptPath());
-                    break;
-                }
-            }
+            SoftReference<CachedScript> reference = new SoftReference<>(script);
+            internalMap.put(script.getScriptPath(), reference);
+            LOGGER.debug("Added script {} to script cache.", script.getScriptPath());
         } finally {
             writeLock.unlock();
         }
@@ -222,17 +217,6 @@ public class ScriptCacheImpl implements ScriptCache, ResourceChangeListener, Ext
             newMap.putAll(internalMap);
             internalMap = newMap;
         }
-        ResourceResolver resolver = null;
-        try {
-            resolver = rrf.getServiceResourceResolver(null);
-            searchPaths = resolver.getSearchPath();
-        } catch (LoginException e) {
-            LOGGER.error("Unable to retrieve a ResourceResolver for determining the search paths.", e);
-        } finally {
-            if (resolver != null) {
-                resolver.close();
-            }
-        }
         active = true;
         configureCache();
     }
@@ -293,6 +277,7 @@ public class ScriptCacheImpl implements ScriptCache, ResourceChangeListener, Ext
 
     @Override
     public void handleEvent(Event event) {
+        clear();
         extensions.clear();
         for (ScriptEngineFactory factory :  slingScriptEngineManager.getEngineFactories()) {
             ScriptEngine scriptEngine = factory.getScriptEngine();
