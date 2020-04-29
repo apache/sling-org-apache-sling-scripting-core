@@ -57,6 +57,7 @@ public class ScriptingCoreTestSupport extends TestSupport {
             slingResourcePresence(),
             mavenBundle().groupId("org.jsoup").artifactId("jsoup").versionAsInProject(),
             mavenBundle().groupId("org.apache.servicemix.bundles").artifactId("org.apache.servicemix.bundles.hamcrest").versionAsInProject(),
+            mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.commons.compiler").versionAsInProject(),
             junitBundles(),
             awaitility()
         ).add(
