@@ -16,8 +16,9 @@
  ~ specific language governing permissions and limitations
  ~ under the License.
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-package org.apache.sling.scripting.bundle.tracker.internal;
+package org.apache.sling.scripting.core.impl.bundled;
 
+import org.apache.sling.scripting.core.impl.bundled.LogWriter;
 import org.junit.Test;
 import org.slf4j.Logger;
 

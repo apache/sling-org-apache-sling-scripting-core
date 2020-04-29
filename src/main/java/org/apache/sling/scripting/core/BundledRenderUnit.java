@@ -16,10 +16,11 @@
  ~ specific language governing permissions and limitations
  ~ under the License.
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-package org.apache.sling.scripting.bundle.tracker;
+package org.apache.sling.scripting.core;
 
 import java.util.Set;
 
+import org.apache.sling.servlets.resolver.bundle.tracker.TypeProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.osgi.annotation.versioning.ProviderType;

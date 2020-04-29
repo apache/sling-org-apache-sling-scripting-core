@@ -16,7 +16,7 @@
  ~ specific language governing permissions and limitations
  ~ under the License.
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-package org.apache.sling.scripting.bundle.tracker.internal;
+package org.apache.sling.scripting.core.impl.bundled;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -40,7 +40,7 @@ import org.apache.sling.api.scripting.SlingScriptConstants;
 import org.apache.sling.scripting.api.BindingsValuesProvider;
 import org.apache.sling.scripting.api.BindingsValuesProvidersByContext;
 import org.apache.sling.scripting.api.resource.ScriptingResourceResolverProvider;
-import org.apache.sling.scripting.bundle.tracker.BundledRenderUnit;
+import org.apache.sling.scripting.core.BundledRenderUnit;
 import org.apache.sling.scripting.core.ScriptHelper;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -74,7 +74,7 @@ public class ScriptContextProvider {
     @Reference
     private ScriptingResourceResolverProvider scriptingResourceResolverProvider;
 
-    ExecutableContext prepareScriptContext(SlingHttpServletRequest request, SlingHttpServletResponse response, Executable executable)
+    public ExecutableContext prepareScriptContext(SlingHttpServletRequest request, SlingHttpServletResponse response, ExecutableUnit executable)
             throws IOException {
         ScriptEngine scriptEngine = scriptEngineManager.getEngineByName(executable.getScriptEngineName());
         if (scriptEngine == null) {
@@ -117,10 +117,10 @@ public class ScriptContextProvider {
 
     static class ExecutableContext {
         private final ScriptContext scriptContext;
-        private final Executable executable;
+        private final ExecutableUnit executable;
         private final ScriptEngine scriptEngine;
 
-        private ExecutableContext(ScriptContext scriptContext, Executable executable, ScriptEngine scriptEngine) {
+        private ExecutableContext(ScriptContext scriptContext, ExecutableUnit executable, ScriptEngine scriptEngine) {
             this.scriptContext = scriptContext;
             this.executable = executable;
             this.scriptEngine = scriptEngine;

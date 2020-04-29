@@ -16,16 +16,16 @@
  ~ specific language governing permissions and limitations
  ~ under the License.
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-package org.apache.sling.scripting.bundle.tracker.internal;
+package org.apache.sling.scripting.core.impl.bundled;
 
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
-import org.apache.sling.scripting.bundle.tracker.BundledRenderUnit;
+import org.apache.sling.scripting.core.BundledRenderUnit;
 import org.jetbrains.annotations.NotNull;
 
-interface Executable extends BundledRenderUnit {
+interface ExecutableUnit extends BundledRenderUnit {
 
     /**
      * Releases all acquired dependencies which were retrieved through {@link #getService(String)} or {@link #getServices(String, String)}.
@@ -41,7 +41,7 @@ interface Executable extends BundledRenderUnit {
     String getPath();
 
     /**
-     * Returns the short name of the {@link ScriptEngine} with which {@code this Executable} can be evaluated.
+     * Returns the short name of the {@link ScriptEngine} with which {@code this ExecutableUnit} can be evaluated.
      *
      * @return the short name of the script engine
      * @see #eval(ScriptEngine, ScriptContext)
