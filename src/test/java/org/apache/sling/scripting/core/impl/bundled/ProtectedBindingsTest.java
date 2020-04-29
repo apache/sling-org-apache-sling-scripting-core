@@ -16,7 +16,7 @@
  ~ specific language governing permissions and limitations
  ~ under the License.
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-package org.apache.sling.scripting.bundle.tracker.internal;
+package org.apache.sling.scripting.core.impl.bundled;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -29,6 +29,7 @@ import java.util.Set;
 import javax.script.Bindings;
 import javax.script.SimpleBindings;
 
+import org.apache.sling.scripting.core.impl.bundled.ProtectedBindings;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

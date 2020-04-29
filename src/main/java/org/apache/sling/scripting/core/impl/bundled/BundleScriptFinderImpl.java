@@ -1,22 +1,22 @@
-/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- ~ Licensed to the Apache Software Foundation (ASF) under one
- ~ or more contributor license agreements.  See the NOTICE file
- ~ distributed with this work for additional information
- ~ regarding copyright ownership.  The ASF licenses this file
- ~ to you under the Apache License, Version 2.0 (the
- ~ "License"); you may not use this file except in compliance
- ~ with the License.  You may obtain a copy of the License at
- ~
- ~   http://www.apache.org/licenses/LICENSE-2.0
- ~
- ~ Unless required by applicable law or agreed to in writing,
- ~ software distributed under the License is distributed on an
- ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- ~ KIND, either express or implied.  See the License for the
- ~ specific language governing permissions and limitations
- ~ under the License.
- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-package org.apache.sling.scripting.bundle.tracker.internal;
+/*******************************************************************************
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ ******************************************************************************/
+package org.apache.sling.scripting.core.impl.bundled;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -27,28 +27,31 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.commons.compiler.source.JavaEscapeHelper;
-import org.apache.sling.scripting.bundle.tracker.BundledRenderUnitCapability;
-import org.apache.sling.scripting.bundle.tracker.ResourceType;
-import org.apache.sling.scripting.bundle.tracker.TypeProvider;
+import org.apache.sling.servlets.resolver.bundle.tracker.BundledRenderUnitCapability;
+import org.apache.sling.servlets.resolver.bundle.tracker.BundledScriptFinder;
+import org.apache.sling.servlets.resolver.bundle.tracker.Executable;
+import org.apache.sling.servlets.resolver.bundle.tracker.ResourceType;
+import org.apache.sling.servlets.resolver.bundle.tracker.TypeProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.osgi.framework.Bundle;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
-@Component(
-        service = BundledScriptFinder.class
-)
-public class BundledScriptFinder {
+@Component
+public class BundleScriptFinderImpl implements BundledScriptFinder {
+    @Reference
+    ScriptContextProvider scriptContextProvider;
 
     private static final String NS_JAVAX_SCRIPT_CAPABILITY = "javax.script";
     private static final String SLASH = "/";
     private static final String DOT = ".";
 
-    Executable getScript(Set<TypeProvider> providers, Set<TypeProvider> allProviders) {
+    public Executable getScript(Set<TypeProvider> providers, Set<TypeProvider> allProviders) {
         for (TypeProvider provider : providers) {
             BundledRenderUnitCapability capability = provider.getBundledRenderUnitCapability();
             for (String match : buildScriptMatches(capability.getResourceTypes(),
-                    capability.getSelectors().toArray(new String[0]), capability.getMethod(), capability.getExtension())) {
+                capability.getSelectors().toArray(new String[0]), capability.getMethod(), capability.getExtension())) {
                 String scriptExtension = capability.getScriptExtension();
                 String scriptEngineName = capability.getScriptEngineName();
                 if (StringUtils.isNotEmpty(scriptExtension) && StringUtils.isNotEmpty(scriptEngineName)) {
@@ -62,16 +65,16 @@ public class BundledScriptFinder {
         return null;
     }
 
-    Executable getScript(@NotNull Bundle bundle, @NotNull String path, @NotNull String scriptEngineName,
-                         @NotNull Set<TypeProvider> providers) {
+    public Executable getScript(@NotNull Bundle bundle, @NotNull String path, @NotNull String scriptEngineName,
+        @NotNull Set<TypeProvider> providers) {
         String className = JavaEscapeHelper.makeJavaPackage(path);
         try {
             Class<?> clazz = bundle.loadClass(className);
-            return new PrecompiledScript(providers, bundle, path, clazz, scriptEngineName);
+            return new ExecutableWrapper(scriptContextProvider, new PrecompiledScript(providers, bundle, path, clazz, scriptEngineName));
         } catch (ClassNotFoundException ignored) {
             URL bundledScriptURL = bundle.getEntry(NS_JAVAX_SCRIPT_CAPABILITY + (path.startsWith("/") ? "" : SLASH) + path);
             if (bundledScriptURL != null) {
-                return new Script(providers, bundle, path, bundledScriptURL, scriptEngineName);
+                return new ExecutableWrapper(scriptContextProvider, new Script(providers, bundle, path, bundledScriptURL, scriptEngineName));
             }    // do nothing here
         }
 
@@ -80,7 +83,7 @@ public class BundledScriptFinder {
 
     @Nullable
     private Executable getExecutable(@NotNull Bundle bundle, @NotNull String match, @NotNull String scriptEngineName,
-                                     @NotNull String scriptExtension, @NotNull Set<TypeProvider> providers) {
+        @NotNull String scriptExtension, @NotNull Set<TypeProvider> providers) {
         String path = match + DOT + scriptExtension;
         return getScript(bundle, path, scriptEngineName, providers);
     }
@@ -91,10 +94,10 @@ public class BundledScriptFinder {
             if (selectors.length > 0) {
                 for (int i = selectors.length - 1; i >= 0; i--) {
                     String base =
-                            resourceType.getType() +
-                                    (StringUtils.isNotEmpty(resourceType.getVersion()) ? SLASH + resourceType.getVersion() + SLASH :
-                                            SLASH) +
-                                    String.join(SLASH, Arrays.copyOf(selectors, i + 1));
+                        resourceType.getType() +
+                            (StringUtils.isNotEmpty(resourceType.getVersion()) ? SLASH + resourceType.getVersion() + SLASH :
+                                SLASH) +
+                            String.join(SLASH, Arrays.copyOf(selectors, i + 1));
                     if (StringUtils.isNotEmpty(extension)) {
                         if (StringUtils.isNotEmpty(method)) {
                             matches.add(base + DOT + extension + DOT + method);
@@ -108,7 +111,7 @@ public class BundledScriptFinder {
                 }
             }
             String base = resourceType.getType() +
-                    (StringUtils.isNotEmpty(resourceType.getVersion()) ? SLASH + resourceType.getVersion() : StringUtils.EMPTY);
+                (StringUtils.isNotEmpty(resourceType.getVersion()) ? SLASH + resourceType.getVersion() : StringUtils.EMPTY);
 
             if (StringUtils.isNotEmpty(extension)) {
                 if (StringUtils.isNotEmpty(method)) {

@@ -16,7 +16,7 @@
  ~ specific language governing permissions and limitations
  ~ under the License.
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-package org.apache.sling.scripting.bundle.tracker.internal;
+package org.apache.sling.scripting.core.impl.bundled;
 
 import java.io.StringReader;
 import java.util.Set;
@@ -26,7 +26,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.sling.scripting.bundle.tracker.TypeProvider;
+import org.apache.sling.servlets.resolver.bundle.tracker.TypeProvider;
 import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.Bundle;
 
