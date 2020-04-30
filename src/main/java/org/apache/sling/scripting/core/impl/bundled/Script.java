@@ -48,8 +48,8 @@ class Script extends AbstractBundledRenderUnit {
 
 
     Script(@NotNull Set<TypeProvider> providers, @NotNull Bundle bundle, @NotNull String path, @NotNull URL url,
-           @NotNull String scriptEngineName) {
-        super(providers, bundle, path, scriptEngineName);
+           @NotNull String scriptEngineName, @NotNull ScriptContextProvider scriptContextProvider) {
+        super(providers, bundle, path, scriptEngineName, scriptContextProvider);
         this.url = url;
     }
 

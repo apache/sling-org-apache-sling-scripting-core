@@ -41,6 +41,7 @@ public class ScriptingCoreTestSupport extends TestSupport {
         versionResolver.setVersionFromProject("org.apache.sling", "org.apache.sling.api");
         versionResolver.setVersionFromProject("org.apache.sling", "org.apache.sling.resourceresolver");
         versionResolver.setVersionFromProject("org.apache.sling", "org.apache.sling.servlets.resolver");
+        versionResolver.setVersionFromProject("org.apache.sling", "org.apache.sling.scripting.api");
         return composite(
             super.baseConfiguration(),
             // Sling Scripting
