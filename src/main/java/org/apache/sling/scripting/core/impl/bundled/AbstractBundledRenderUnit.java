@@ -27,6 +27,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.scripting.core.impl.helper.OnDemandReaderRequest;
+import org.apache.sling.scripting.core.impl.helper.OnDemandWriterResponse;
 import org.apache.sling.servlets.resolver.bundle.tracker.TypeProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,16 +52,18 @@ abstract class AbstractBundledRenderUnit implements ExecutableUnit {
     private final BundleContext bundleContext;
     private final String path;
     private final String scriptEngineName;
+    private final ScriptContextProvider scriptContextProvider;
     private List<ServiceReference<?>> references;
     private Map<String, Object> services;
 
 
     AbstractBundledRenderUnit(@NotNull Set<TypeProvider> providers, @NotNull Bundle bundle, @NotNull String path,
-                              @NotNull String scriptEngineName) {
+                              @NotNull String scriptEngineName, ScriptContextProvider scriptContextProvider) {
         this.providers = providers;
         this.bundle = bundle;
         this.path = path;
         this.scriptEngineName = scriptEngineName;
+        this.scriptContextProvider = scriptContextProvider;
         bundleContext = bundle.getBundleContext();
     }
 
@@ -152,6 +161,20 @@ abstract class AbstractBundledRenderUnit implements ExecutableUnit {
         }
         if (services != null) {
             services.clear();
+        }
+    }
+
+
+    @Override
+    public void eval(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response) throws Exception {
+        ScriptContextProvider.ExecutableContext executableContext = scriptContextProvider
+            .prepareScriptContext(new OnDemandReaderRequest((SlingHttpServletRequest) request),
+                new OnDemandWriterResponse((SlingHttpServletResponse) response), this);
+        try {
+            executableContext.eval();
+        }
+        finally {
+            executableContext.clean();
         }
     }
 

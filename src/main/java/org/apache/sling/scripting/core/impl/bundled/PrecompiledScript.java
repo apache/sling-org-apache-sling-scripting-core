@@ -37,8 +37,8 @@ class PrecompiledScript extends AbstractBundledRenderUnit {
     private volatile Object instance;
 
     PrecompiledScript(@NotNull Set<TypeProvider> providers, @NotNull Bundle bundle, @NotNull String path, @NotNull Class<?> clazz,
-                      @NotNull String scriptEngineName) {
-        super(providers, bundle, path, scriptEngineName);
+                      @NotNull String scriptEngineName, @NotNull ScriptContextProvider scriptContextProvider) {
+        super(providers, bundle, path, scriptEngineName, scriptContextProvider);
         this.clazz = clazz;
     }
 

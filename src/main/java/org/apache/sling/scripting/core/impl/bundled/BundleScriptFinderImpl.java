@@ -70,11 +70,11 @@ public class BundleScriptFinderImpl implements BundledScriptFinder {
         String className = JavaEscapeHelper.makeJavaPackage(path);
         try {
             Class<?> clazz = bundle.loadClass(className);
-            return new ExecutableWrapper(scriptContextProvider, new PrecompiledScript(providers, bundle, path, clazz, scriptEngineName));
+            return new PrecompiledScript(providers, bundle, path, clazz, scriptEngineName, scriptContextProvider);
         } catch (ClassNotFoundException ignored) {
             URL bundledScriptURL = bundle.getEntry(NS_JAVAX_SCRIPT_CAPABILITY + (path.startsWith("/") ? "" : SLASH) + path);
             if (bundledScriptURL != null) {
-                return new ExecutableWrapper(scriptContextProvider, new Script(providers, bundle, path, bundledScriptURL, scriptEngineName));
+                return new Script(providers, bundle, path, bundledScriptURL, scriptEngineName, scriptContextProvider);
             }    // do nothing here
         }
 

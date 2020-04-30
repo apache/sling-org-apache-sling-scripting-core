@@ -22,10 +22,11 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
-import org.apache.sling.scripting.core.BundledRenderUnit;
+import org.apache.sling.scripting.api.bundled.BundledRenderUnit;
+import org.apache.sling.servlets.resolver.bundle.tracker.Executable;
 import org.jetbrains.annotations.NotNull;
 
-interface ExecutableUnit extends BundledRenderUnit {
+interface ExecutableUnit extends BundledRenderUnit, Executable {
 
     /**
      * Releases all acquired dependencies which were retrieved through {@link #getService(String)} or {@link #getServices(String, String)}.
