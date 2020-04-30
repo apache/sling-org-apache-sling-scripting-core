@@ -22,24 +22,16 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
-import org.apache.sling.scripting.api.bundled.BundledRenderUnit;
-import org.apache.sling.servlets.resolver.bundle.tracker.Executable;
+import org.apache.sling.servlets.resolver.bundle.tracker.BundledRenderUnit;
 import org.jetbrains.annotations.NotNull;
 
-interface ExecutableUnit extends BundledRenderUnit, Executable {
+interface ExecutableUnit extends BundledRenderUnit
+{
 
     /**
      * Releases all acquired dependencies which were retrieved through {@link #getService(String)} or {@link #getServices(String, String)}.
      */
     void releaseDependencies();
-
-    /**
-     * Returns the path of this executable in the resource type hierarchy. The path can be relative to the search paths or absolute.
-     *
-     * @return the path of this executable in the resource type hierarchy
-     */
-    @NotNull
-    String getPath();
 
     /**
      * Returns the short name of the {@link ScriptEngine} with which {@code this ExecutableUnit} can be evaluated.
