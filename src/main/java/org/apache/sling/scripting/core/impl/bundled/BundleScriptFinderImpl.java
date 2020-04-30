@@ -27,9 +27,9 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.commons.compiler.source.JavaEscapeHelper;
+import org.apache.sling.servlets.resolver.bundle.tracker.BundledRenderUnit;
 import org.apache.sling.servlets.resolver.bundle.tracker.BundledRenderUnitCapability;
 import org.apache.sling.servlets.resolver.bundle.tracker.BundledScriptFinder;
-import org.apache.sling.servlets.resolver.bundle.tracker.Executable;
 import org.apache.sling.servlets.resolver.bundle.tracker.ResourceType;
 import org.apache.sling.servlets.resolver.bundle.tracker.TypeProvider;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +47,7 @@ public class BundleScriptFinderImpl implements BundledScriptFinder {
     private static final String SLASH = "/";
     private static final String DOT = ".";
 
-    public Executable getScript(Set<TypeProvider> providers, Set<TypeProvider> allProviders) {
+    public BundledRenderUnit getScript(Set<TypeProvider> providers, Set<TypeProvider> allProviders) {
         for (TypeProvider provider : providers) {
             BundledRenderUnitCapability capability = provider.getBundledRenderUnitCapability();
             for (String match : buildScriptMatches(capability.getResourceTypes(),
@@ -55,7 +55,7 @@ public class BundleScriptFinderImpl implements BundledScriptFinder {
                 String scriptExtension = capability.getScriptExtension();
                 String scriptEngineName = capability.getScriptEngineName();
                 if (StringUtils.isNotEmpty(scriptExtension) && StringUtils.isNotEmpty(scriptEngineName)) {
-                    Executable executable = getExecutable(provider.getBundle(), match, scriptEngineName, scriptExtension, allProviders);
+                    BundledRenderUnit executable = getExecutable(provider.getBundle(), match, scriptEngineName, scriptExtension, allProviders);
                     if (executable != null) {
                         return executable;
                     }
@@ -65,7 +65,7 @@ public class BundleScriptFinderImpl implements BundledScriptFinder {
         return null;
     }
 
-    public Executable getScript(@NotNull Bundle bundle, @NotNull String path, @NotNull String scriptEngineName,
+    public BundledRenderUnit getScript(@NotNull Bundle bundle, @NotNull String path, @NotNull String scriptEngineName,
         @NotNull Set<TypeProvider> providers) {
         String className = JavaEscapeHelper.makeJavaPackage(path);
         try {
@@ -82,7 +82,7 @@ public class BundleScriptFinderImpl implements BundledScriptFinder {
     }
 
     @Nullable
-    private Executable getExecutable(@NotNull Bundle bundle, @NotNull String match, @NotNull String scriptEngineName,
+    private BundledRenderUnit getExecutable(@NotNull Bundle bundle, @NotNull String match, @NotNull String scriptEngineName,
         @NotNull String scriptExtension, @NotNull Set<TypeProvider> providers) {
         String path = match + DOT + scriptExtension;
         return getScript(bundle, path, scriptEngineName, providers);
