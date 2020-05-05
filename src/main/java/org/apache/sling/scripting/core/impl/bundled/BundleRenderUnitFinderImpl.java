@@ -29,7 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.commons.compiler.source.JavaEscapeHelper;
 import org.apache.sling.servlets.resolver.bundle.tracker.BundledRenderUnit;
 import org.apache.sling.servlets.resolver.bundle.tracker.BundledRenderUnitCapability;
-import org.apache.sling.servlets.resolver.bundle.tracker.BundledScriptFinder;
+import org.apache.sling.servlets.resolver.bundle.tracker.BundledRenderUnitFinder;
 import org.apache.sling.servlets.resolver.bundle.tracker.ResourceType;
 import org.apache.sling.servlets.resolver.bundle.tracker.TypeProvider;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +39,7 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 @Component
-public class BundleScriptFinderImpl implements BundledScriptFinder {
+public class BundleRenderUnitFinderImpl implements BundledRenderUnitFinder {
     @Reference
     ScriptContextProvider scriptContextProvider;
 
@@ -47,7 +47,9 @@ public class BundleScriptFinderImpl implements BundledScriptFinder {
     private static final String SLASH = "/";
     private static final String DOT = ".";
 
-    public BundledRenderUnit getScript(Set<TypeProvider> providers, Set<TypeProvider> allProviders) {
+    @Override
+    @Nullable
+    public BundledRenderUnit findUnit(@NotNull Set<TypeProvider> providers, @NotNull Set<TypeProvider> allProviders) {
         for (TypeProvider provider : providers) {
             BundledRenderUnitCapability capability = provider.getBundledRenderUnitCapability();
             for (String match : buildScriptMatches(capability.getResourceTypes(),
@@ -65,8 +67,28 @@ public class BundleScriptFinderImpl implements BundledScriptFinder {
         return null;
     }
 
-    public BundledRenderUnit getScript(@NotNull Bundle bundle, @NotNull String path, @NotNull String scriptEngineName,
-        @NotNull Set<TypeProvider> providers) {
+    @Override
+    @Nullable
+    public BundledRenderUnit findUnit(@NotNull TypeProvider provider, @NotNull Set<TypeProvider> providers) {
+        BundledRenderUnitCapability capability = provider.getBundledRenderUnitCapability();
+        String path = capability.getPath();
+        String scriptEngineName = capability.getScriptEngineName();
+        if (StringUtils.isNotEmpty(path) && StringUtils.isNotEmpty(scriptEngineName)) {
+            return findUnit(provider.getBundle(), path, scriptEngineName, providers);
+        }
+        return null;
+    }
+
+    @Nullable
+    private BundledRenderUnit getExecutable(@NotNull Bundle bundle, @NotNull String match, @NotNull String scriptEngineName,
+        @NotNull String scriptExtension, @NotNull Set<TypeProvider> providers) {
+        String path = match + DOT + scriptExtension;
+        return findUnit(bundle, path, scriptEngineName, providers);
+    }
+
+    @Nullable
+    private BundledRenderUnit findUnit(@NotNull Bundle bundle, @NotNull String path, String scriptEngineName,
+                                       @NotNull Set<TypeProvider> providers) {
         String className = JavaEscapeHelper.makeJavaPackage(path);
         try {
             Class<?> clazz = bundle.loadClass(className);
@@ -75,20 +97,14 @@ public class BundleScriptFinderImpl implements BundledScriptFinder {
             URL bundledScriptURL = bundle.getEntry(NS_JAVAX_SCRIPT_CAPABILITY + (path.startsWith("/") ? "" : SLASH) + path);
             if (bundledScriptURL != null) {
                 return new Script(providers, bundle, path, bundledScriptURL, scriptEngineName, scriptContextProvider);
-            }    // do nothing here
+            }
         }
-
         return null;
     }
 
-    @Nullable
-    private BundledRenderUnit getExecutable(@NotNull Bundle bundle, @NotNull String match, @NotNull String scriptEngineName,
-        @NotNull String scriptExtension, @NotNull Set<TypeProvider> providers) {
-        String path = match + DOT + scriptExtension;
-        return getScript(bundle, path, scriptEngineName, providers);
-    }
-
-    private List<String> buildScriptMatches(Set<ResourceType> resourceTypes, String[] selectors, String method, String extension) {
+    @NotNull
+    private List<String> buildScriptMatches(@NotNull Set<ResourceType> resourceTypes, @NotNull String[] selectors, @Nullable String method,
+                                            @Nullable String extension) {
         List<String> matches = new ArrayList<>();
         for (ResourceType resourceType : resourceTypes) {
             if (selectors.length > 0) {
