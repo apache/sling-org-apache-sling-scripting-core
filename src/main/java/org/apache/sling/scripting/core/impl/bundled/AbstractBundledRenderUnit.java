@@ -18,6 +18,7 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.scripting.core.impl.bundled;
 
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.script.ScriptException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -166,15 +168,19 @@ abstract class AbstractBundledRenderUnit implements ExecutableUnit {
 
 
     @Override
-    public void eval(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response) throws Exception {
-        ScriptContextProvider.ExecutableContext executableContext = scriptContextProvider
-            .prepareScriptContext(new OnDemandReaderRequest((SlingHttpServletRequest) request),
-                new OnDemandWriterResponse((SlingHttpServletResponse) response), this);
+    public void eval(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response) throws ScriptException {
         try {
-            executableContext.eval();
-        }
-        finally {
-            executableContext.clean();
+            ScriptContextProvider.ExecutableContext executableContext = scriptContextProvider
+                .prepareScriptContext(new OnDemandReaderRequest((SlingHttpServletRequest) request),
+                    new OnDemandWriterResponse((SlingHttpServletResponse) response), this);
+            try {
+                executableContext.eval();
+            }
+            finally {
+                executableContext.clean();
+            }
+        } catch (IOException ex) {
+            throw new ScriptException(ex);
         }
     }
 
