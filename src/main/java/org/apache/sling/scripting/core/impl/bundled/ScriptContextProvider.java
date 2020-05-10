@@ -78,8 +78,11 @@ public class ScriptContextProvider {
             throws IOException {
         ScriptEngine scriptEngine = scriptEngineManager.getEngineByName(executable.getScriptEngineName());
         if (scriptEngine == null) {
-            throw new IllegalStateException(String.format("Cannot find a script engine with name %s for executable %s.",
-                    executable.getScriptEngineName(), executable.getPath()));
+            scriptEngine = scriptEngineManager.getEngineByExtension(executable.getScriptExtension());
+            if (scriptEngine == null) {
+                throw new IllegalStateException(String.format("Cannot find a script engine with name %s and extension %s for executable %s.",
+                    executable.getScriptEngineName(), executable.getScriptExtension(), executable.getPath()));
+            }
         }
         // prepare the SlingBindings
         Bindings bindings = new LazyBindings();
@@ -92,7 +95,7 @@ public class ScriptContextProvider {
         bindings.put(SlingBindings.OUT, response.getWriter());
         Logger scriptLogger = LoggerFactory.getLogger(executable.getName());
         bindings.put(SlingBindings.LOG, scriptLogger);
-        bindings.put(SlingBindings.SLING, new ScriptHelper(executable.getBundle().getBundleContext(), null, request, response));
+        bindings.put(SlingBindings.SLING, new ScriptHelper(executable.getBundleContext(), new SlingScriptAdapter(scriptingResourceResolverProvider.getRequestScopedResourceResolver(), executable.getPath(), "sling/bundle/resource"), request, response));
         bindings.put(BundledRenderUnit.VARIABLE, executable);
         bindings.put(ScriptEngine.FILENAME, executable.getName());
         bindings.put(ScriptEngine.FILENAME.replaceAll("\\.", "_"), executable.getName());

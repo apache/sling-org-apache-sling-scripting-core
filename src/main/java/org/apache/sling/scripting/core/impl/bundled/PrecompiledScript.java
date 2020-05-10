@@ -29,6 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.servlets.resolver.bundle.tracker.TypeProvider;
 import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
 
 class PrecompiledScript extends AbstractBundledRenderUnit {
 
@@ -36,9 +37,9 @@ class PrecompiledScript extends AbstractBundledRenderUnit {
     private final Class<?> clazz;
     private volatile Object instance;
 
-    PrecompiledScript(@NotNull Set<TypeProvider> providers, @NotNull Bundle bundle, @NotNull String path, @NotNull Class<?> clazz,
-                      @NotNull String scriptEngineName, @NotNull ScriptContextProvider scriptContextProvider) {
-        super(providers, bundle, path, scriptEngineName, scriptContextProvider);
+    PrecompiledScript(@NotNull Set<TypeProvider> providers, @NotNull BundleContext context, @NotNull Bundle bundle, @NotNull String path, @NotNull Class<?> clazz,
+                      @NotNull String scriptEngineName, @NotNull String scriptExtension, @NotNull ScriptContextProvider scriptContextProvider) {
+        super(providers, context, bundle, path, scriptEngineName, scriptExtension, scriptContextProvider);
         this.clazz = clazz;
     }
 
