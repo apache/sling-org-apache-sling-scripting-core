@@ -37,6 +37,7 @@ import org.apache.sling.servlets.resolver.bundle.tracker.TypeProvider;
 import org.apache.sling.scripting.core.ScriptNameAwareReader;
 import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
 
 class Script extends AbstractBundledRenderUnit {
 
@@ -47,9 +48,9 @@ class Script extends AbstractBundledRenderUnit {
     private Lock readLock = new ReentrantLock();
 
 
-    Script(@NotNull Set<TypeProvider> providers, @NotNull Bundle bundle, @NotNull String path, @NotNull URL url,
-           @NotNull String scriptEngineName, @NotNull ScriptContextProvider scriptContextProvider) {
-        super(providers, bundle, path, scriptEngineName, scriptContextProvider);
+    Script(@NotNull Set<TypeProvider> providers, @NotNull BundleContext context, @NotNull Bundle bundle, @NotNull String path, @NotNull URL url,
+           @NotNull String scriptEngineName, @NotNull String scriptExtension, @NotNull ScriptContextProvider scriptContextProvider) {
+        super(providers, context, bundle, path, scriptEngineName, scriptExtension, scriptContextProvider);
         this.url = url;
     }
 

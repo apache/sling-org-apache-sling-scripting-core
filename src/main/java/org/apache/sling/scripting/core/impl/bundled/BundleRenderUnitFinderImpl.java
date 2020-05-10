@@ -35,6 +35,7 @@ import org.apache.sling.servlets.resolver.bundle.tracker.TypeProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -49,7 +50,7 @@ public class BundleRenderUnitFinderImpl implements BundledRenderUnitFinder {
 
     @Override
     @Nullable
-    public BundledRenderUnit findUnit(@NotNull Set<TypeProvider> providers, @NotNull Set<TypeProvider> allProviders) {
+    public BundledRenderUnit findUnit(@NotNull BundleContext context, @NotNull Set<TypeProvider> providers, @NotNull Set<TypeProvider> allProviders) {
         for (TypeProvider provider : providers) {
             BundledRenderUnitCapability capability = provider.getBundledRenderUnitCapability();
             for (String match : buildScriptMatches(capability.getResourceTypes(),
@@ -57,7 +58,7 @@ public class BundleRenderUnitFinderImpl implements BundledRenderUnitFinder {
                 String scriptExtension = capability.getScriptExtension();
                 String scriptEngineName = capability.getScriptEngineName();
                 if (StringUtils.isNotEmpty(scriptExtension) && StringUtils.isNotEmpty(scriptEngineName)) {
-                    BundledRenderUnit executable = getExecutable(provider.getBundle(), match, scriptEngineName, scriptExtension, allProviders);
+                    BundledRenderUnit executable = getExecutable(context, provider.getBundle(), match, scriptEngineName, scriptExtension, allProviders);
                     if (executable != null) {
                         return executable;
                     }
@@ -69,34 +70,35 @@ public class BundleRenderUnitFinderImpl implements BundledRenderUnitFinder {
 
     @Override
     @Nullable
-    public BundledRenderUnit findUnit(@NotNull TypeProvider provider, @NotNull Set<TypeProvider> providers) {
+    public BundledRenderUnit findUnit(@NotNull BundleContext context, @NotNull TypeProvider provider, @NotNull Set<TypeProvider> providers) {
         BundledRenderUnitCapability capability = provider.getBundledRenderUnitCapability();
         String path = capability.getPath();
         String scriptEngineName = capability.getScriptEngineName();
-        if (StringUtils.isNotEmpty(path) && StringUtils.isNotEmpty(scriptEngineName)) {
-            return findUnit(provider.getBundle(), path, scriptEngineName, providers);
+        String scriptExtension = capability.getScriptExtension();
+        if (StringUtils.isNotEmpty(path) && StringUtils.isNotEmpty(scriptEngineName) && StringUtils.isNotEmpty(scriptExtension)) {
+            return findUnit(context, provider.getBundle(), path, scriptEngineName, scriptExtension, providers);
         }
         return null;
     }
 
     @Nullable
-    private BundledRenderUnit getExecutable(@NotNull Bundle bundle, @NotNull String match, @NotNull String scriptEngineName,
+    private BundledRenderUnit getExecutable(@NotNull BundleContext context, @NotNull Bundle bundle, @NotNull String match, @NotNull String scriptEngineName,
         @NotNull String scriptExtension, @NotNull Set<TypeProvider> providers) {
         String path = match + DOT + scriptExtension;
-        return findUnit(bundle, path, scriptEngineName, providers);
+        return findUnit(context, bundle, path, scriptEngineName, scriptExtension, providers);
     }
 
     @Nullable
-    private BundledRenderUnit findUnit(@NotNull Bundle bundle, @NotNull String path, String scriptEngineName,
-                                       @NotNull Set<TypeProvider> providers) {
+    private BundledRenderUnit findUnit(@NotNull BundleContext context, @NotNull Bundle bundle, @NotNull String path, String scriptEngineName,
+                                       @NotNull String scriptExtension, @NotNull Set<TypeProvider> providers) {
         String className = JavaEscapeHelper.makeJavaPackage(path);
         try {
             Class<?> clazz = bundle.loadClass(className);
-            return new PrecompiledScript(providers, bundle, path, clazz, scriptEngineName, scriptContextProvider);
+            return new PrecompiledScript(providers, context, bundle, path, clazz, scriptEngineName, scriptExtension, scriptContextProvider);
         } catch (ClassNotFoundException ignored) {
             URL bundledScriptURL = bundle.getEntry(NS_JAVAX_SCRIPT_CAPABILITY + (path.startsWith("/") ? "" : SLASH) + path);
             if (bundledScriptURL != null) {
-                return new Script(providers, bundle, path, bundledScriptURL, scriptEngineName, scriptContextProvider);
+                return new Script(providers, context, bundle, path, bundledScriptURL, scriptEngineName, scriptExtension, scriptContextProvider);
             }
         }
         return null;

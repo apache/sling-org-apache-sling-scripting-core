@@ -54,25 +54,33 @@ abstract class AbstractBundledRenderUnit implements ExecutableUnit {
     private final BundleContext bundleContext;
     private final String path;
     private final String scriptEngineName;
+    private final String scriptExtension;
     private final ScriptContextProvider scriptContextProvider;
     private List<ServiceReference<?>> references;
     private Map<String, Object> services;
 
 
-    AbstractBundledRenderUnit(@NotNull Set<TypeProvider> providers, @NotNull Bundle bundle, @NotNull String path,
-                              @NotNull String scriptEngineName, ScriptContextProvider scriptContextProvider) {
+    AbstractBundledRenderUnit(@NotNull Set<TypeProvider> providers, @NotNull BundleContext context, @NotNull Bundle bundle, @NotNull String path,
+                              @NotNull String scriptEngineName, @NotNull String scriptExtension, @NotNull ScriptContextProvider scriptContextProvider) {
         this.providers = providers;
         this.bundle = bundle;
         this.path = path;
         this.scriptEngineName = scriptEngineName;
+        this.scriptExtension = scriptExtension;
         this.scriptContextProvider = scriptContextProvider;
-        bundleContext = bundle.getBundleContext();
+        this.bundleContext = context;
     }
 
     @Override
     @NotNull
     public Bundle getBundle() {
         return bundle;
+    }
+
+    @Override
+    @NotNull
+    public BundleContext getBundleContext() {
+        return bundleContext;
     }
 
     @Override
@@ -88,6 +96,11 @@ abstract class AbstractBundledRenderUnit implements ExecutableUnit {
     @Override
     public @NotNull String getScriptEngineName() {
         return scriptEngineName;
+    }
+
+    @Override
+    public @NotNull String getScriptExtension() {
+        return scriptExtension;
     }
 
     @Override
@@ -183,5 +196,4 @@ abstract class AbstractBundledRenderUnit implements ExecutableUnit {
             throw new ScriptException(ex);
         }
     }
-
 }

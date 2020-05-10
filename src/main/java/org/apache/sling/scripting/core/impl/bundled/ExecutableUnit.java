@@ -42,6 +42,14 @@ interface ExecutableUnit extends BundledRenderUnit
     @NotNull String getScriptEngineName();
 
     /**
+     * Returns the extension of the {@link ScriptEngine} with which {@code this ExecutableUnit} can be evaluated.
+     *
+     * @return the extension name of the script engine
+     * @see #eval(ScriptEngine, ScriptContext)
+     */
+    @NotNull String getScriptExtension();
+
+    /**
      * Provided a {@link ScriptContext}, this method will execute / evaluate the wrapped script or precompiled script.
      *
      * @param scriptEngine a suitable script engine; see {@link #getScriptEngineName()} in order to see what {@link ScriptEngine}
