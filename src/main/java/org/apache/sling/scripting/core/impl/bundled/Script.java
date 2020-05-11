@@ -19,6 +19,7 @@
 package org.apache.sling.scripting.core.impl.bundled;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -72,6 +73,16 @@ class Script extends AbstractBundledRenderUnit {
     @Override
     public String getName() {
         return url.getPath();
+    }
+
+    @Override
+    public InputStream getInputStream() {
+        try {
+            return IOUtils.toInputStream(getSourceCode());
+        }
+        catch (IOException e) {
+            return null;
+        }
     }
 
     @Override
