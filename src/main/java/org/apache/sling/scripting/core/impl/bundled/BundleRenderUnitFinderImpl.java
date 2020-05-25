@@ -124,6 +124,7 @@ public class BundleRenderUnitFinderImpl implements BundledRenderUnitFinder {
                     }
                     if (StringUtils.isNotEmpty(method)) {
                         matches.add(base + DOT + method);
+                        matches.add(base + SLASH + method);
                     }
                     matches.add(base);
                 }
