@@ -29,6 +29,7 @@ import static org.apache.sling.testing.paxexam.SlingOptions.versionResolver;
 import static org.ops4j.pax.exam.CoreOptions.composite;
 import static org.ops4j.pax.exam.CoreOptions.junitBundles;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
+import static org.ops4j.pax.exam.CoreOptions.vmOption;
 import static org.ops4j.pax.exam.cm.ConfigurationAdminOptions.newConfiguration;
 
 public class ScriptingCoreTestSupport extends TestSupport {
@@ -61,7 +62,8 @@ public class ScriptingCoreTestSupport extends TestSupport {
             mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.commons.compiler").versionAsInProject(),
             mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.servlets.resolver").versionAsInProject(),
             junitBundles(),
-            awaitility()
+            awaitility(),
+            vmOption(System.getProperty("jacoco.command"))
         ).add(
             mavenBundle().groupId("org.apache.felix").artifactId("org.apache.felix.converter").version("1.0.12") // new Sling API dependency
         ).remove(
