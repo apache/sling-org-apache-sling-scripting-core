@@ -96,7 +96,8 @@ public class ScriptContextProvider {
         bindings.put(SlingBindings.OUT, response.getWriter());
         Logger scriptLogger = LoggerFactory.getLogger(executable.getName());
         bindings.put(SlingBindings.LOG, scriptLogger);
-        bindings.put(SlingBindings.SLING, new ScriptHelper(executable.getBundleContext(), new SlingScriptAdapter(scriptingResourceResolverProvider.getRequestScopedResourceResolver(), executable.getPath(), "sling/bundle/resource"), request, response));
+        bindings.put(SlingBindings.SLING, new ScriptHelper(executable.getBundleContext(), new SlingScriptAdapter(request.getResourceResolver(),
+                executable.getPath(), "sling/bundle/resource"), request, response));
         bindings.put(BundledRenderUnit.VARIABLE, executable);
         bindings.put(ScriptEngine.FILENAME, executable.getPath());
         bindings.put(ScriptEngine.FILENAME.replaceAll("\\.", "_"), executable.getPath());
