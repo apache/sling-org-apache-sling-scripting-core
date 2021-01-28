@@ -16,7 +16,7 @@
  ~ specific language governing permissions and limitations
  ~ under the License.
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-package org.apache.sling.scripting.core.impl.bundle;
+package org.apache.sling.scripting.core.impl.bundled;
 
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
