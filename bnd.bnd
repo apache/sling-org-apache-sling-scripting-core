@@ -1,5 +1,6 @@
 Import-Package:\
   org.apache.felix.webconsole;resolution:=optional,\
+  org.apache.sling.servlets.resolver.bundle.tracker;resolution:=optional,\
   *
 
 Conditional-Package:\
