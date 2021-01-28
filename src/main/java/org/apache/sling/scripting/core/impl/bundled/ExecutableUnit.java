@@ -22,7 +22,7 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
-import org.apache.sling.scripting.api.bundle.BundledRenderUnit;
+import org.apache.sling.servlets.resolver.bundle.tracker.BundledRenderUnit;
 import org.jetbrains.annotations.NotNull;
 
 interface ExecutableUnit extends BundledRenderUnit

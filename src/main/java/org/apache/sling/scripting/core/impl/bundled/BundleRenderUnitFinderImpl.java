@@ -26,12 +26,12 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.sling.api.resource.type.ResourceType;
 import org.apache.sling.commons.compiler.source.JavaEscapeHelper;
-import org.apache.sling.scripting.api.bundle.BundledRenderUnit;
-import org.apache.sling.scripting.api.bundle.BundledRenderUnitCapability;
-import org.apache.sling.scripting.api.bundle.BundledRenderUnitFinder;
-import org.apache.sling.scripting.api.bundle.TypeProvider;
+import org.apache.sling.servlets.resolver.bundle.tracker.BundledRenderUnit;
+import org.apache.sling.servlets.resolver.bundle.tracker.BundledRenderUnitCapability;
+import org.apache.sling.servlets.resolver.bundle.tracker.BundledRenderUnitFinder;
+import org.apache.sling.servlets.resolver.bundle.tracker.ResourceType;
+import org.apache.sling.servlets.resolver.bundle.tracker.TypeProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.osgi.framework.Bundle;
