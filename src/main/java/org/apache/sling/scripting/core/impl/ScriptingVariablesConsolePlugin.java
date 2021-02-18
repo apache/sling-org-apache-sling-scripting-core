@@ -20,6 +20,8 @@ import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
@@ -33,6 +35,7 @@ import org.apache.felix.webconsole.WebConsoleConstants;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.log.LogService;
 
 /**
  * Web Console Plugin exposing all binding provider values.
@@ -138,12 +141,20 @@ public class ScriptingVariablesConsolePlugin extends AbstractWebConsolePlugin {
         }
         path += ".SLING_availablebindings.json";
 
-        // generate a one-time-usage token to pass along
-        String nonce = ScriptingVariablesNonceFactory.nextNonce();
+        // generate a token to pass along
+        String token = ScriptingVariablesTokenFactory.createToken();
+        String tokenHash;
+        try {
+            tokenHash = ScriptingVariablesTokenFactory.toHash(token);
+        } catch (InvalidKeyException | NoSuchAlgorithmException e) {
+            log(LogService.LOG_ERROR, "Failed to create the token hash", e);
+            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            return;
+        }
 
         // redirect to get let the sling main servlet handle creating the response
-        String redirect = String.format("%s%s?extension=%s&nonce=%s", req.getContextPath(), path, 
-                              req.getParameter("extension"), nonce);
+        String redirect = String.format("%s%s?extension=%s&t=%s&h=%s", req.getContextPath(), path, 
+                              req.getParameter("extension"), token, tokenHash);
         resp.sendRedirect(redirect);
     }
 }
