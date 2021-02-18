@@ -17,6 +17,8 @@ package org.apache.sling.scripting.core.impl;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 
 import javax.script.ScriptEngineFactory;
@@ -113,5 +115,36 @@ public class ScriptingVariablesConsolePlugin extends AbstractWebConsolePlugin {
         pw.append("</select> ");
         pw.append("<button type='button' id='submitButton'> Retrieve Variables </button></td></tr></table>");
         pw.append("<div id='response'></div>");
+    }
+
+    /**
+     * Handles the callback from the "retrieve variables" form
+     */
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String path = req.getParameter("path");
+        if (path == null || path.isEmpty()) {
+        	path = "/";
+        } else {
+            try {
+                URI redirectUri = new URI(path);
+                if (redirectUri.getAuthority() != null) {
+                    // if it has a host information
+                    throw new ServletException("path includes host information. This is not allowed for security reasons!");
+                }
+            } catch (URISyntaxException e) {
+                throw new ServletException("given path is not a valid uri", e);
+            }
+        	
+        }
+        path += ".SLING_availablebindings.json";
+        
+        // generate a one-time-usage token to pass along
+        String nonce = ScriptingVariablesNonceFactory.nextNonce();
+        
+        // redirect to get let the sling main servlet handle creating the response
+        String redirect = String.format("%s%s?extension=%s&nonce=%s", req.getContextPath(), path, 
+                              req.getParameter("extension"), nonce);
+        resp.sendRedirect(redirect);
     }
 }

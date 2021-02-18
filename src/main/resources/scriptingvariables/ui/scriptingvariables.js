@@ -41,9 +41,12 @@
 
 	function lookupVariables(path, extension) {
 		if (/^\//.test(path)) {
-			$.ajax(appendSelectorToPath(path) + "?extension="+extension,
-					{
-						type: 'GET'
+			$.ajax({
+						type: 'POST',
+                        data: {
+                            path: path,
+                            extension: extension
+                        }
 					}
 			).success(
 					function (data) {
@@ -57,10 +60,6 @@
 		} else {
 			$('#response').html('Invalid path given.');
 		}
-	}
-
-	function appendSelectorToPath(path) {
-		return path + ".SLING_availablebindings.json";
 	}
 
     
