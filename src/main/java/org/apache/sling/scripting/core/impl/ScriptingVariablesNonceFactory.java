@@ -26,7 +26,7 @@ import org.apache.commons.collections4.map.LRUMap;
  */
 final class ScriptingVariablesNonceFactory {
     private static final String EMPTY_STRING = "";
-	private static final SecureRandom secureRandom = new SecureRandom();
+    private static final SecureRandom secureRandom = new SecureRandom();
     // use LRUMap so it is not possible to grow indefinitely if isValid is
     //  never called after nextNonce is called
     private static final LRUMap<String, String> validNonceSet = new LRUMap<>(100);
@@ -52,7 +52,7 @@ final class ScriptingVariablesNonceFactory {
      */
     public static boolean isValid(String nonce) {
         Object remove = validNonceSet.remove(nonce);
-		return remove != null;
+        return remove != null;
     }
 
     /**

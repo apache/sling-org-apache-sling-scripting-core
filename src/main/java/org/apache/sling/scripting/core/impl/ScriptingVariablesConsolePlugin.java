@@ -124,7 +124,7 @@ public class ScriptingVariablesConsolePlugin extends AbstractWebConsolePlugin {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String path = req.getParameter("path");
         if (path == null || path.isEmpty()) {
-        	path = "/";
+            path = "/";
         } else {
             try {
                 URI redirectUri = new URI(path);
@@ -135,13 +135,12 @@ public class ScriptingVariablesConsolePlugin extends AbstractWebConsolePlugin {
             } catch (URISyntaxException e) {
                 throw new ServletException("given path is not a valid uri", e);
             }
-        	
         }
         path += ".SLING_availablebindings.json";
-        
+
         // generate a one-time-usage token to pass along
         String nonce = ScriptingVariablesNonceFactory.nextNonce();
-        
+
         // redirect to get let the sling main servlet handle creating the response
         String redirect = String.format("%s%s?extension=%s&nonce=%s", req.getContextPath(), path, 
                               req.getParameter("extension"), nonce);
