@@ -67,6 +67,7 @@ public class ScriptingVariablesConsolePlugin extends AbstractWebConsolePlugin {
     private ScriptEngineManager scriptEngineManager;
 
     public ScriptingVariablesConsolePlugin() {
+        super();
     }
 
     /**
@@ -133,10 +134,14 @@ public class ScriptingVariablesConsolePlugin extends AbstractWebConsolePlugin {
                 URI redirectUri = new URI(path);
                 if (redirectUri.getAuthority() != null) {
                     // if it has a host information
-                    throw new ServletException("path includes host information. This is not allowed for security reasons!");
+                    log(LogService.LOG_ERROR, "path includes host information. This is not allowed for security reasons!");
+                    safeSendError(resp, HttpServletResponse.SC_FORBIDDEN);
+                    return;
                 }
             } catch (URISyntaxException e) {
-                throw new ServletException("given path is not a valid uri", e);
+                log(LogService.LOG_ERROR, "given path is not a valid uri");
+                safeSendError(resp, HttpServletResponse.SC_FORBIDDEN);
+                return;
             }
         }
         path += ".SLING_availablebindings.json";
@@ -148,7 +153,7 @@ public class ScriptingVariablesConsolePlugin extends AbstractWebConsolePlugin {
             tokenHash = ScriptingVariablesTokenFactory.toHash(token);
         } catch (InvalidKeyException | NoSuchAlgorithmException e) {
             log(LogService.LOG_ERROR, "Failed to create the token hash", e);
-            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            safeSendError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             return;
         }
 
@@ -157,6 +162,23 @@ public class ScriptingVariablesConsolePlugin extends AbstractWebConsolePlugin {
         String redirect = String.format("%s%s?extension=%s&t=%s&h=%s", req.getContextPath(), path, 
                               extension == null ? "" : extension,
                               token, tokenHash);
-        resp.sendRedirect(redirect);
+        try {
+            resp.sendRedirect(redirect);
+        } catch (IOException ioe) {
+            log(LogService.LOG_ERROR, "Failed to send redirect", ioe);
+        }
+    }
+
+    /**
+     * Send Error to the response without throwing any IOException
+     * @param resp the response
+     * @param sc the status code of the error
+     */
+    protected void safeSendError(HttpServletResponse resp, int sc) {
+        try {
+            resp.sendError(sc);
+        } catch (IOException ioe) {
+            log(LogService.LOG_ERROR, "Failed to send error", ioe);
+        }
     }
 }

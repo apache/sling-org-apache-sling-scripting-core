@@ -63,7 +63,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestName;
 import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
@@ -94,9 +93,6 @@ public class SLING_10147IT extends ScriptingCoreTestSupport {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private CloseableHttpClient httpClient;
-
-    @Rule
-    public TestName testName = new TestName();
 
     @Rule
     public TestRule watcher = new TestWatcher() {
@@ -256,8 +252,8 @@ public class SLING_10147IT extends ScriptingCoreTestSupport {
             if (logger.isInfoEnabled()) {
                 logger.info("Response Content\r\n: {}", IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8));
             }
-            checkContentType(response, "application/json");
             assertEquals(HttpServletResponse.SC_OK, response.getStatusLine().getStatusCode());
+            checkContentType(response, "application/json");
         }
     }
 
@@ -277,8 +273,50 @@ public class SLING_10147IT extends ScriptingCoreTestSupport {
             if (logger.isInfoEnabled()) {
                 logger.info("Response Content\r\n: {}", IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8));
             }
-            checkContentType(response, "application/json");
             assertEquals(HttpServletResponse.SC_OK, response.getStatusLine().getStatusCode());
+            checkContentType(response, "application/json");
+        }
+    }
+
+    @Test
+    public void testPostScriptingVariablesConsolePluginWithForbiddenPath() throws IOException {
+        // make POST request and verify it redirects and returns the expected response
+        HttpPost request = new HttpPost(String.format("http://localhost:%d/system/console/scriptingvariables", httpPort()));
+        List<NameValuePair> urlParameters = new ArrayList<>();
+        urlParameters.add(new BasicNameValuePair("path", "http://example.com/content"));
+        urlParameters.add(new BasicNameValuePair("extension", "esp"));
+        request.setEntity(new UrlEncodedFormEntity(urlParameters));
+
+        if (logger.isInfoEnabled()) {
+            logger.info("Executing POST Request to: {}", request.getURI());
+        }
+        try (CloseableHttpResponse response = httpClient.execute(request)) {
+            if (logger.isInfoEnabled()) {
+                logger.info("Response Content\r\n: {}", IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8));
+            }
+            assertEquals(HttpServletResponse.SC_FORBIDDEN, response.getStatusLine().getStatusCode());
+            checkContentType(response, "text/html");
+        }
+    }
+
+    @Test
+    public void testPostScriptingVariablesConsolePluginWithSyntaxErrorInPath() throws IOException {
+        // make POST request and verify it redirects and returns the expected response
+        HttpPost request = new HttpPost(String.format("http://localhost:%d/system/console/scriptingvariables", httpPort()));
+        List<NameValuePair> urlParameters = new ArrayList<>();
+        urlParameters.add(new BasicNameValuePair("path", "/con tent"));
+        urlParameters.add(new BasicNameValuePair("extension", "esp"));
+        request.setEntity(new UrlEncodedFormEntity(urlParameters));
+
+        if (logger.isInfoEnabled()) {
+            logger.info("Executing POST Request to: {}", request.getURI());
+        }
+        try (CloseableHttpResponse response = httpClient.execute(request)) {
+            if (logger.isInfoEnabled()) {
+                logger.info("Response Content\r\n: {}", IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8));
+            }
+            assertEquals(HttpServletResponse.SC_FORBIDDEN, response.getStatusLine().getStatusCode());
+            checkContentType(response, "text/html");
         }
     }
 
