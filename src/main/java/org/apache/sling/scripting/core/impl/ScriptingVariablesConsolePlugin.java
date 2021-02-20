@@ -153,8 +153,10 @@ public class ScriptingVariablesConsolePlugin extends AbstractWebConsolePlugin {
         }
 
         // redirect to get let the sling main servlet handle creating the response
+        String extension = req.getParameter("extension");
         String redirect = String.format("%s%s?extension=%s&t=%s&h=%s", req.getContextPath(), path, 
-                              req.getParameter("extension"), token, tokenHash);
+                              extension == null ? "" : extension,
+                              token, tokenHash);
         resp.sendRedirect(redirect);
     }
 }

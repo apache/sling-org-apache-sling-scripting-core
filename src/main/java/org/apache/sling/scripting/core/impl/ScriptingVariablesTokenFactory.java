@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
  * ScriptingVariablesConsolePlugin + SlingBindingsVariablesListJsonServlet
  * transactions.
  */
-final class ScriptingVariablesTokenFactory {
+public final class ScriptingVariablesTokenFactory {
 
     /** The logger. */
     private static final Logger LOGGER = LoggerFactory.getLogger(ScriptingVariablesTokenFactory.class);
