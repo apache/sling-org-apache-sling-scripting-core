@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.script.ScriptEngine;
@@ -54,6 +55,9 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.Designate;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +76,20 @@ import org.slf4j.LoggerFactory;
         policy = ReferencePolicy.DYNAMIC
     )
 )
+@Designate(ocd=SlingScriptEngineManager.Config.class)
 public class SlingScriptEngineManager extends ScriptEngineManager implements BundleListener {
+
+    @ObjectClassDefinition(name ="Apache Sling Script Engine Manager",
+            description="Configures options for the Script Engine Manager")
+    public @interface Config {
+
+        @AttributeDefinition(name = "Includes", description = "Regular expressions to match script engines to include (matched against short names).")
+        String[] includes() default {".*"};
+
+        @AttributeDefinition(name = "Excludes", description = "Optional regular expressions to match script engines to exclude (matched against short names). Allows to exclude specific engines from selected set as produced by 'Includes'.\"")
+        String[] excludes();
+
+    }
 
     private ScriptEngineManager internalManager;
 
@@ -99,11 +116,18 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
 
     private final Logger logger = LoggerFactory.getLogger(SlingScriptEngineManager.class);
 
+    private Set<Pattern> includePatterns = Collections.emptySet();
+    private Set<Pattern> excludePatterns = Collections.emptySet();
+
     @Override
     public ScriptEngine getEngineByName(String shortName) {
         readWriteLock.readLock().lock();
         try {
-            return internalManager.getEngineByName(shortName);
+            SortableScriptEngineFactory ssef = factories.stream()
+                .filter(factory -> factory.getNames().contains(shortName))
+                .findFirst()
+                .orElse(null);
+            return ssef == null ? null : ssef.getScriptEngine();
         } finally {
             readWriteLock.readLock().unlock();
         }
@@ -113,7 +137,11 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
         readWriteLock.readLock().lock();
         try {
             return factories.stream()
-                .filter(factory -> factory.getEngineName().contains(shortName))
+                                   // first, check exact match of short names
+                .filter(factory -> factory.getNames().contains(shortName) ||
+                                   // then, check contains match of long name
+                                   //   for backward compatibility
+                                   factory.getEngineName().contains(shortName))
                 .map(factory -> factory.getDelegate().getScriptEngine())
                 .collect(Collectors.toList());
         } finally {
@@ -125,7 +153,11 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
     public ScriptEngine getEngineByExtension(String extension) {
         readWriteLock.readLock().lock();
         try {
-            return internalManager.getEngineByExtension(extension);
+            SortableScriptEngineFactory ssef = factories.stream()
+                    .filter(factory -> factory.getExtensions().contains(extension))
+                    .findFirst()
+                    .orElse(null);
+            return ssef == null ? null : ssef.getScriptEngine();
         } finally {
             readWriteLock.readLock().unlock();
         }
@@ -147,7 +179,11 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
     public ScriptEngine getEngineByMimeType(String mimeType) {
         readWriteLock.readLock().lock();
         try {
-            return internalManager.getEngineByMimeType(mimeType);
+            SortableScriptEngineFactory ssef = factories.stream()
+                    .filter(factory -> factory.getMimeTypes().contains(mimeType))
+                    .findFirst()
+                    .orElse(null);
+            return ssef == null ? null : ssef.getScriptEngine();
         } finally {
             readWriteLock.readLock().unlock();
         }
@@ -237,10 +273,73 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
     }
 
     @Activate
-    private void activate(final BundleContext bundleContext) {
+    private void activate(final Config config, final BundleContext bundleContext) {
+        String[] includes = config.includes();
+        if (includes == null) {
+            this.includePatterns = Collections.emptySet();
+        } else {
+            this.includePatterns = new HashSet<>();
+            for (String pattern : includes) {
+                if (!pattern.isEmpty()) {
+                    Pattern p = Pattern.compile(pattern);
+                    includePatterns.add(p);
+                }
+            }
+        }
+
+        String[] excludes = config.excludes();
+        if (excludes == null) {
+            this.excludePatterns = Collections.emptySet();
+        } else {
+            this.excludePatterns = new HashSet<>();
+            for (String pattern : excludes) {
+                if (!pattern.isEmpty()) {
+                    Pattern p = Pattern.compile(pattern);
+                    excludePatterns.add(p);
+                }
+            }
+        }
+
         this.bundleContext = bundleContext;
         bundleContext.addBundleListener(this);
         updateFactories();
+    }
+
+    /**
+     * Check if the given factory matches any of the include/excludes patterns
+     *
+     * @param sef the factory to check
+     * @return true if included, false otherwise
+     */
+    private boolean isIncluded(ScriptEngineFactory sef) {
+        boolean include = false;
+
+        if (!this.includePatterns.isEmpty()) {
+            List<String> names = sef.getNames();
+            for (String name : names) {
+                for (Pattern p : this.includePatterns) {
+                    if (p.matcher(name).matches()) {
+                        include = true;
+                        break; // found a match so stop looking further
+                    }
+                }
+            }
+        }
+
+        if (include) {
+            if (!this.excludePatterns.isEmpty()) {
+                List<String> names = sef.getNames();
+                for (String name : names) {
+                    for (Pattern p : this.excludePatterns) {
+                        if (p.matcher(name).matches()) {
+                            include = false;
+                            break; // found a match so stop looking further
+                        }
+                    }
+                }
+            }
+        }
+        return include;
     }
 
     @Deactivate
@@ -248,6 +347,7 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
         bundleContext.removeBundleListener(this);
     }
 
+    @SuppressWarnings("unused")
     private void bindScriptEngineFactory(final ServiceReference<ScriptEngineFactory> serviceReference, final ScriptEngineFactory factory) {
         synchronized (this.serviceReferences) {
             serviceReferences.add(serviceReference);
@@ -256,6 +356,7 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
         postEvent(SlingScriptConstants.TOPIC_SCRIPT_ENGINE_FACTORY_ADDED, factory);
     }
 
+    @SuppressWarnings("unused")
     private void unbindScriptEngineFactory(final ServiceReference<ScriptEngineFactory> serviceReference, final ScriptEngineFactory factory) {
         synchronized (this.serviceReferences) {
             serviceReferences.remove(serviceReference);
@@ -267,6 +368,7 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
         postEvent(SlingScriptConstants.TOPIC_SCRIPT_ENGINE_FACTORY_REMOVED, factory);
     }
 
+    @SuppressWarnings("unused")
     private void updatedScriptEngineFactory(final ServiceReference<ScriptEngineFactory> serviceReference, final ScriptEngineFactory factory) {
         updateFactories();
         postEvent(SlingScriptConstants.TOPIC_SCRIPT_ENGINE_FACTORY_UPDATED, factory);
@@ -277,12 +379,16 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
         try {
             internalManager = getInternalScriptEngineManager();
             factories.clear();
+
             long fakeBundleIdCounter = Long.MIN_VALUE;
             // first add the platform factories
             for (final ScriptEngineFactory factory : internalManager.getEngineFactories()) {
-                final SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(factory, fakeBundleIdCounter++, 0, null);
-                factories.add(sortableScriptEngineFactory);
+                if (isIncluded(factory)) {
+                    final SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(factory, fakeBundleIdCounter++, 0, null);
+                    factories.add(sortableScriptEngineFactory);
+                }
             }
+
             // then factories from SPI Bundles
             final ClassLoader loader = Thread.currentThread().getContextClassLoader();
             try {
@@ -291,8 +397,10 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
                     try {
                         final ScriptEngineManager manager = new ScriptEngineManager(bundle.adapt(BundleWiring.class).getClassLoader());
                         for (final ScriptEngineFactory factory : manager.getEngineFactories()) {
-                            final SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(factory, bundle.getBundleId(), 0, null);
-                            factories.add(sortableScriptEngineFactory);
+                            if (isIncluded(factory)) {
+                                final SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(factory, bundle.getBundleId(), 0, null);
+                                factories.add(sortableScriptEngineFactory);
+                            }
                         }
                     } catch (Exception ex) {
                         logger.error("Unable to process bundle " + bundle.getSymbolicName(), ex);
@@ -306,12 +414,14 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
             if (bundleContext != null) {
                 for (final ServiceReference<ScriptEngineFactory> serviceReference : serviceReferences) {
                     final ScriptEngineFactory scriptEngineFactory = bundleContext.getService(serviceReference);
-                    final Map<String, Object> factoryProperties = new HashMap<>(serviceReference.getPropertyKeys().length);
-                    for (final String key : serviceReference.getPropertyKeys()) {
-                        factoryProperties.put(key, serviceReference.getProperty(key));
+                    if (isIncluded(scriptEngineFactory)) {
+                        final Map<String, Object> factoryProperties = new HashMap<>(serviceReference.getPropertyKeys().length);
+                        for (final String key : serviceReference.getPropertyKeys()) {
+                            factoryProperties.put(key, serviceReference.getProperty(key));
+                        }
+                        final SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(scriptEngineFactory, serviceReference.getBundle().getBundleId(), PropertiesUtil.toInteger(serviceReference.getProperty(Constants.SERVICE_RANKING), 0), factoryProperties);
+                        factories.add(sortableScriptEngineFactory);
                     }
-                    final SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(scriptEngineFactory, serviceReference.getBundle().getBundleId(), PropertiesUtil.toInteger(serviceReference.getProperty(Constants.SERVICE_RANKING), 0), factoryProperties);
-                    factories.add(sortableScriptEngineFactory);
                 }
             }
             // register the associations at the end, so that the priority sorting is taken into consideration
@@ -319,7 +429,7 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
                 registerAssociations(factory);
             }
             if (eventAdmin != null) {
-                eventAdmin.postEvent(new Event(EVENT_TOPIC_SCRIPT_MANAGER_UPDATED, Collections.EMPTY_MAP));
+                eventAdmin.postEvent(new Event(EVENT_TOPIC_SCRIPT_MANAGER_UPDATED, Collections.emptyMap()));
             }
         } finally {
             readWriteLock.writeLock().unlock();
