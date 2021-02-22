@@ -326,15 +326,13 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
             }
         }
 
-        if (include) {
-            if (!this.excludePatterns.isEmpty()) {
-                List<String> names = sef.getNames();
-                for (String name : names) {
-                    for (Pattern p : this.excludePatterns) {
-                        if (p.matcher(name).matches()) {
-                            include = false;
-                            break; // found a match so stop looking further
-                        }
+        if (include && !this.excludePatterns.isEmpty()) {
+            List<String> names = sef.getNames();
+            for (String name : names) {
+                for (Pattern p : this.excludePatterns) {
+                    if (p.matcher(name).matches()) {
+                        include = false;
+                        break; // found a match so stop looking further
                     }
                 }
             }
