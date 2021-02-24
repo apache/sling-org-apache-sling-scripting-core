@@ -321,10 +321,13 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
                     if (p.matcher(name).matches()) {
                         include = true;
                         if (logger.isDebugEnabled()) {
-                            logger.debug("ScriptEngineFactory matches the include patterns: {}", sef.getEngineName());
+                            logger.debug("ScriptEngineFactory \"{}\" matches the include pattern \"{}\" for name \"{}\"", sef.getEngineName(), p.pattern(), name);
                         }
                         break; // found a match so stop looking further
                     }
+                }
+                if (include) {
+                    break; // break out of the outer loop too
                 }
             }
         }
@@ -336,10 +339,13 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
                     if (p.matcher(name).matches()) {
                         include = false;
                         if (logger.isDebugEnabled()) {
-                            logger.debug("ScriptEngineFactory matches the exclude patterns so it is not included: {}", sef.getEngineName());
+                            logger.debug("ScriptEngineFactory \"{}\" matches the exclude pattern \"{}\" for name \"{}\" so it is not included", sef.getEngineName(), p.pattern(), name);
                         }
                         break; // found a match so stop looking further
                     }
+                }
+                if (!include) {
+                    break; // break out of the outer loop too
                 }
             }
         }
