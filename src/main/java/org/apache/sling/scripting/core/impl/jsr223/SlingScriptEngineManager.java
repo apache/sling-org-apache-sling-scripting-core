@@ -83,10 +83,10 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
             description="Configures options for the Script Engine Manager")
     public @interface Config {
 
-        @AttributeDefinition(name = "Includes", description = "Regular expressions to match script engines to include (matched against short names).")
+        @AttributeDefinition(name = "Includes", description = "A script engine with a short name that matches any of these expressions is included")
         String[] includes() default {".*"};
 
-        @AttributeDefinition(name = "Excludes", description = "Optional regular expressions to match script engines to exclude (matched against short names). Allows to exclude specific engines from selected set as produced by 'Includes'.\"")
+        @AttributeDefinition(name = "Excludes", description = "A script engine with a short name that matches any of these (optional) expressions is NOT included, even if it was accepted by the 'Includes' configuration")
         String[] excludes();
 
     }
@@ -320,6 +320,9 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
                 for (Pattern p : this.includePatterns) {
                     if (p.matcher(name).matches()) {
                         include = true;
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("ScriptEngineFactory matches the include patterns: {}", sef.getEngineName());
+                        }
                         break; // found a match so stop looking further
                     }
                 }
@@ -332,6 +335,9 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
                 for (Pattern p : this.excludePatterns) {
                     if (p.matcher(name).matches()) {
                         include = false;
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("ScriptEngineFactory matches the exclude patterns so it is not included: {}", sef.getEngineName());
+                        }
                         break; // found a match so stop looking further
                     }
                 }
