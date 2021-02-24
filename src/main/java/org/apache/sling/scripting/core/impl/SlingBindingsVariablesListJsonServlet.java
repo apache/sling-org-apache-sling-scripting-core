@@ -26,8 +26,11 @@ import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.felix.utils.json.JSONWriter;
+import org.apache.felix.webconsole.WebConsoleSecurityProvider;
+import org.apache.felix.webconsole.WebConsoleSecurityProvider2;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.NonExistingResource;
@@ -43,6 +46,8 @@ import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 /**
  * Return all scripting variables for all registered scripting languages for the default context (=request).
@@ -68,6 +73,12 @@ public class SlingBindingsVariablesListJsonServlet extends SlingSafeMethodsServl
     private static final long serialVersionUID = -6744726829737263875L;
 
     /**
+     * The webconsole security provider
+     */
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policyOption = ReferencePolicyOption.GREEDY)
+    private WebConsoleSecurityProvider webconsoleSecurity;
+
+    /**
      * The script engine manager.
      */
     @Reference
@@ -91,6 +102,24 @@ public class SlingBindingsVariablesListJsonServlet extends SlingSafeMethodsServl
     @Override
     protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)
             throws ServletException, IOException {
+        if (webconsoleSecurity == null) {
+            log("Acccess forbidden as the WebConsoleSecurity reference is not set");
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        } else if (!(webconsoleSecurity instanceof WebConsoleSecurityProvider2)) {
+            log("Acccess forbidden as the WebConsoleSecurity reference does not implement WebConsoleSecurityProvider2");
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        } else if (!((WebConsoleSecurityProvider2)webconsoleSecurity).authenticate(request, response)) {
+            // the request is terminated without any more response sent back to the client.
+            //    The WebConsoleSecurityProvider2 implementation may have sent auth challenge to the client
+            //    in the case of anonymous access.
+            if (!response.isCommitted()) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            }
+            return;
+        }
+
         response.setContentType("application/json");
         JSONWriter jsonWriter = new JSONWriter(response.getWriter());
         jsonWriter.array();
