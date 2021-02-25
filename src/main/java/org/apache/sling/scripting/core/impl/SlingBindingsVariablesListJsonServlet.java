@@ -102,18 +102,21 @@ public class SlingBindingsVariablesListJsonServlet extends SlingSafeMethodsServl
     @Override
     protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)
             throws ServletException, IOException {
+        boolean allowed = true;
         if (webconsoleSecurity == null) {
-            log("Acccess forbidden as the WebConsoleSecurity reference is not set");
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
-            return;
+            log("Access forbidden as the WebConsoleSecurity reference is not set");
+            allowed = false;
         } else if (!(webconsoleSecurity instanceof WebConsoleSecurityProvider2)) {
-            log("Acccess forbidden as the WebConsoleSecurity reference does not implement WebConsoleSecurityProvider2");
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
-            return;
+            log("Access forbidden as the WebConsoleSecurity reference does not implement WebConsoleSecurityProvider2");
+            allowed = false;
         } else if (!((WebConsoleSecurityProvider2)webconsoleSecurity).authenticate(request, response)) {
+            log("Access forbidden as the WebConsoleSecurity component returned false");
             // the request is terminated without any more response sent back to the client.
             //    The WebConsoleSecurityProvider2 implementation may have sent auth challenge to the client
             //    in the case of anonymous access.
+            allowed = false;
+        }
+        if (!allowed) {
             if (!response.isCommitted()) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN);
             }
