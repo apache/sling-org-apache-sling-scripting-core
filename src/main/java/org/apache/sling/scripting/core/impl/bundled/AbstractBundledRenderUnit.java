@@ -36,7 +36,7 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.scripting.core.impl.helper.OnDemandReaderRequest;
 import org.apache.sling.scripting.core.impl.helper.OnDemandWriterResponse;
-import org.apache.sling.servlets.resolver.bundle.tracker.TypeProvider;
+import org.apache.sling.scripting.spi.bundle.TypeProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.osgi.framework.Bundle;
