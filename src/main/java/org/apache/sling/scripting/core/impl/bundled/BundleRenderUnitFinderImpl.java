@@ -27,11 +27,11 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.commons.compiler.source.JavaEscapeHelper;
-import org.apache.sling.servlets.resolver.bundle.tracker.BundledRenderUnit;
-import org.apache.sling.servlets.resolver.bundle.tracker.BundledRenderUnitCapability;
-import org.apache.sling.servlets.resolver.bundle.tracker.BundledRenderUnitFinder;
-import org.apache.sling.servlets.resolver.bundle.tracker.ResourceType;
-import org.apache.sling.servlets.resolver.bundle.tracker.TypeProvider;
+import org.apache.sling.scripting.spi.bundle.BundledRenderUnit;
+import org.apache.sling.scripting.spi.bundle.BundledRenderUnitCapability;
+import org.apache.sling.scripting.spi.bundle.BundledRenderUnitFinder;
+import org.apache.sling.scripting.spi.bundle.ResourceType;
+import org.apache.sling.scripting.spi.bundle.TypeProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.osgi.framework.Bundle;
