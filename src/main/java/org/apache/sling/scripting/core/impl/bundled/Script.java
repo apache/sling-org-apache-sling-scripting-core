@@ -34,8 +34,8 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.sling.servlets.resolver.bundle.tracker.TypeProvider;
 import org.apache.sling.scripting.core.ScriptNameAwareReader;
+import org.apache.sling.scripting.spi.bundle.TypeProvider;
 import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;

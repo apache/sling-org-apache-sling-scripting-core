@@ -61,7 +61,7 @@ public class ScriptingCoreTestSupport extends TestSupport {
             mavenBundle().groupId("org.apache.servicemix.bundles").artifactId("org.apache.servicemix.bundles.hamcrest").versionAsInProject(),
             mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.commons.compiler").versionAsInProject(),
             mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.commons.johnzon").versionAsInProject(),
-            mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.servlets.resolver.api").versionAsInProject(),
+            mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.scripting.spi").versionAsInProject(),
             junitBundles(),
             awaitility(),
             vmOption(System.getProperty("jacoco.command"))
