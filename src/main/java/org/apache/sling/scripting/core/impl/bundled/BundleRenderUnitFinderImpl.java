@@ -26,11 +26,11 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.sling.api.resource.type.ResourceType;
 import org.apache.sling.commons.compiler.source.JavaEscapeHelper;
 import org.apache.sling.scripting.spi.bundle.BundledRenderUnit;
 import org.apache.sling.scripting.spi.bundle.BundledRenderUnitCapability;
 import org.apache.sling.scripting.spi.bundle.BundledRenderUnitFinder;
-import org.apache.sling.scripting.spi.bundle.ResourceType;
 import org.apache.sling.scripting.spi.bundle.TypeProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,7 +113,7 @@ public class BundleRenderUnitFinderImpl implements BundledRenderUnitFinder {
                 for (int i = selectors.length - 1; i >= 0; i--) {
                     String base =
                         resourceType.getType() +
-                            (StringUtils.isNotEmpty(resourceType.getVersion()) ? SLASH + resourceType.getVersion() + SLASH :
+                            (resourceType.getVersion() != null ? SLASH + resourceType.getVersion() + SLASH :
                                 SLASH) +
                             String.join(SLASH, Arrays.copyOf(selectors, i + 1));
                     if (StringUtils.isNotEmpty(extension)) {
@@ -130,7 +130,7 @@ public class BundleRenderUnitFinderImpl implements BundledRenderUnitFinder {
                 }
             }
             String base = resourceType.getType() +
-                (StringUtils.isNotEmpty(resourceType.getVersion()) ? SLASH + resourceType.getVersion() : StringUtils.EMPTY);
+                (resourceType.getVersion() != null ? SLASH + resourceType.getVersion() : StringUtils.EMPTY);
 
             if (StringUtils.isNotEmpty(extension)) {
                 if (StringUtils.isNotEmpty(method)) {
