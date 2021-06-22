@@ -18,9 +18,13 @@
  */
 package org.apache.sling.scripting.core.it;
 
+import java.util.Objects;
+
 import org.apache.sling.testing.paxexam.TestSupport;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.options.ModifiableCompositeOption;
+import org.ops4j.pax.exam.options.OptionalCompositeOption;
+import org.ops4j.pax.exam.options.extra.VMOption;
 
 import static org.apache.sling.testing.paxexam.SlingOptions.awaitility;
 import static org.apache.sling.testing.paxexam.SlingOptions.slingResourcePresence;
@@ -30,6 +34,7 @@ import static org.ops4j.pax.exam.CoreOptions.composite;
 import static org.ops4j.pax.exam.CoreOptions.junitBundles;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.vmOption;
+import static org.ops4j.pax.exam.CoreOptions.when;
 import static org.ops4j.pax.exam.cm.ConfigurationAdminOptions.newConfiguration;
 
 public class ScriptingCoreTestSupport extends TestSupport {
@@ -64,12 +69,19 @@ public class ScriptingCoreTestSupport extends TestSupport {
             mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.scripting.spi").versionAsInProject(),
             junitBundles(),
             awaitility(),
-            vmOption(System.getProperty("jacoco.command"))
+            jacoco() // remove with Testing PaxExam 4.0
         ).add(
             mavenBundle().groupId("org.apache.felix").artifactId("org.apache.felix.converter").version("1.0.12") // new Sling API dependency
         ).remove(
             scriptingCore
         );
+    }
+
+    // remove with Testing PaxExam 4.0
+    protected OptionalCompositeOption jacoco() {
+        final String jacocoCommand = System.getProperty("jacoco.command");
+        final VMOption option = Objects.nonNull(jacocoCommand) && !jacocoCommand.trim().isEmpty() ? vmOption(jacocoCommand) : null;
+        return when(Objects.nonNull(option)).useOptions(option);
     }
 
 }
