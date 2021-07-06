@@ -52,6 +52,8 @@ import org.slf4j.LoggerFactory;
         service = ScriptContextProvider.class
 )
 public class ScriptContextProvider {
+    
+    private static final Logger LOG = LoggerFactory.getLogger(ScriptContextProvider.class);
 
     private static final Set<String> PROTECTED_BINDINGS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
             SlingBindings.REQUEST,
@@ -105,7 +107,13 @@ public class ScriptContextProvider {
         ProtectedBindings protectedBindings = new ProtectedBindings(bindings, PROTECTED_BINDINGS);
         for (BindingsValuesProvider bindingsValuesProvider : bvpTracker.getBindingsValuesProviders(scriptEngine.getFactory(),
                 BindingsValuesProvider.DEFAULT_CONTEXT)) {
+            long start = System.nanoTime();
             bindingsValuesProvider.addBindings(protectedBindings);
+            long stop = System.nanoTime();
+            if ((stop-start) > (1000*1000)) { // 1ms
+                LOG.info("Adding the bindings of {} took {} microseconds, it might impact general performance", 
+                        bindingsValuesProvider.getClass().getName(), (start-stop)/1000);
+            }
         }
         ScriptContext scriptContext = new BundledScriptContext();
         Map<String, LazyBindings.Supplier> slingBindingsSuppliers = new HashMap<>();
