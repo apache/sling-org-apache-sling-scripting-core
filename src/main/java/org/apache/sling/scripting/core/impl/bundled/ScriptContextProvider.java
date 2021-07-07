@@ -53,6 +53,11 @@ import org.slf4j.LoggerFactory;
 )
 public class ScriptContextProvider {
 
+    private static final Logger LOG = LoggerFactory.getLogger(ScriptContextProvider.class);
+
+    /** is defined on multiple files in this bundle*/
+    private static final long WARN_LIMIT_FOR_BVP_NANOS = (1000*1000); // 1 ms
+
     private static final Set<String> PROTECTED_BINDINGS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
             SlingBindings.REQUEST,
             SlingBindings.RESPONSE,
@@ -105,7 +110,16 @@ public class ScriptContextProvider {
         ProtectedBindings protectedBindings = new ProtectedBindings(bindings, PROTECTED_BINDINGS);
         for (BindingsValuesProvider bindingsValuesProvider : bvpTracker.getBindingsValuesProviders(scriptEngine.getFactory(),
                 BindingsValuesProvider.DEFAULT_CONTEXT)) {
+            long start = System.nanoTime();
             bindingsValuesProvider.addBindings(protectedBindings);
+            long stop = System.nanoTime();
+            LOG.trace("Invoking addBindings() of {} took {} nanoseconds",
+                    bindingsValuesProvider.getClass().getName(), stop-start);
+            if ((stop-start) > WARN_LIMIT_FOR_BVP_NANOS) {
+                LOG.info("Adding the bindings of {} took {} microseconds;"
+                        + " if this message appears often it indicates that this BindingsValuesProvider has an impact on general page rendering performance",
+                        bindingsValuesProvider.getClass().getName(), (stop-start)/1000);
+            }
         }
         ScriptContext scriptContext = new BundledScriptContext();
         Map<String, LazyBindings.Supplier> slingBindingsSuppliers = new HashMap<>();
