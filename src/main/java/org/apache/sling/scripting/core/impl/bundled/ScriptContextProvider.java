@@ -52,8 +52,11 @@ import org.slf4j.LoggerFactory;
         service = ScriptContextProvider.class
 )
 public class ScriptContextProvider {
-    
+
     private static final Logger LOG = LoggerFactory.getLogger(ScriptContextProvider.class);
+
+    /** is defined on multiple files in this bundle*/
+    private static final long WARN_LIMIT_FOR_BVP_NANOS = (1000*1000); // 1 ms
 
     private static final Set<String> PROTECTED_BINDINGS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
             SlingBindings.REQUEST,
@@ -110,9 +113,11 @@ public class ScriptContextProvider {
             long start = System.nanoTime();
             bindingsValuesProvider.addBindings(protectedBindings);
             long stop = System.nanoTime();
-            if ((stop-start) > (1000*1000)) { // 1ms
+            LOG.trace("Invoking addBindings() of {} took {} nanoseconds",
+                    bindingsValuesProvider.getClass().getName(), stop-start);
+            if ((stop-start) > WARN_LIMIT_FOR_BVP_NANOS) {
                 LOG.info("Adding the bindings of {} took {} microseconds;"
-                        + " if this message appears often it impacts general page rendering performance",
+                        + " if this message appears often it indicates that this BindingsValuesProvider has an impact on general page rendering performance",
                         bindingsValuesProvider.getClass().getName(), (stop-start)/1000);
             }
         }
