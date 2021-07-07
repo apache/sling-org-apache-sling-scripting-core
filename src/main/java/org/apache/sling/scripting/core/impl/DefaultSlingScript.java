@@ -735,9 +735,9 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
                 long start = System.nanoTime();
                 provider.addBindings(protectedBindings);
                 long stop = System.nanoTime();
-                if (start-stop > (1000*1000)) { // 1 ms
-                    LOGGER.info("Adding the bindings of {} took {} microseconds, it might impact general performance", 
-                            provider.getClass().getName(), (start-stop)/1000);
+                if (stop-start > (1000*1000)) { // 1 ms
+                    LOGGER.info("Adding the bindings of {} took {} microseconds, it might impact general page rendering performance",
+                            provider.getClass().getName(), (stop-start)/1000);
                 }
             }
         }

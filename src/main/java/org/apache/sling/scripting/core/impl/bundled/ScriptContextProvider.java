@@ -111,8 +111,8 @@ public class ScriptContextProvider {
             bindingsValuesProvider.addBindings(protectedBindings);
             long stop = System.nanoTime();
             if ((stop-start) > (1000*1000)) { // 1ms
-                LOG.info("Adding the bindings of {} took {} microseconds, it might impact general performance", 
-                        bindingsValuesProvider.getClass().getName(), (start-stop)/1000);
+                LOG.info("Adding the bindings of {} took {} microseconds, it might impact general page rendering performance",
+                        bindingsValuesProvider.getClass().getName(), (stop-start)/1000);
             }
         }
         ScriptContext scriptContext = new BundledScriptContext();
