@@ -23,8 +23,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.script.Bindings;
 import javax.script.ScriptContext;
@@ -40,10 +42,17 @@ import org.apache.sling.api.scripting.SlingScriptConstants;
 import org.apache.sling.scripting.api.BindingsValuesProvider;
 import org.apache.sling.scripting.api.BindingsValuesProvidersByContext;
 import org.apache.sling.scripting.api.resource.ScriptingResourceResolverProvider;
+import org.apache.sling.scripting.core.impl.InternalScriptHelper;
+import org.apache.sling.scripting.core.impl.ServiceCache;
 import org.apache.sling.scripting.core.impl.helper.ProtectedBindings;
 import org.apache.sling.scripting.core.ScriptHelper;
 import org.apache.sling.scripting.spi.bundle.BundledRenderUnit;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleEvent;
+import org.osgi.framework.BundleListener;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +60,7 @@ import org.slf4j.LoggerFactory;
 @Component(
         service = ScriptContextProvider.class
 )
-public class ScriptContextProvider {
+public class ScriptContextProvider implements BundleListener {
 
     private static final Set<String> PROTECTED_BINDINGS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
             SlingBindings.REQUEST,
@@ -75,6 +84,8 @@ public class ScriptContextProvider {
     @Reference
     private ScriptingResourceResolverProvider scriptingResourceResolverProvider;
 
+    private final ConcurrentHashMap<BundleContext, ServiceCache> perContextServiceCache = new ConcurrentHashMap<>();
+
     public ExecutableContext prepareScriptContext(SlingHttpServletRequest request, SlingHttpServletResponse response, ExecutableUnit executable)
             throws IOException {
         ScriptEngine scriptEngine = scriptEngineManager.getEngineByName(executable.getScriptEngineName());
@@ -96,8 +107,9 @@ public class ScriptContextProvider {
         bindings.put(SlingBindings.OUT, response.getWriter());
         Logger scriptLogger = LoggerFactory.getLogger(executable.getName());
         bindings.put(SlingBindings.LOG, scriptLogger);
-        bindings.put(SlingBindings.SLING, new ScriptHelper(executable.getBundleContext(), new SlingScriptAdapter(request.getResourceResolver(),
-                executable.getPath(), "sling/bundle/resource"), request, response));
+        bindings.put(SlingBindings.SLING, new InternalScriptHelper(executable.getBundleContext(), new SlingScriptAdapter(request.getResourceResolver(),
+                executable.getPath(), "sling/bundle/resource"), request, response,
+                perContextServiceCache.computeIfAbsent(executable.getBundleContext(), ServiceCache::new)));
         bindings.put(BundledRenderUnit.VARIABLE, executable);
         bindings.put(ScriptEngine.FILENAME, executable.getPath());
         bindings.put(ScriptEngine.FILENAME.replaceAll("\\.", "_"), executable.getPath());
@@ -144,6 +156,30 @@ public class ScriptContextProvider {
                 }
             }
             executable.releaseDependencies();
+        }
+    }
+
+    @Activate
+    private void activate(BundleContext bundleContext) {
+        bundleContext.addBundleListener(this);
+    }
+
+    @Deactivate
+    private void deactivate(BundleContext bundleContext) {
+        bundleContext.removeBundleListener(this);
+    }
+
+    @Override
+    public void bundleChanged(BundleEvent event) {
+        if (event.getType() == BundleEvent.STOPPED) {
+            for (Iterator<BundleContext> iterator = perContextServiceCache.keySet().iterator(); iterator.hasNext();) {
+                try {
+                    iterator.next().getBundle();
+                } catch (IllegalStateException e) {
+                    iterator.remove();
+                }
+            }
+
         }
     }
 
