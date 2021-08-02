@@ -98,7 +98,7 @@ public class ScriptContextProvider implements BundleListener {
         }
         // prepare the SlingBindings
         Bindings bindings = new LazyBindings();
-        bindings.put("properties", request.getResource().getValueMap());
+        bindings.put("properties", (LazyBindings.Supplier) () -> request.getResource().getValueMap());
         bindings.put(SlingBindings.REQUEST, request);
         bindings.put(SlingBindings.RESPONSE, response);
         bindings.put(SlingBindings.READER, request.getReader());
