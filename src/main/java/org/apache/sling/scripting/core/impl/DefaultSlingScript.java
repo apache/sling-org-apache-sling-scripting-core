@@ -89,6 +89,9 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
     /** The logger. */
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultSlingScript.class);
 
+    /** is defined on multiple files in this bundle*/
+    private static final long WARN_LIMIT_FOR_BVP_NANOS = (1000*1000); // 1 ms
+
     /** Thread local containing the resource resolver. */
     private static ThreadLocal<ResourceResolver> requestResourceResolver = new ThreadLocal<ResourceResolver>();
 
@@ -732,7 +735,16 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
 
             ProtectedBindings protectedBindings = new ProtectedBindings(bindings, protectedKeys);
             for (BindingsValuesProvider provider : bindingsValuesProviders) {
+                long start = System.nanoTime();
                 provider.addBindings(protectedBindings);
+                long stop = System.nanoTime();
+                LOGGER.trace("Invoking addBindings() of {} took {} nanoseconds",
+                        provider.getClass().getName(), stop-start);
+                if (stop-start > WARN_LIMIT_FOR_BVP_NANOS) {
+                    LOGGER.info("Adding the bindings of {} took {} microseconds which is above the harcoded limit of {} microseconds;"
+                            + " if this message appears often it indicates that this BindingsValuesProvider has an impact on general page rendering performance",
+                            new Object[]{provider.getClass().getName(), (stop-start)/1000, WARN_LIMIT_FOR_BVP_NANOS/1000});
+                }
             }
         }
 
