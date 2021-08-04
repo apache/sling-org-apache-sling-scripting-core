@@ -741,9 +741,9 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
                 LOGGER.trace("Invoking addBindings() of {} took {} nanoseconds",
                         provider.getClass().getName(), stop-start);
                 if (stop-start > WARN_LIMIT_FOR_BVP_NANOS) {
-                    LOGGER.info("Adding the bindings of {} took {} microseconds; "
-                            + "if this message appears often it indicates that this BindingsValuesProvider has an impact on general rendering performance",
-                            provider.getClass().getName(), (stop-start)/1000);
+                    LOGGER.info("Adding the bindings of {} took {} microseconds which is above the harcoded limit of {} microseconds;"
+                            + " if this message appears often it indicates that this BindingsValuesProvider has an impact on general page rendering performance",
+                            new Object[]{provider.getClass().getName(), (stop-start)/1000, WARN_LIMIT_FOR_BVP_NANOS/1000});
                 }
             }
         }

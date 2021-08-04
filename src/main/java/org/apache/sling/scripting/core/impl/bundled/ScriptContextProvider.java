@@ -116,9 +116,9 @@ public class ScriptContextProvider {
             LOG.trace("Invoking addBindings() of {} took {} nanoseconds",
                     bindingsValuesProvider.getClass().getName(), stop-start);
             if ((stop-start) > WARN_LIMIT_FOR_BVP_NANOS) {
-                LOG.info("Adding the bindings of {} took {} microseconds;"
+                LOG.info("Adding the bindings of {} took {} microseconds which is above the hardcoded limit of {} microseconds;"
                         + " if this message appears often it indicates that this BindingsValuesProvider has an impact on general page rendering performance",
-                        bindingsValuesProvider.getClass().getName(), (stop-start)/1000);
+                        new Object[]{bindingsValuesProvider.getClass().getName(), (stop-start)/1000, WARN_LIMIT_FOR_BVP_NANOS/1000});
             }
         }
         ScriptContext scriptContext = new BundledScriptContext();
