@@ -184,8 +184,7 @@ abstract class AbstractBundledRenderUnit implements ExecutableUnit {
     public void eval(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response) throws ScriptException {
         try {
             ScriptContextProvider.ExecutableContext executableContext = scriptContextProvider
-                .prepareScriptContext(new OnDemandReaderRequest((SlingHttpServletRequest) request),
-                    new OnDemandWriterResponse((SlingHttpServletResponse) response), this);
+                .prepareScriptContext((SlingHttpServletRequest) request, (SlingHttpServletResponse) response, this);
             try {
                 executableContext.eval();
             }

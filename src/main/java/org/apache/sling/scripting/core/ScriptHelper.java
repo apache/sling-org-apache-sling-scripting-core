@@ -40,8 +40,11 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.scripting.InvalidServiceFilterSyntaxException;
 import org.apache.sling.api.scripting.SlingScript;
 import org.apache.sling.api.scripting.SlingScriptHelper;
+import org.apache.sling.api.wrappers.SlingHttpServletRequestWrapper;
+import org.apache.sling.api.wrappers.SlingHttpServletResponseWrapper;
 import org.apache.sling.scripting.core.impl.helper.OnDemandReaderRequest;
 import org.apache.sling.scripting.core.impl.helper.OnDemandWriterResponse;
+import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
@@ -97,8 +100,8 @@ public class ScriptHelper implements SlingScriptHelper {
             throw new IllegalArgumentException("Bundle context must not be null.");
         }
         this.script = script;
-        this.request = new OnDemandReaderRequest(request);
-        this.response = new OnDemandWriterResponse(response);
+        this.request = wrapIfNeeded(request);
+        this.response = wrapIfNeeded(response);
         this.bundleContext = ctx;
     }
 
@@ -341,5 +344,27 @@ public class ScriptHelper implements SlingScriptHelper {
                 throw new SlingServletException(se);
             }
         }
+    }
+
+    private SlingHttpServletRequest wrapIfNeeded(@NotNull SlingHttpServletRequest request) {
+        SlingHttpServletRequest initialRequest = request;
+        while (request instanceof SlingHttpServletRequestWrapper) {
+            if (request instanceof OnDemandReaderRequest) {
+                return initialRequest;
+            }
+            request = ((SlingHttpServletRequestWrapper) request).getSlingRequest();
+        }
+        return new OnDemandReaderRequest(initialRequest);
+    }
+
+    private SlingHttpServletResponse wrapIfNeeded(@NotNull SlingHttpServletResponse response) {
+        SlingHttpServletResponse initialResponse = response;
+        while (response instanceof SlingHttpServletResponseWrapper) {
+            if (response instanceof OnDemandWriterResponse) {
+                return initialResponse;
+            }
+            response = ((SlingHttpServletResponseWrapper) response).getSlingResponse();
+        }
+        return new OnDemandWriterResponse(initialResponse);
     }
 }

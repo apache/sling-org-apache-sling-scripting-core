@@ -91,8 +91,12 @@ public class ScriptContextProvider implements BundleListener {
 
     private final ConcurrentHashMap<BundleContext, ServiceCache> perContextServiceCache = new ConcurrentHashMap<>();
 
-    public ExecutableContext prepareScriptContext(SlingHttpServletRequest request, SlingHttpServletResponse response, ExecutableUnit executable)
+    public ExecutableContext prepareScriptContext(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                                                  ExecutableUnit executable)
             throws IOException {
+        InternalScriptHelper scriptHelper = new InternalScriptHelper(executable.getBundleContext(), new SlingScriptAdapter(request.getResourceResolver(),
+                executable.getPath(), "sling/bundle/resource"), request, response,
+                perContextServiceCache.computeIfAbsent(executable.getBundleContext(), ServiceCache::new));
         ScriptEngine scriptEngine = scriptEngineManager.getEngineByName(executable.getScriptEngineName());
         if (scriptEngine == null) {
             scriptEngine = scriptEngineManager.getEngineByExtension(executable.getScriptExtension());
@@ -103,18 +107,16 @@ public class ScriptContextProvider implements BundleListener {
         }
         // prepare the SlingBindings
         Bindings bindings = new LazyBindings();
-        bindings.put("properties", (LazyBindings.Supplier) () -> request.getResource().getValueMap());
-        bindings.put(SlingBindings.REQUEST, request);
-        bindings.put(SlingBindings.RESPONSE, response);
-        bindings.put(SlingBindings.READER, request.getReader());
-        bindings.put(SlingBindings.RESOURCE, request.getResource());
-        bindings.put(SlingBindings.RESOLVER, request.getResource().getResourceResolver());
-        bindings.put(SlingBindings.OUT, response.getWriter());
+        bindings.put("properties", (LazyBindings.Supplier) () -> scriptHelper.getRequest().getResource().getValueMap());
+        bindings.put(SlingBindings.REQUEST, scriptHelper.getRequest());
+        bindings.put(SlingBindings.RESPONSE, scriptHelper.getResponse());
+        bindings.put(SlingBindings.READER, scriptHelper.getRequest().getReader());
+        bindings.put(SlingBindings.OUT, scriptHelper.getResponse().getWriter());
+        bindings.put(SlingBindings.RESOURCE, scriptHelper.getRequest().getResource());
+        bindings.put(SlingBindings.RESOLVER, scriptHelper.getRequest().getResource().getResourceResolver());
         Logger scriptLogger = LoggerFactory.getLogger(executable.getName());
         bindings.put(SlingBindings.LOG, scriptLogger);
-        bindings.put(SlingBindings.SLING, new InternalScriptHelper(executable.getBundleContext(), new SlingScriptAdapter(request.getResourceResolver(),
-                executable.getPath(), "sling/bundle/resource"), request, response,
-                perContextServiceCache.computeIfAbsent(executable.getBundleContext(), ServiceCache::new)));
+        bindings.put(SlingBindings.SLING, scriptHelper);
         bindings.put(BundledRenderUnit.VARIABLE, executable);
         bindings.put(ScriptEngine.FILENAME, executable.getPath());
         bindings.put(ScriptEngine.FILENAME.replaceAll("\\.", "_"), executable.getPath());
@@ -140,9 +142,9 @@ public class ScriptContextProvider implements BundleListener {
         LazyBindings slingScopeBindings = new LazyBindings(slingBindingsSuppliers);
         scriptContext.setBindings(slingScopeBindings, SlingScriptConstants.SLING_SCOPE);
         scriptContext.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
-        scriptContext.setWriter(response.getWriter());
         scriptContext.setErrorWriter(new LogWriter(scriptLogger));
-        scriptContext.setReader(request.getReader());
+        scriptContext.setWriter(scriptHelper.getResponse().getWriter());
+        scriptContext.setReader(scriptHelper.getRequest().getReader());
         return new ExecutableContext(scriptContext, executable, scriptEngine);
     }
 
