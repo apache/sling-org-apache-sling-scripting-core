@@ -861,7 +861,7 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
                 delegatee = this.resource.adaptTo(InputStream.class);
                 if (delegatee == null) {
                     throw new IOException("Cannot get a stream to the script resource "
-                        + this.resource);
+                        + this.resource.getPath());
                 }
             }
             return delegatee;
