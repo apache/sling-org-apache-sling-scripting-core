@@ -139,15 +139,13 @@ public class BundleRenderUnitFinderImpl implements BundledRenderUnitFinder {
                 matches.add(base + SLASH + resourceType.getResourceLabel() + DOT + extension);
             }
             if (StringUtils.isNotEmpty(method)) {
-                matches.add(base + SLASH + resourceType.getResourceLabel() + DOT + method);
-            }
-            matches.add(base + SLASH + resourceType.getResourceLabel());
-            if (StringUtils.isNotEmpty(method)) {
                 matches.add(base + SLASH + method);
+                matches.add(base + SLASH + resourceType.getResourceLabel() + DOT + method);
             }
             if (StringUtils.isNotEmpty(extension)) {
                 matches.add(base + SLASH + extension);
             }
+            matches.add(base + SLASH + resourceType.getResourceLabel());
         }
         return Collections.unmodifiableList(matches);
     }
