@@ -95,7 +95,7 @@ public class BundleRenderUnitFinderImpl implements BundledRenderUnitFinder {
         try {
             Class<?> clazz = bundle.loadClass(className);
             return new PrecompiledScript(providers, context, bundle, path, clazz, scriptEngineName, scriptExtension, scriptContextProvider);
-        } catch (ClassNotFoundException ignored) {
+        } catch (ClassNotFoundException | NoClassDefFoundError ignored) {
             URL bundledScriptURL = bundle.getEntry(NS_JAVAX_SCRIPT_CAPABILITY + (path.startsWith("/") ? "" : SLASH) + path);
             if (bundledScriptURL != null) {
                 return new Script(providers, context, bundle, path, bundledScriptURL, scriptEngineName, scriptExtension, scriptContextProvider);
