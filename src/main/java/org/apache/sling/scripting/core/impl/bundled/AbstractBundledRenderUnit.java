@@ -34,8 +34,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
-import org.apache.sling.scripting.core.impl.helper.OnDemandReaderRequest;
-import org.apache.sling.scripting.core.impl.helper.OnDemandWriterResponse;
 import org.apache.sling.scripting.spi.bundle.TypeProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,7 +124,7 @@ abstract class AbstractBundledRenderUnit implements ExecutableUnit {
                 }
             }
         }
-        return null;
+        return result;
     }
 
     @Override
