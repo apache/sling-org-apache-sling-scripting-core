@@ -18,29 +18,35 @@
  */
 package org.apache.sling.scripting.core.impl;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
+import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ServiceCache implements ServiceListener {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ServiceCache.class);
+
     private final BundleContext bundleContext;
 
-    private static final Reference NULL_REFERENCE = new Reference();
-
-    private final ConcurrentHashMap<String, Reference> cache = new ConcurrentHashMap<String, Reference>();
-
-    /**
-     * The list of references - we don't need to synchronize this as we are
-     * running in one single request.
-     */
-    protected final List<ServiceReference> references = new ArrayList<ServiceReference>();
+    private final ConcurrentHashMap<String, SortedSet<Reference>> cache = new ConcurrentHashMap<>();
 
     public ServiceCache(final BundleContext ctx) {
         this.bundleContext = ctx;
@@ -49,11 +55,12 @@ public class ServiceCache implements ServiceListener {
 
     public void dispose() {
         this.bundleContext.removeServiceListener(this);
-        for (final Reference ref : cache.values()) {
-            if ( ref != NULL_REFERENCE ) {
-                this.bundleContext.ungetService(ref.reference);
+        for (final SortedSet<Reference> references : cache.values()) {
+            for (Reference reference : references) {
+                this.bundleContext.ungetService(reference.getServiceReference());
             }
         }
+        cache.clear();
     }
 
     /**
@@ -63,70 +70,151 @@ public class ServiceCache implements ServiceListener {
      * @return The service or <code>null</code>
      */
     @SuppressWarnings("unchecked")
+    @Nullable
     public <ServiceType> ServiceType getService(Class<ServiceType> type) {
-        final String key = type.getName();
-        Reference reference = this.cache.get(key);
-        if (reference == null) {
-
-            // get the service
-            ServiceReference ref = this.bundleContext.getServiceReference(key);
-            if (ref != null) {
-                final Object service = this.bundleContext.getService(ref);
-                if (service != null) {
-                    reference = new Reference();
-                    reference.service = service;
-                    reference.reference = ref;
-                } else {
-                    ref = null;
-                }
-            }
-
-            // assume missing service
-            if (reference == null) {
-                reference = NULL_REFERENCE;
-            }
-
-            // check to see whether another thread has not done the same thing
-            synchronized (this) {
-                Reference existing = this.cache.get(key);
-                if (existing == null) {
-                    this.cache.put(key, reference);
-                    ref = null;
-                } else {
-                    reference = existing;
-                }
-            }
-
-            // unget the service if another thread was faster
-            if (ref != null) {
-                this.bundleContext.ungetService(ref);
+        SortedSet<Reference> references = getCachedReferences(type);
+        for (Reference reference : references) {
+            ServiceType service = (ServiceType) reference.getService();
+            if (service != null) {
+                return service;
             }
         }
+        return null;
+    }
 
-        // return whatever we got (which may be null)
-        return (ServiceType) reference.service;
+    @SuppressWarnings("unchecked")
+    @Nullable
+    public <ServiceType> ServiceType[] getServices(Class<ServiceType> type, String filter) {
+        List<ServiceType> result = new ArrayList<>();
+        try {
+            SortedSet<Reference> cachedReferences = getCachedReferences(type);
+            final Collection<ServiceReference<ServiceType>> filteredReferences = this.bundleContext.getServiceReferences(type, filter);
+            if (!filteredReferences.isEmpty()) {
+                List<ServiceReference<ServiceType>> localFilteredReferences = new ArrayList<>(filteredReferences);
+                Collections.sort(localFilteredReferences);
+                // get the highest ranking first
+                Collections.reverse(localFilteredReferences);
+                for (ServiceReference<ServiceType> serviceReference : localFilteredReferences) {
+                    Reference lookup = new Reference(serviceReference);
+                    if (cachedReferences.contains(lookup)) {
+                        for (Reference reference : cachedReferences) {
+                            if (serviceReference.equals(reference.getServiceReference())) {
+                                ServiceType service = (ServiceType) reference.getService();
+                                if (service != null) {
+                                    result.add(service);
+                                }
+                                break;
+                            }
+                        }
+                    } else {
+                        // concurrent change; restart
+                        return getServices(type, filter);
+                    }
+                }
+            }
+        } catch (InvalidSyntaxException e) {
+            LOGGER.error(String.format("Unable to retrieve the services of type %s.", type.getName()), e);
+        }
+        if (!result.isEmpty()) {
+            ServiceType[] srv = (ServiceType[]) Array.newInstance(type, result.size());
+            return result.toArray(srv);
+        }
+        return null;
     }
 
     /**
      * @see org.osgi.framework.ServiceListener#serviceChanged(org.osgi.framework.ServiceEvent)
      */
     public void serviceChanged(ServiceEvent event) {
-        final String[] objectClasses = (String[])event.getServiceReference().getProperty(Constants.OBJECTCLASS);
-        if ( objectClasses != null) {
-            for(final String key : objectClasses) {
-                Reference ref = null;
-                synchronized ( this ) {
-                    ref = this.cache.remove(key);
-                }
-                if ( ref != null && ref != NULL_REFERENCE ) {
-                    this.bundleContext.ungetService(ref.reference);
+        ServiceReference<?> serviceReference = event.getServiceReference();
+        final String[] objectClasses = (String[]) serviceReference.getProperty(Constants.OBJECTCLASS);
+        if (objectClasses != null) {
+            for (final String key : objectClasses) {
+                SortedSet<Reference> references;
+                synchronized (this) {
+                    references = this.cache.remove(key);
+                    if (references != null) {
+                        for (Reference reference : references) {
+                            bundleContext.ungetService(reference.getServiceReference());
+                        }
+                    }
                 }
             }
         }
     }
 
-    protected static final class Reference {
-        public ServiceReference reference;
-        public Object           service;
+    private <ServiceType> SortedSet<Reference> getCachedReferences(Class<ServiceType> type) {
+        String key = type.getName();
+        SortedSet<Reference> references = cache.get(key);
+        if (references == null) {
+            references = Collections.synchronizedSortedSet(new TreeSet<>((o1, o2) -> -1 * o1.compareTo(o2)));
+            try {
+                Collection<ServiceReference<ServiceType>> serviceReferences = this.bundleContext.getServiceReferences(type, null);
+                if (!serviceReferences.isEmpty()) {
+                    List<ServiceReference<ServiceType>> localReferences = new ArrayList<>(serviceReferences);
+                    Collections.sort(localReferences);
+                    Collections.reverse(localReferences);
+                    for (ServiceReference<ServiceType> ref : localReferences) {
+                        references.add(new Reference(ref));
+                    }
+                    synchronized (this) {
+                        SortedSet<Reference> existing = this.cache.get(key);
+                        if (existing != null) {
+                            existing.addAll(
+                                    references.stream().filter(reference -> !existing.contains(reference)).collect(Collectors.toList()));
+                            references = existing;
+                        } else {
+                            this.cache.put(key, references);
+                        }
+                    }
+                }
+            } catch (InvalidSyntaxException e) {
+                LOGGER.error(String.format("Unable to retrieve the services of type %s.", type.getName()), e);
+            }
+        }
+        return references;
+    }
+
+
+    private final class Reference implements Comparable<Reference> {
+        private final ServiceReference<?> serviceReference;
+        private Object service;
+
+        Reference(ServiceReference<?> serviceReference) {
+            this.serviceReference = serviceReference;
+        }
+
+        @Override
+        public int compareTo(@NotNull ServiceCache.Reference o) {
+            return this.serviceReference.compareTo(o.serviceReference);
+        }
+
+        synchronized Object getService() {
+            if (service == null) {
+                service = bundleContext.getService(serviceReference);
+            }
+            return service;
+        }
+
+        ServiceReference<?> getServiceReference() {
+            return serviceReference;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(serviceReference);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj instanceof Reference) {
+                Reference other = (Reference) obj;
+                return Objects.equals(this.serviceReference, other.serviceReference);
+            }
+            return false;
+        }
     }
 }

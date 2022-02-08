@@ -22,16 +22,11 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
+import org.apache.sling.scripting.core.impl.ServiceCache;
 import org.apache.sling.scripting.spi.bundle.BundledRenderUnit;
 import org.jetbrains.annotations.NotNull;
 
-interface ExecutableUnit extends BundledRenderUnit
-{
-
-    /**
-     * Releases all acquired dependencies which were retrieved through {@link #getService(String)} or {@link #getServices(String, String)}.
-     */
-    void releaseDependencies();
+interface ExecutableUnit extends BundledRenderUnit {
 
     /**
      * Returns the short name of the {@link ScriptEngine} with which {@code this ExecutableUnit} can be evaluated.
@@ -58,4 +53,13 @@ interface ExecutableUnit extends BundledRenderUnit
      * @throws ScriptException if the execution leads to an error
      */
     void eval(@NotNull ScriptEngine scriptEngine, @NotNull ScriptContext context) throws ScriptException;
+
+    /**
+     * Returns the {@link ServiceCache} that's used for retrieving OSGi dependencies at run-time for this executable unit. The {@link
+     * ServiceCache} is based on the {@link org.osgi.framework.BundleContext} provided by {@link #getBundleContext()}.
+     *
+     * @return the service cache
+     */
+    @NotNull
+    ServiceCache getServiceCache();
 }

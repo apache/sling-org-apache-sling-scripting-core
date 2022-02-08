@@ -18,37 +18,44 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.scripting.core.impl.bundled;
 
-import static org.junit.Assert.assertSame;
-
 import java.util.Collections;
+import java.util.Hashtable;
 
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
+import org.apache.sling.scripting.core.impl.ServiceCache;
+import org.apache.sling.testing.mock.osgi.junit.OsgiContext;
+import org.jetbrains.annotations.NotNull;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.Mockito;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
+
+import static org.junit.Assert.assertSame;
 
 public class AbstractBundledRenderUnitTest {
+
+    private static final String CLASS_TYPE = Object.class.getName();
+
+    @Rule
+    public OsgiContext osgiContext = new OsgiContext();
+
+    private ServiceCache serviceCache;
+
+    @Before
+    public void before() {
+        serviceCache = new ServiceCache(osgiContext.bundleContext());
+    }
+
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Test
     public void testGetService() throws Exception {
         Object fooBarSvc = new Object();
-
-        ServiceReference sref = Mockito.mock(ServiceReference.class);
-
-        BundleContext bc = Mockito.mock(BundleContext.class);
-        Mockito.when(bc.getServiceReference("foo.Bar"))
-            .thenReturn(sref);
-        Mockito.when(bc.getService(sref))
-            .thenReturn(fooBarSvc);
-
+        osgiContext.bundleContext().registerService(Object.class, fooBarSvc, new Hashtable<>());
         AbstractBundledRenderUnit abru = new AbstractBundledRenderUnit(
-                Collections.emptySet(), bc, Mockito.mock(Bundle.class), "/",
-                "testeng", "htl", new ScriptContextProvider()) {
+                Collections.emptySet(), osgiContext.bundleContext(), osgiContext.bundleContext().getBundle(), "/",
+                "testeng", "htl", new ScriptContextProvider(), serviceCache) {
 
             @Override
             public void eval(
@@ -59,23 +66,26 @@ public class AbstractBundledRenderUnitTest {
             @Override
             public String getName() {
                 return "test";
-            }};
+            }
 
-        assertSame(fooBarSvc, abru.getService("foo.Bar"));
+            @Override
+            public @NotNull ServiceCache getServiceCache() {
+                return serviceCache;
+            }
+        };
+
+        assertSame(fooBarSvc, abru.getService(CLASS_TYPE));
 
         // Make the service registry return a new service now
         Object newSvc = new Object();
-        ServiceReference sref2 = Mockito.mock(ServiceReference.class);
-        Mockito.when(bc.getServiceReference("foo.Bar"))
-            .thenReturn(sref2);
-        Mockito.when(bc.getService(sref2))
-            .thenReturn(newSvc);
+        osgiContext.bundleContext().registerService(Object.class, newSvc, new Hashtable<>());
 
-        assertSame("Second invocation should return the old service from the cache",
-                fooBarSvc, abru.getService("foo.Bar"));
+        assertSame("Second invocation should return still the first service from the cache",
+                fooBarSvc, abru.getService(CLASS_TYPE));
 
-        abru.releaseDependencies();
-        assertSame("After cleaning the cache check that the new service is returned",
-                newSvc, abru.getService("foo.Bar"));
+        serviceCache.dispose();
+
+        assertSame("After cleaning the cache check that still the first service is returned, since it has the highest priority.",
+                fooBarSvc, abru.getService(CLASS_TYPE));
     }
 }

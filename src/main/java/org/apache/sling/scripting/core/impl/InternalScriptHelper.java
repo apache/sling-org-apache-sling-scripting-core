@@ -20,6 +20,7 @@ package org.apache.sling.scripting.core.impl;
 
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.scripting.InvalidServiceFilterSyntaxException;
 import org.apache.sling.api.scripting.SlingScript;
 import org.apache.sling.scripting.core.ScriptHelper;
 import org.osgi.framework.BundleContext;
@@ -52,5 +53,11 @@ public class InternalScriptHelper extends ScriptHelper {
      */
     public <ServiceType> ServiceType getService(Class<ServiceType> type) {
         return this.serviceCache.getService(type);
+    }
+
+    @Override
+    public <ServiceType> ServiceType[] getServices(Class<ServiceType> serviceType, String filter)
+            throws InvalidServiceFilterSyntaxException {
+        return this.serviceCache.getServices(serviceType, filter);
     }
 }
