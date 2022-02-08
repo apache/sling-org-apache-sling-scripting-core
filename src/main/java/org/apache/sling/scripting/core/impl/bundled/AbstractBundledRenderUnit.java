@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.wiring.BundleWiring;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -104,7 +105,8 @@ abstract class AbstractBundledRenderUnit implements ExecutableUnit {
     @SuppressWarnings("unchecked")
     public <T> T getService(@NotNull String className) {
         try {
-            return (T) serviceCache.getService(Class.forName(className));
+            ClassLoader bundleClassloader = getBundle().adapt(BundleWiring.class).getClassLoader();
+            return (T) serviceCache.getService(bundleClassloader.loadClass(className));
         } catch (ClassNotFoundException e) {
             LOG.error("Unable to retrieve a service of type " + className + " for bundled script " + path, e);
         }
@@ -116,7 +118,8 @@ abstract class AbstractBundledRenderUnit implements ExecutableUnit {
     @SuppressWarnings("unchecked")
     public <T> T[] getServices(@NotNull String className, @Nullable String filter) {
         try {
-            return (T[]) serviceCache.getServices(Class.forName(className), filter);
+            ClassLoader bundleClassloader = getBundle().adapt(BundleWiring.class).getClassLoader();
+            return (T[]) serviceCache.getServices(bundleClassloader.loadClass(className), filter);
         } catch (ClassNotFoundException e) {
             LOG.error("Unable to retrieve a service of type " + className + " for bundled script " + path, e);
         }
