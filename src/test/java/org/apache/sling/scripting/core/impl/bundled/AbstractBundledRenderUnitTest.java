@@ -31,8 +31,14 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.wiring.BundleWiring;
 
 import static org.junit.Assert.assertSame;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 public class AbstractBundledRenderUnitTest {
 
@@ -41,11 +47,18 @@ public class AbstractBundledRenderUnitTest {
     @Rule
     public OsgiContext osgiContext = new OsgiContext();
 
+    private BundleContext bundleContext;
     private ServiceCache serviceCache;
 
     @Before
     public void before() {
-        serviceCache = new ServiceCache(osgiContext.bundleContext());
+        bundleContext = spy(osgiContext.bundleContext());
+        Bundle bundle = mock(Bundle.class);
+        when(bundleContext.getBundle()).thenReturn(bundle);
+        BundleWiring bundleWiring = mock(BundleWiring.class);
+        when(bundle.adapt(BundleWiring.class)).thenReturn(bundleWiring);
+        when(bundleWiring.getClassLoader()).thenReturn(this.getClass().getClassLoader());
+        serviceCache = new ServiceCache(bundleContext);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -54,7 +67,7 @@ public class AbstractBundledRenderUnitTest {
         Object fooBarSvc = new Object();
         osgiContext.bundleContext().registerService(Object.class, fooBarSvc, new Hashtable<>());
         AbstractBundledRenderUnit abru = new AbstractBundledRenderUnit(
-                Collections.emptySet(), osgiContext.bundleContext(), osgiContext.bundleContext().getBundle(), "/",
+                Collections.emptySet(), bundleContext, bundleContext.getBundle(), "/",
                 "testeng", "htl", new ScriptContextProvider(), serviceCache) {
 
             @Override
