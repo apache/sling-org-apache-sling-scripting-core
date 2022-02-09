@@ -22,12 +22,15 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.type.ResourceType;
 import org.apache.sling.commons.compiler.source.JavaEscapeHelper;
+import org.apache.sling.scripting.core.impl.ServiceCache;
 import org.apache.sling.scripting.spi.bundle.BundledRenderUnit;
 import org.apache.sling.scripting.spi.bundle.BundledRenderUnitCapability;
 import org.apache.sling.scripting.spi.bundle.BundledRenderUnitFinder;
@@ -36,17 +39,24 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleEvent;
+import org.osgi.framework.BundleListener;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 
 @Component
-public class BundleRenderUnitFinderImpl implements BundledRenderUnitFinder {
+public class BundleRenderUnitFinderImpl implements BundledRenderUnitFinder, BundleListener {
+
     @Reference
     ScriptContextProvider scriptContextProvider;
 
     private static final String NS_JAVAX_SCRIPT_CAPABILITY = "javax.script";
     private static final String SLASH = "/";
     private static final String DOT = ".";
+
+    private final ConcurrentHashMap<BundleContext, ServiceCache> perContextServiceCache = new ConcurrentHashMap<>();
 
     @Override
     @Nullable
@@ -92,13 +102,17 @@ public class BundleRenderUnitFinderImpl implements BundledRenderUnitFinder {
     private BundledRenderUnit findUnit(@NotNull BundleContext context, @NotNull Bundle bundle, @NotNull String path, String scriptEngineName,
                                        @NotNull String scriptExtension, @NotNull Set<TypeProvider> providers) {
         String className = JavaEscapeHelper.makeJavaPackage(path);
+        ServiceCache serviceCache = perContextServiceCache.computeIfAbsent(context, ServiceCache::new);
         try {
             Class<?> clazz = bundle.loadClass(className);
-            return new PrecompiledScript(providers, context, bundle, path, clazz, scriptEngineName, scriptExtension, scriptContextProvider);
+
+            return new PrecompiledScript(providers, context, bundle, path, clazz, scriptEngineName, scriptExtension,
+                    scriptContextProvider, serviceCache);
         } catch (ClassNotFoundException | NoClassDefFoundError ignored) {
             URL bundledScriptURL = bundle.getEntry(NS_JAVAX_SCRIPT_CAPABILITY + (path.startsWith("/") ? "" : SLASH) + path);
             if (bundledScriptURL != null) {
-                return new Script(providers, context, bundle, path, bundledScriptURL, scriptEngineName, scriptExtension, scriptContextProvider);
+                return new Script(providers, context, bundle, path, bundledScriptURL, scriptEngineName, scriptExtension,
+                        scriptContextProvider, serviceCache);
             }
         }
         return null;
@@ -148,5 +162,29 @@ public class BundleRenderUnitFinderImpl implements BundledRenderUnitFinder {
             matches.add(base + SLASH + resourceType.getResourceLabel());
         }
         return Collections.unmodifiableList(matches);
+    }
+
+    @Activate
+    private void activate(BundleContext bundleContext) {
+        bundleContext.addBundleListener(this);
+    }
+
+    @Deactivate
+    private void deactivate(BundleContext bundleContext) {
+        bundleContext.removeBundleListener(this);
+    }
+
+    @Override
+    public void bundleChanged(BundleEvent event) {
+        if (event.getType() == BundleEvent.STOPPED) {
+            for (Iterator<BundleContext> iterator = perContextServiceCache.keySet().iterator(); iterator.hasNext(); ) {
+                try {
+                    iterator.next().getBundle();
+                } catch (IllegalStateException e) {
+                    iterator.remove();
+                }
+            }
+
+        }
     }
 }

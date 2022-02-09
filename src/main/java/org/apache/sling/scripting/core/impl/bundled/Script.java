@@ -35,6 +35,7 @@ import javax.script.ScriptException;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.sling.scripting.core.ScriptNameAwareReader;
+import org.apache.sling.scripting.core.impl.ServiceCache;
 import org.apache.sling.scripting.spi.bundle.TypeProvider;
 import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.Bundle;
@@ -50,8 +51,9 @@ class Script extends AbstractBundledRenderUnit {
 
 
     Script(@NotNull Set<TypeProvider> providers, @NotNull BundleContext context, @NotNull Bundle bundle, @NotNull String path, @NotNull URL url,
-           @NotNull String scriptEngineName, @NotNull String scriptExtension, @NotNull ScriptContextProvider scriptContextProvider) {
-        super(providers, context, bundle, path, scriptEngineName, scriptExtension, scriptContextProvider);
+           @NotNull String scriptEngineName, @NotNull String scriptExtension, @NotNull ScriptContextProvider scriptContextProvider,
+           @NotNull ServiceCache serviceCache) {
+        super(providers, context, bundle, path, scriptEngineName, scriptExtension, scriptContextProvider, serviceCache);
         this.url = url;
     }
 

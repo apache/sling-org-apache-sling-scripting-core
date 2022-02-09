@@ -26,6 +26,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.sling.scripting.core.impl.ServiceCache;
 import org.apache.sling.scripting.spi.bundle.TypeProvider;
 import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.Bundle;
@@ -38,8 +39,9 @@ class PrecompiledScript extends AbstractBundledRenderUnit {
     private volatile Object instance;
 
     PrecompiledScript(@NotNull Set<TypeProvider> providers, @NotNull BundleContext context, @NotNull Bundle bundle, @NotNull String path, @NotNull Class<?> clazz,
-                      @NotNull String scriptEngineName, @NotNull String scriptExtension, @NotNull ScriptContextProvider scriptContextProvider) {
-        super(providers, context, bundle, path, scriptEngineName, scriptExtension, scriptContextProvider);
+                      @NotNull String scriptEngineName, @NotNull String scriptExtension,
+                      @NotNull ScriptContextProvider scriptContextProvider, @NotNull ServiceCache serviceCache) {
+        super(providers, context, bundle, path, scriptEngineName, scriptExtension, scriptContextProvider, serviceCache);
         this.clazz = clazz;
     }
 

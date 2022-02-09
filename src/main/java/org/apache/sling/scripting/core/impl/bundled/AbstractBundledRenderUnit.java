@@ -19,13 +19,6 @@
 package org.apache.sling.scripting.core.impl.bundled;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.script.ScriptException;
@@ -34,12 +27,13 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.scripting.core.impl.ServiceCache;
 import org.apache.sling.scripting.spi.bundle.TypeProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
+import org.osgi.framework.wiring.BundleWiring;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,12 +48,11 @@ abstract class AbstractBundledRenderUnit implements ExecutableUnit {
     private final String scriptEngineName;
     private final String scriptExtension;
     private final ScriptContextProvider scriptContextProvider;
-    private List<ServiceReference<?>> references;
-    private Map<String, Object> services;
-
+    private final ServiceCache serviceCache;
 
     AbstractBundledRenderUnit(@NotNull Set<TypeProvider> providers, @NotNull BundleContext context, @NotNull Bundle bundle, @NotNull String path,
-                              @NotNull String scriptEngineName, @NotNull String scriptExtension, @NotNull ScriptContextProvider scriptContextProvider) {
+                              @NotNull String scriptEngineName, @NotNull String scriptExtension,
+                              @NotNull ScriptContextProvider scriptContextProvider, @NotNull ServiceCache serviceCache) {
         this.providers = providers;
         this.bundle = bundle;
         this.path = path;
@@ -67,6 +60,7 @@ abstract class AbstractBundledRenderUnit implements ExecutableUnit {
         this.scriptExtension = scriptExtension;
         this.scriptContextProvider = scriptContextProvider;
         this.bundleContext = context;
+        this.serviceCache = serviceCache;
     }
 
     @Override
@@ -102,81 +96,35 @@ abstract class AbstractBundledRenderUnit implements ExecutableUnit {
     }
 
     @Override
+    public @NotNull ServiceCache getServiceCache() {
+        return serviceCache;
+    }
+
+    @Override
     @Nullable
     @SuppressWarnings("unchecked")
     public <T> T getService(@NotNull String className) {
-        LOG.debug("Attempting to load class {} as an OSGi service.", className);
-        T result = (this.services == null ? null : (T) this.services.get(className));
-        if (result == null) {
-            final ServiceReference<?> ref = this.bundleContext.getServiceReference(className);
-            if (ref != null) {
-                result = (T) this.bundleContext.getService(ref);
-                if (result != null) {
-                    if (this.services == null) {
-                        this.services = new HashMap<>();
-                    }
-                    if (this.references == null) {
-                        this.references = new ArrayList<>();
-                    }
-                    this.references.add(ref);
-                    this.services.put(className, result);
-                    return result;
-                }
-            }
+        try {
+            ClassLoader bundleClassloader = getBundle().adapt(BundleWiring.class).getClassLoader();
+            return (T) serviceCache.getService(bundleClassloader.loadClass(className));
+        } catch (ClassNotFoundException e) {
+            LOG.error("Unable to retrieve a service of type " + className + " for bundled script " + path, e);
         }
-        return result;
+        return null;
     }
 
     @Override
     @Nullable
     @SuppressWarnings("unchecked")
     public <T> T[] getServices(@NotNull String className, @Nullable String filter) {
-        T[] result = null;
         try {
-            final ServiceReference<?>[] refs = this.bundleContext.getServiceReferences(className, filter);
-
-            if (refs != null) {
-                // sort by service ranking (lowest first) (see ServiceReference#compareTo(Object))
-                List<ServiceReference<?>> localReferences = Arrays.asList(refs);
-                Collections.sort(localReferences);
-                // get the highest ranking first
-                Collections.reverse(localReferences);
-
-                final List<T> objects = new ArrayList<>();
-                for (ServiceReference<?> reference : localReferences) {
-                    final T service = (T) this.bundleContext.getService(reference);
-                    if (service != null) {
-                        if (this.references == null) {
-                            this.references = new ArrayList<>();
-                        }
-                        this.references.add(reference);
-                        objects.add(service);
-                    }
-                }
-                if (!objects.isEmpty()) {
-                    T[] srv = (T[]) Array.newInstance(bundle.loadClass(className), objects.size());
-                    result = objects.toArray(srv);
-                }
-            }
-        } catch (Exception e) {
-            LOG.error(String.format("Unable to retrieve the services of type %s.", className), e);
+            ClassLoader bundleClassloader = getBundle().adapt(BundleWiring.class).getClassLoader();
+            return (T[]) serviceCache.getServices(bundleClassloader.loadClass(className), filter);
+        } catch (ClassNotFoundException e) {
+            LOG.error("Unable to retrieve a service of type " + className + " for bundled script " + path, e);
         }
-        return result;
+        return null;
     }
-
-    @Override
-    public void releaseDependencies() {
-        if (references != null) {
-            for (ServiceReference<?> reference : this.references) {
-                bundleContext.ungetService(reference);
-            }
-            references.clear();
-        }
-        if (services != null) {
-            services.clear();
-        }
-    }
-
 
     @Override
     public void eval(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response) throws ScriptException {
