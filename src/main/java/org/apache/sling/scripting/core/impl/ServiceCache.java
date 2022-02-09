@@ -22,12 +22,12 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -147,7 +147,7 @@ public class ServiceCache implements ServiceListener {
         String key = type.getName();
         SortedSet<Reference> references = cache.get(key);
         if (references == null) {
-            references = Collections.synchronizedSortedSet(new TreeSet<>((o1, o2) -> -1 * o1.compareTo(o2)));
+            references = new ConcurrentSkipListSet<>(Comparator.reverseOrder());
             try {
                 Collection<ServiceReference<ServiceType>> serviceReferences = this.bundleContext.getServiceReferences(type, null);
                 if (!serviceReferences.isEmpty()) {
@@ -160,8 +160,7 @@ public class ServiceCache implements ServiceListener {
                     synchronized (this) {
                         SortedSet<Reference> existing = this.cache.get(key);
                         if (existing != null) {
-                            existing.addAll(
-                                    references.stream().filter(reference -> !existing.contains(reference)).collect(Collectors.toList()));
+                            existing.addAll(references);
                             references = existing;
                         } else {
                             this.cache.put(key, references);
