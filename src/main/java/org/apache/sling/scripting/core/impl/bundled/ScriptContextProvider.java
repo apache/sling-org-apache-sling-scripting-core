@@ -113,6 +113,7 @@ public class ScriptContextProvider {
         bindings.put(ScriptEngine.FILENAME.replaceAll("\\.", "_"), executable.getPath());
 
         ProtectedBindings protectedBindings = new ProtectedBindings(bindings, PROTECTED_BINDINGS);
+        long inclusionStart = System.nanoTime();
         for (BindingsValuesProvider bindingsValuesProvider : bvpTracker.getBindingsValuesProviders(scriptEngine.getFactory(),
                 BindingsValuesProvider.DEFAULT_CONTEXT)) {
             long start = System.nanoTime();
@@ -126,6 +127,9 @@ public class ScriptContextProvider {
                         new Object[]{bindingsValuesProvider.getClass().getName(), (stop-start)/1000, WARN_LIMIT_FOR_BVP_NANOS/1000});
             }
         }
+        long duration = (System.nanoTime() - inclusionStart) / 1000;
+        request.getRequestProgressTracker().log("Adding bindings took " + duration + " microseconds");
+
         ScriptContext scriptContext = new BundledScriptContext();
         Map<String, LazyBindings.Supplier> slingBindingsSuppliers = new HashMap<>();
         slingBindingsSuppliers.put(SlingScriptConstants.ATTR_SCRIPT_RESOURCE_RESOLVER,

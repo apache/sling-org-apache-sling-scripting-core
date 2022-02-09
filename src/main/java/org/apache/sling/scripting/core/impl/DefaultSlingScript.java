@@ -732,8 +732,9 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
         if (!bindingsValuesProviders.isEmpty()) {
             Set<String> protectedKeys = new HashSet<String>();
             protectedKeys.addAll(PROTECTED_KEYS);
-
             ProtectedBindings protectedBindings = new ProtectedBindings(bindings, protectedKeys);
+            
+            long inclusionStart = System.nanoTime();
             for (BindingsValuesProvider provider : bindingsValuesProviders) {
                 long start = System.nanoTime();
                 provider.addBindings(protectedBindings);
@@ -746,6 +747,8 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
                             new Object[]{provider.getClass().getName(), (stop-start)/1000, WARN_LIMIT_FOR_BVP_NANOS/1000});
                 }
             }
+            long duration = (System.nanoTime() - inclusionStart) / 1000;
+            request.getRequestProgressTracker().log("Adding bindings took " + duration + " microseconds");
         }
 
         return bindings;
