@@ -92,6 +92,10 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
     /** is defined on multiple files in this bundle*/
     private static final long WARN_LIMIT_FOR_BVP_NANOS = (1000*1000); // 1 ms
 
+    private static final String BINDINGS_THRESHOLD_MESSAGE = "Adding the bindings of %s took %s microseconds which is above the hardcoded" +
+            " limit of %s microseconds; if this message appears often it indicates that this BindingsValuesProvider has an impact on " +
+            "general page rendering performance.";
+
     /** Thread local containing the resource resolver. */
     private static ThreadLocal<ResourceResolver> requestResourceResolver = new ThreadLocal<ResourceResolver>();
 
@@ -742,13 +746,20 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
                 LOGGER.trace("Invoking addBindings() of {} took {} nanoseconds",
                         provider.getClass().getName(), stop-start);
                 if (stop-start > WARN_LIMIT_FOR_BVP_NANOS) {
-                    LOGGER.info("Adding the bindings of {} took {} microseconds which is above the harcoded limit of {} microseconds;"
-                            + " if this message appears often it indicates that this BindingsValuesProvider has an impact on general page rendering performance",
-                            new Object[]{provider.getClass().getName(), (stop-start)/1000, WARN_LIMIT_FOR_BVP_NANOS/1000});
+                    // SLING-11182 - make this work with older implementations of the Sling API
+                    if (request != null && request.getRequestProgressTracker() != null) {
+                        request.getRequestProgressTracker().log(String.format(BINDINGS_THRESHOLD_MESSAGE, provider.getClass().getName(), (stop-start)/1000, WARN_LIMIT_FOR_BVP_NANOS/1000));
+                    } else {
+                        LOGGER.info(String.format(BINDINGS_THRESHOLD_MESSAGE, provider.getClass().getName(), (stop-start)/1000,
+                                WARN_LIMIT_FOR_BVP_NANOS/1000));
+                    }
                 }
             }
-            long duration = (System.nanoTime() - inclusionStart) / 1000;
-            request.getRequestProgressTracker().log("Adding bindings took " + duration + " microseconds");
+            // SLING-11182 - make this work with older implementations of the Sling API
+            if (request != null && request.getRequestProgressTracker() != null) {
+                long duration = (System.nanoTime() - inclusionStart) / 1000;
+                request.getRequestProgressTracker().log("Adding bindings took " + duration + " microseconds");
+            }
         }
 
         return bindings;
