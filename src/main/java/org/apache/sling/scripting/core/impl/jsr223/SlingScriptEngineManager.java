@@ -422,15 +422,17 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
             }
             // and finally factories registered as OSGi services
             if (bundleContext != null) {
-                for (final ServiceReference<ScriptEngineFactory> serviceReference : serviceReferences) {
-                    final ScriptEngineFactory scriptEngineFactory = bundleContext.getService(serviceReference);
-                    if (isIncluded(scriptEngineFactory)) {
-                        final Map<String, Object> factoryProperties = new HashMap<>(serviceReference.getPropertyKeys().length);
-                        for (final String key : serviceReference.getPropertyKeys()) {
-                            factoryProperties.put(key, serviceReference.getProperty(key));
+                synchronized (this.serviceReferences) {
+                    for (final ServiceReference<ScriptEngineFactory> serviceReference : serviceReferences) {
+                        final ScriptEngineFactory scriptEngineFactory = bundleContext.getService(serviceReference);
+                        if (isIncluded(scriptEngineFactory)) {
+                            final Map<String, Object> factoryProperties = new HashMap<>(serviceReference.getPropertyKeys().length);
+                            for (final String key : serviceReference.getPropertyKeys()) {
+                                factoryProperties.put(key, serviceReference.getProperty(key));
+                            }
+                            final SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(scriptEngineFactory, serviceReference.getBundle().getBundleId(), PropertiesUtil.toInteger(serviceReference.getProperty(Constants.SERVICE_RANKING), 0), factoryProperties);
+                            factories.add(sortableScriptEngineFactory);
                         }
-                        final SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(scriptEngineFactory, serviceReference.getBundle().getBundleId(), PropertiesUtil.toInteger(serviceReference.getProperty(Constants.SERVICE_RANKING), 0), factoryProperties);
-                        factories.add(sortableScriptEngineFactory);
                     }
                 }
             }
