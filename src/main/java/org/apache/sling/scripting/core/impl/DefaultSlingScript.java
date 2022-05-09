@@ -418,6 +418,8 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
             throw new ScriptEvaluationException(this.scriptName, ioe.getMessage(),
                 ioe);
 
+        } catch (ScriptEvaluationException see) {
+            throw see;
         } catch (ScriptException se) {
             Throwable cause = (se.getCause() == null) ? se : se.getCause();
             throw new ScriptEvaluationException(this.scriptName, se.getMessage(),
@@ -497,17 +499,12 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
             // evaluate the script now using the ScriptEngine
             eval(props);
 
-        } catch (ScriptEvaluationException see) {
+        } catch (RuntimeException see) {
 
             // log in the request progress tracker
             logScriptError(request, see);
 
             throw see;
-        } catch (SlingException e) {
-            // log in the request progress tracker
-            logScriptError(request, e);
-
-            throw e;
         } catch (Exception e) {
 
             // log in the request progress tracker
