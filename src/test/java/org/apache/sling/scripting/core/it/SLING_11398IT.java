@@ -54,7 +54,8 @@ public class SLING_11398IT extends ScriptingCoreTestSupport {
             baseConfiguration(),
             optionalRemoteDebug(),
             mavenBundle().groupId("org.codehaus.groovy").artifactId("groovy").version("3.0.9").startLevel(1),
-            // factory is defined in this fragment artifact
+            // factory is defined in this fragment artifact – other versions of this bundle (e.g. 3.0.1) were 
+            //  released as regular bundle, not as fragment
             mavenBundle().groupId("org.codehaus.groovy").artifactId("groovy-jsr223").version("3.0.9").noStart()
         );
     }
