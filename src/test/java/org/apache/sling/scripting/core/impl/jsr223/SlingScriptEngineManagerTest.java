@@ -18,6 +18,12 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.scripting.core.impl.jsr223;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -48,12 +54,6 @@ import org.osgi.framework.wiring.BundleWiring;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class SlingScriptEngineManagerTest {
 
@@ -163,7 +163,7 @@ public class SlingScriptEngineManagerTest {
         when(bundle.adapt(BundleWiring.class)).thenReturn(wiring);
         when(wiring.getClassLoader()).thenReturn(loader);
 
-        when(bundle.getEntry(SlingScriptEngineManager.ENGINE_FACTORY_SERVICE)).thenReturn(url);
+        when(bundle.findEntries(SlingScriptEngineManager.META_INF_SERVICES, SlingScriptEngineManager.FACTORY_NAME, false)).thenReturn(Collections.enumeration(Collections.singleton(url)));
 
         BundleEvent bundleEvent = new BundleEvent(BundleEvent.STARTED, bundle);
         SlingScriptEngineManager slingScriptEngineManager = context.getService(SlingScriptEngineManager.class);

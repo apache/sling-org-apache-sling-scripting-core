@@ -110,7 +110,8 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
 
     static final String EVENT_TOPIC_SCRIPT_MANAGER_UPDATED = "org/apache/sling/scripting/core/impl/jsr223/SlingScriptEngineManager/UPDATED";
 
-    static final String ENGINE_FACTORY_SERVICE = "META-INF/services/" + ScriptEngineFactory.class.getName();
+    static final String META_INF_SERVICES = "META-INF/services";
+    static final String FACTORY_NAME = ScriptEngineFactory.class.getName();
 
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
@@ -247,7 +248,8 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
     public void bundleChanged(BundleEvent event) {
         if (event.getType() == BundleEvent.STARTED
                 && event.getBundle().getBundleId() > 0
-                && event.getBundle().getEntry(ENGINE_FACTORY_SERVICE) != null) {
+                   // SLING-11398 - use findEntries instead of getEntry to support fragments
+                && event.getBundle().findEntries(META_INF_SERVICES, FACTORY_NAME, false) != null) {
             synchronized (this.engineSpiBundles) {
                 this.engineSpiBundles.add(event.getBundle());
             }
@@ -302,6 +304,23 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
 
         this.bundleContext = bundleContext;
         bundleContext.addBundleListener(this);
+        registerInitialScriptEngineFactories();
+    }
+
+    /**
+     * Handles any spi bundles that were already started before we started listening
+     */
+    private void registerInitialScriptEngineFactories() {
+        Bundle[] bundles = this.bundleContext.getBundles();
+        for (Bundle bundle : bundles) {
+            if (bundle.getState() == Bundle.ACTIVE
+                    && bundle.getBundleId() > 0
+                    && bundle.findEntries(META_INF_SERVICES, FACTORY_NAME, false) != null) {
+                synchronized (this.engineSpiBundles) {
+                    this.engineSpiBundles.add(bundle);
+                }
+            }
+        }
         updateFactories();
     }
 
