@@ -71,10 +71,10 @@ public class ServiceCache implements ServiceListener {
      */
     @SuppressWarnings("unchecked")
     @Nullable
-    public <ServiceType> ServiceType getService(Class<ServiceType> type) {
+    public <T> T getService(Class<T> type) {
         SortedSet<Reference> references = getCachedReferences(type);
         for (Reference reference : references) {
-            ServiceType service = (ServiceType) reference.getService();
+            T service = (T) reference.getService();
             if (service != null) {
                 return service;
             }
@@ -84,22 +84,22 @@ public class ServiceCache implements ServiceListener {
 
     @SuppressWarnings("unchecked")
     @Nullable
-    public <ServiceType> ServiceType[] getServices(Class<ServiceType> type, String filter) {
-        List<ServiceType> result = new ArrayList<>();
+    public <T> T[] getServices(Class<T> type, String filter) {
+        List<T> result = new ArrayList<>();
         try {
             SortedSet<Reference> cachedReferences = getCachedReferences(type);
-            final Collection<ServiceReference<ServiceType>> filteredReferences = this.bundleContext.getServiceReferences(type, filter);
+            final Collection<ServiceReference<T>> filteredReferences = this.bundleContext.getServiceReferences(type, filter);
             if (!filteredReferences.isEmpty()) {
-                List<ServiceReference<ServiceType>> localFilteredReferences = new ArrayList<>(filteredReferences);
+                List<ServiceReference<T>> localFilteredReferences = new ArrayList<>(filteredReferences);
                 Collections.sort(localFilteredReferences);
                 // get the highest ranking first
                 Collections.reverse(localFilteredReferences);
-                for (ServiceReference<ServiceType> serviceReference : localFilteredReferences) {
+                for (ServiceReference<T> serviceReference : localFilteredReferences) {
                     Reference lookup = new Reference(serviceReference);
                     if (cachedReferences.contains(lookup)) {
                         for (Reference reference : cachedReferences) {
                             if (serviceReference.equals(reference.getServiceReference())) {
-                                ServiceType service = (ServiceType) reference.getService();
+                                T service = (T) reference.getService();
                                 if (service != null) {
                                     result.add(service);
                                 }
@@ -116,7 +116,7 @@ public class ServiceCache implements ServiceListener {
             LOGGER.error(String.format("Unable to retrieve the services of type %s.", type.getName()), e);
         }
         if (!result.isEmpty()) {
-            ServiceType[] srv = (ServiceType[]) Array.newInstance(type, result.size());
+            T[] srv = (T[]) Array.newInstance(type, result.size());
             return result.toArray(srv);
         }
         return null;
@@ -143,18 +143,18 @@ public class ServiceCache implements ServiceListener {
         }
     }
 
-    private <ServiceType> SortedSet<Reference> getCachedReferences(Class<ServiceType> type) {
+    private <T> SortedSet<Reference> getCachedReferences(Class<T> type) {
         String key = type.getName();
         SortedSet<Reference> references = cache.get(key);
         if (references == null) {
             references = new ConcurrentSkipListSet<>(Comparator.reverseOrder());
             try {
-                Collection<ServiceReference<ServiceType>> serviceReferences = this.bundleContext.getServiceReferences(type, null);
+                Collection<ServiceReference<T>> serviceReferences = this.bundleContext.getServiceReferences(type, null);
                 if (!serviceReferences.isEmpty()) {
-                    List<ServiceReference<ServiceType>> localReferences = new ArrayList<>(serviceReferences);
+                    List<ServiceReference<T>> localReferences = new ArrayList<>(serviceReferences);
                     Collections.sort(localReferences);
                     Collections.reverse(localReferences);
-                    for (ServiceReference<ServiceType> ref : localReferences) {
+                    for (ServiceReference<T> ref : localReferences) {
                         references.add(new Reference(ref));
                     }
                     synchronized (this) {

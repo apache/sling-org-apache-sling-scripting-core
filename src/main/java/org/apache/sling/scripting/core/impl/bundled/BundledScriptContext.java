@@ -33,9 +33,14 @@ class BundledScriptContext extends SimpleScriptContext {
 
     private static final Integer[] SCOPES = {SlingScriptConstants.SLING_SCOPE, GLOBAL_SCOPE, ENGINE_SCOPE};
 
-    private Bindings globalScope = new LazyBindings();
-    private Bindings engineScope = new LazyBindings();
-    private Bindings slingScope = new LazyBindings();
+    private Bindings slingScope;
+
+    public BundledScriptContext() {
+        super();
+        globalScope = new LazyBindings();
+        engineScope = new LazyBindings();
+        slingScope = new LazyBindings();
+    }
 
     @Override
     public void setBindings(final Bindings bindings, final int scope) {
@@ -66,8 +71,9 @@ class BundledScriptContext extends SimpleScriptContext {
                 return this.engineScope;
             case 200:
                 return this.globalScope;
+            default:
+                throw new IllegalArgumentException("Invalid scope.");
         }
-        throw new IllegalArgumentException("Invalid scope.");
     }
 
     @Override

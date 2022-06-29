@@ -61,9 +61,6 @@ public class ScriptingVariablesConsolePlugin extends AbstractWebConsolePlugin {
     @Reference
     private ScriptEngineManager scriptEngineManager;
 
-    public ScriptingVariablesConsolePlugin() {
-    }
-
     /**
      * Automatically called from
      * <a href="https://github.com/apache/felix/blob/4a60744d0f88f351551e4cb4673eb60b8fbd21d3/webconsole/src/main/java/org/apache/felix/webconsole/AbstractWebConsolePlugin.java#L510">AbstractWebConsolePlugin#spoolResource</a>

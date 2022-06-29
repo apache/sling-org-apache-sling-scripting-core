@@ -51,12 +51,13 @@ public class InternalScriptHelper extends ScriptHelper {
     /**
      * @see org.apache.sling.api.scripting.SlingScriptHelper#getService(java.lang.Class)
      */
-    public <ServiceType> ServiceType getService(Class<ServiceType> type) {
+    @Override
+    public <T> T getService(Class<T> type) {
         return this.serviceCache.getService(type);
     }
 
     @Override
-    public <ServiceType> ServiceType[] getServices(Class<ServiceType> serviceType, String filter)
+    public <T> T[] getServices(Class<T> serviceType, String filter)
             throws InvalidServiceFilterSyntaxException {
         return this.serviceCache.getServices(serviceType, filter);
     }

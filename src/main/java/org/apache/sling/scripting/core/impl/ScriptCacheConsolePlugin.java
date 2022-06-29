@@ -49,6 +49,8 @@ import org.osgi.service.component.annotations.Reference;
 )
 public class ScriptCacheConsolePlugin extends AbstractWebConsolePlugin {
 
+    private static final long serialVersionUID = 8073398598702884758L;
+
     public static final String CONSOLE_LABEL = "scriptcache";
     public static final String CONSOLE_TITLE = "Script Cache Status";
     public static final String RESOURCES = CONSOLE_LABEL + "/ui";
@@ -83,7 +85,7 @@ public class ScriptCacheConsolePlugin extends AbstractWebConsolePlugin {
             StringBuilder sb = new StringBuilder();
             sb.append("<script type='text/javascript' src='").append(RESOURCES).append("/").append(SCRIPTCACHE_JS).append("'></script>");
             sb.append("<div id='cached-scripts' class='ui-widget statline'>");
-            if (scripts.size() > 0) {
+            if (!scripts.isEmpty()) {
                 Collections.sort(scripts);
                 sb.append("<p class='ui-widget-header'>Cached Scripts</p>");
                 sb.append("<table class='nicetable ui-widget-content'>");

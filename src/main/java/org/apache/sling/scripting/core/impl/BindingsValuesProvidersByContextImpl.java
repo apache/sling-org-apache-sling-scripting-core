@@ -86,6 +86,10 @@ public class BindingsValuesProvidersByContextImpl implements BindingsValuesProvi
     private volatile EventAdmin eventAdmin;
 
     private abstract class ContextLoop {
+        private String [] getContexts(ServiceReference reference) {
+            return PropertiesUtil.toStringArray(reference.getProperty(CONTEXT), new String[] { DEFAULT_CONTEXT });
+        }
+
         Object apply(ServiceReference ref) {
             final Object service = bundleContext.getService(ref);
             if(service != null) {
@@ -104,7 +108,7 @@ public class BindingsValuesProvidersByContextImpl implements BindingsValuesProvi
         }
 
         protected abstract void applyInContext(ContextBvpCollector c);
-    };
+    }
 
     @Activate
     public void activate(ComponentContext ctx) {
@@ -174,12 +178,8 @@ public class BindingsValuesProvidersByContextImpl implements BindingsValuesProvi
         return results;
     }
 
-    private String [] getContexts(ServiceReference reference) {
-        return PropertiesUtil.toStringArray(reference.getProperty(CONTEXT), new String[] { DEFAULT_CONTEXT });
-    }
-
     private Event newEvent(final String topic, final ServiceReference reference) {
-        Dictionary<String, Object> props = new Hashtable<>();
+        Dictionary<String, Object> props = new Hashtable<>(); // NOSONAR
         props.put("service.id", reference.getProperty(Constants.SERVICE_ID));
         return new Event(topic, props);
     }

@@ -20,25 +20,18 @@ package org.apache.sling.scripting.core.impl;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Arrays;
-import java.util.Dictionary;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 
 import javax.script.ScriptEngineFactory;
-import javax.script.ScriptEngineManager;
 import javax.servlet.Servlet;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.felix.webconsole.AbstractWebConsolePlugin;
 import org.apache.felix.webconsole.WebConsoleConstants;
 import org.apache.sling.scripting.core.impl.jsr223.SlingScriptEngineManager;
-import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
-import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -54,6 +47,8 @@ import org.osgi.service.component.annotations.Reference;
         service = { Servlet.class }
 )
 public class ScriptEngineConsolePlugin extends AbstractWebConsolePlugin {
+
+    private static final long serialVersionUID = -6444729200748932100L;
 
     public static final String CONSOLE_LABEL = "slingscripting";
     public static final String CONSOLE_TITLE = "Script Engines";
@@ -109,7 +104,7 @@ public class ScriptEngineConsolePlugin extends AbstractWebConsolePlugin {
     }
 
     private void printArray(PrintWriter pw, List<?> values) {
-        if (values == null || values.size() == 0) {
+        if (values == null || values.isEmpty()) {
             pw.println("-");
         } else {
             for (Iterator<?> vi = values.iterator(); vi.hasNext();) {

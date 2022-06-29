@@ -34,8 +34,6 @@ import javax.script.Compilable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 
-import org.apache.sling.api.resource.LoginException;
-import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.api.resource.observation.ExternalResourceChangeListener;
 import org.apache.sling.api.resource.observation.ResourceChange;
@@ -88,7 +86,6 @@ public class ScriptCacheImpl implements ScriptCache, ResourceChangeListener, Ext
     private ServiceRegistration<ResourceChangeListener> resourceChangeListener;
     private Set<String> extensions = new HashSet<>();
     private String[] additionalExtensions = new String[]{};
-    private String[] searchPaths = {};
 
     // use a static policy so that we can reconfigure the watched script files if the search paths are changed
     @Reference
@@ -166,30 +163,27 @@ public class ScriptCacheImpl implements ScriptCache, ResourceChangeListener, Ext
     @Override
     public void onChange(@NotNull List<ResourceChange> list) {
         for (final ResourceChange change : list) {
-            Runnable eventTask = new Runnable() {
-                @Override
-                public void run() {
-                    String path = change.getPath();
-                    writeLock.lock();
-                    try {
-                        final boolean removed = internalMap.remove(path) != null;
-                        LOGGER.debug("Detected script change for {} - removed entry from the cache.", path);
-                        if ( !removed && change.getType() == ChangeType.REMOVED ) {
-                            final String prefix = path + "/";
-                            final Set<String> removal = new HashSet<>();
-                            for(final Map.Entry<String, SoftReference<CachedScript>> entry : internalMap.entrySet()) {
-                                if ( entry.getKey().startsWith(prefix) ) {
-                                    removal.add(entry.getKey());
-                                }
-                            }
-                            for(final String key : removal) {
-                                internalMap.remove(key);
-                                LOGGER.debug("Detected removal for {} - removed entry {} from the cache.", path, key);
+            Runnable eventTask = () -> {
+                String path = change.getPath();
+                writeLock.lock();
+                try {
+                    final boolean removed = internalMap.remove(path) != null;
+                    LOGGER.debug("Detected script change for {} - removed entry from the cache.", path);
+                    if ( !removed && change.getType() == ChangeType.REMOVED ) {
+                        final String prefix = path + "/";
+                        final Set<String> removal = new HashSet<>();
+                        for(final Map.Entry<String, SoftReference<CachedScript>> entry : internalMap.entrySet()) {
+                            if ( entry.getKey().startsWith(prefix) ) {
+                                removal.add(entry.getKey());
                             }
                         }
-                    } finally {
-                        writeLock.unlock();
+                        for(final String key : removal) {
+                            internalMap.remove(key);
+                            LOGGER.debug("Detected removal for {} - removed entry {} from the cache.", path, key);
+                        }
                     }
+                } finally {
+                    writeLock.unlock();
                 }
             };
             threadPool.execute(eventTask);
@@ -238,7 +232,7 @@ public class ScriptCacheImpl implements ScriptCache, ResourceChangeListener, Ext
                     for (String extension : extensions) {
                         globPatterns.add("glob:**/*." + extension);
                     }
-                    Dictionary<String, Object> resourceChangeListenerProperties = new Hashtable<>();
+                    Dictionary<String, Object> resourceChangeListenerProperties = new Hashtable<>(); // NOSONAR
                     resourceChangeListenerProperties
                             .put(ResourceChangeListener.PATHS, globPatterns.toArray(new String[globPatterns.size()]));
                     resourceChangeListenerProperties.put(ResourceChangeListener.CHANGES,

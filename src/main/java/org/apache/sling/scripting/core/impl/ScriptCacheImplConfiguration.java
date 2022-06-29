@@ -33,13 +33,13 @@ import static org.apache.sling.scripting.core.impl.ScriptCacheImpl.DEFAULT_CACHE
         name = "Cache Size",
         description = "The Cache Size defines the maximum number of compiled script references that will be stored in the cache's internal map."
     )
-    int org_apache_sling_scripting_cache_size() default DEFAULT_CACHE_SIZE;
+    int org_apache_sling_scripting_cache_size() default DEFAULT_CACHE_SIZE; // NOSONAR
 
     @AttributeDefinition(
         name = "Additional Extensions",
         description = "Scripts from the search paths with these extensions will also be monitored so that changes to them will clean the cache if the cache contains them."
 
     )
-    String[] org_apache_sling_scripting_cache_additional__extensions() default {};
+    String[] org_apache_sling_scripting_cache_additional__extensions() default {}; // NOSONAR
 
 }

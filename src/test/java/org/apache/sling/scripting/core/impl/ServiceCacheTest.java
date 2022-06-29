@@ -18,20 +18,18 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.scripting.core.impl;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+
 import java.util.Dictionary;
 import java.util.Hashtable;
 
 import org.apache.sling.testing.mock.osgi.junit.OsgiContext;
-import org.apache.sling.testing.mock.sling.junit.SlingContext;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
-
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 public class ServiceCacheTest {
 
@@ -94,6 +92,7 @@ public class ServiceCacheTest {
     }
 
     private static final class TestService {
+        @SuppressWarnings("unused")
         private final String service;
 
         public TestService(String service) {

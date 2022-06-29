@@ -20,205 +20,204 @@ package org.apache.sling.scripting.core.impl;
 
 import java.io.IOException;
 
-import junit.framework.TestCase;
-
-import org.apache.sling.scripting.core.impl.LogWriter;
 import org.slf4j.Logger;
 import org.slf4j.Marker;
+
+import junit.framework.TestCase;
 
 public class LogWriterTest extends TestCase {
 
     public void testCharacter() {
         MockLogger logger = new MockLogger();
-        LogWriter logWriter = new LogWriter(logger);
+        try(LogWriter logWriter = new LogWriter(logger)) {
+            // ensure logger is empty
+            logger.getLastMessage();
 
-        // ensure logger is empty
-        logger.getLastMessage();
+            // empty flush
+            logWriter.flush();
+            String msg = logger.getLastMessage();
+            assertNull(msg);
 
-        // empty flush
-        logWriter.flush();
-        String msg = logger.getLastMessage();
-        assertNull(msg);
+            // write a single character, message only after flush
+            logWriter.write('a');
+            assertNull(logger.getLastMessage());
+            logWriter.flush();
+            msg = logger.getLastMessage();
+            assertNotNull(msg);
+            assertEquals("a", msg);
 
-        // write a single character, message only after flush
-        logWriter.write('a');
-        assertNull(logger.getLastMessage());
-        logWriter.flush();
-        msg = logger.getLastMessage();
-        assertNotNull(msg);
-        assertEquals("a", msg);
+            // write a single CR, no message
+            logWriter.write('\r');
+            assertNull(logger.getLastMessage());
 
-        // write a single CR, no message
-        logWriter.write('\r');
-        assertNull(logger.getLastMessage());
+            // write a single LF, no message
+            logWriter.write('\n');
+            assertNull(logger.getLastMessage());
 
-        // write a single LF, no message
-        logWriter.write('\n');
-        assertNull(logger.getLastMessage());
+            // write three characters (one is CR)
+            logWriter.write('a');
+            logWriter.write('\r');
+            logWriter.write('b');
 
-        // write three characters (one is CR)
-        logWriter.write('a');
-        logWriter.write('\r');
-        logWriter.write('b');
+            msg = logger.getLastMessage();
+            assertNotNull(msg);
+            assertEquals("a", msg);
 
-        msg = logger.getLastMessage();
-        assertNotNull(msg);
-        assertEquals("a", msg);
+            logWriter.flush();
 
-        logWriter.flush();
+            msg = logger.getLastMessage();
+            assertNotNull(msg);
+            assertEquals("b", msg);
 
-        msg = logger.getLastMessage();
-        assertNotNull(msg);
-        assertEquals("b", msg);
+            // write three characters (one is LF)
+            logWriter.write('a');
+            logWriter.write('\n');
+            logWriter.write('b');
 
-        // write three characters (one is LF)
-        logWriter.write('a');
-        logWriter.write('\n');
-        logWriter.write('b');
+            msg = logger.getLastMessage();
+            assertNotNull(msg);
+            assertEquals("a", msg);
 
-        msg = logger.getLastMessage();
-        assertNotNull(msg);
-        assertEquals("a", msg);
+            logWriter.flush();
 
-        logWriter.flush();
-
-        msg = logger.getLastMessage();
-        assertNotNull(msg);
-        assertEquals("b", msg);
+            msg = logger.getLastMessage();
+            assertNotNull(msg);
+            assertEquals("b", msg);
+        }
     }
 
     public void testStringCR() throws IOException {
         MockLogger logger = new MockLogger();
-        LogWriter logWriter = new LogWriter(logger);
-        
-        // ensure logger is empty
-        logger.getLastMessage();
-        
-        // empty flush
-        logWriter.flush();
-        String msg = logger.getLastMessage();
-        assertNull(msg);
-        
-        // intermediate CR
-        String tMsg1 = "Ein";
-        String tMsg2 = "Text";
-        String tMsg = tMsg1 + "\r" + tMsg2;
-        logWriter.write(tMsg);
-        msg = logger.getLastMessage();
-        assertNotNull(msg);
-        assertEquals(tMsg1, msg);
-        
-        logWriter.flush();
-        msg = logger.getLastMessage();
-        assertNotNull(msg);
-        assertEquals(tMsg2, msg);
-        
-        // initial CR
-        tMsg = "\r" + tMsg1 + tMsg2;
-        logWriter.write(tMsg);
-        msg = logger.getLastMessage();
-        assertNull(msg);
-        
-        logWriter.flush();
-        msg = logger.getLastMessage();
-        assertNotNull(msg);
-        assertEquals(tMsg1 + tMsg2, msg);
-        
-        // terminating CR
-        tMsg = tMsg1 + tMsg2 + "\r";
-        logWriter.write(tMsg);
-        msg = logger.getLastMessage();
-        assertNotNull(msg);
-        assertEquals(tMsg1+tMsg2, msg);
-        
-        logWriter.flush();
-        msg = logger.getLastMessage();
-        assertNull(msg);
+        try (LogWriter logWriter = new LogWriter(logger)) {
+            // ensure logger is empty
+            logger.getLastMessage();
+            
+            // empty flush
+            logWriter.flush();
+            String msg = logger.getLastMessage();
+            assertNull(msg);
+            
+            // intermediate CR
+            String tMsg1 = "Ein";
+            String tMsg2 = "Text";
+            String tMsg = tMsg1 + "\r" + tMsg2;
+            logWriter.write(tMsg);
+            msg = logger.getLastMessage();
+            assertNotNull(msg);
+            assertEquals(tMsg1, msg);
+            
+            logWriter.flush();
+            msg = logger.getLastMessage();
+            assertNotNull(msg);
+            assertEquals(tMsg2, msg);
+            
+            // initial CR
+            tMsg = "\r" + tMsg1 + tMsg2;
+            logWriter.write(tMsg);
+            msg = logger.getLastMessage();
+            assertNull(msg);
+            
+            logWriter.flush();
+            msg = logger.getLastMessage();
+            assertNotNull(msg);
+            assertEquals(tMsg1 + tMsg2, msg);
+            
+            // terminating CR
+            tMsg = tMsg1 + tMsg2 + "\r";
+            logWriter.write(tMsg);
+            msg = logger.getLastMessage();
+            assertNotNull(msg);
+            assertEquals(tMsg1+tMsg2, msg);
+            
+            logWriter.flush();
+            msg = logger.getLastMessage();
+            assertNull(msg);
+        }
     }
-    
+
     public void testStringLF() throws IOException {
         MockLogger logger = new MockLogger();
-        LogWriter logWriter = new LogWriter(logger);
+        try (LogWriter logWriter = new LogWriter(logger)) {
+            // ensure logger is empty
+            logger.getLastMessage();
 
-        // ensure logger is empty
-        logger.getLastMessage();
+            // empty flush
+            logWriter.flush();
+            String msg = logger.getLastMessage();
+            assertNull(msg);
 
-        // empty flush
-        logWriter.flush();
-        String msg = logger.getLastMessage();
-        assertNull(msg);
+            // intermediate LF
+            String tMsg1 = "Ein";
+            String tMsg2 = "Text";
+            String tMsg = tMsg1 + "\n" + tMsg2;
+            logWriter.write(tMsg);
+            msg = logger.getLastMessage();
+            assertNotNull(msg);
+            assertEquals(tMsg1, msg);
 
-        // intermediate LF
-        String tMsg1 = "Ein";
-        String tMsg2 = "Text";
-        String tMsg = tMsg1 + "\n" + tMsg2;
-        logWriter.write(tMsg);
-        msg = logger.getLastMessage();
-        assertNotNull(msg);
-        assertEquals(tMsg1, msg);
+            logWriter.flush();
+            msg = logger.getLastMessage();
+            assertNotNull(msg);
+            assertEquals(tMsg2, msg);
 
-        logWriter.flush();
-        msg = logger.getLastMessage();
-        assertNotNull(msg);
-        assertEquals(tMsg2, msg);
+            // initial LF
+            tMsg = "\n" + tMsg1 + tMsg2;
+            logWriter.write(tMsg);
+            msg = logger.getLastMessage();
+            assertNull(msg);
 
-        // initial LF
-        tMsg = "\n" + tMsg1 + tMsg2;
-        logWriter.write(tMsg);
-        msg = logger.getLastMessage();
-        assertNull(msg);
+            logWriter.flush();
+            msg = logger.getLastMessage();
+            assertNotNull(msg);
+            assertEquals(tMsg1 + tMsg2, msg);
 
-        logWriter.flush();
-        msg = logger.getLastMessage();
-        assertNotNull(msg);
-        assertEquals(tMsg1 + tMsg2, msg);
+            // terminating LF
+            tMsg = tMsg1 + tMsg2 + "\n";
+            logWriter.write(tMsg);
+            msg = logger.getLastMessage();
+            assertNotNull(msg);
+            assertEquals(tMsg1+tMsg2, msg);
 
-        // terminating LF
-        tMsg = tMsg1 + tMsg2 + "\n";
-        logWriter.write(tMsg);
-        msg = logger.getLastMessage();
-        assertNotNull(msg);
-        assertEquals(tMsg1+tMsg2, msg);
-
-        logWriter.flush();
-        msg = logger.getLastMessage();
-        assertNull(msg);
+            logWriter.flush();
+            msg = logger.getLastMessage();
+            assertNull(msg);
+        }
     }
 
     public void testString() throws IOException {
         MockLogger logger = new MockLogger();
-        LogWriter logWriter = new LogWriter(logger);
+        try (LogWriter logWriter = new LogWriter(logger)) {
+            // ensure logger is empty
+            logger.getLastMessage();
 
-        // ensure logger is empty
-        logger.getLastMessage();
+            // empty flush
+            logWriter.flush();
+            String msg = logger.getLastMessage();
+            assertNull(msg);
 
-        // empty flush
-        logWriter.flush();
-        String msg = logger.getLastMessage();
-        assertNull(msg);
+            // flushed line
+            String tMsg = "Ein Text";
+            logWriter.write(tMsg);
+            msg = logger.getLastMessage();
+            assertNull(msg);
 
-        // flushed line
-        String tMsg = "Ein Text";
-        logWriter.write(tMsg);
-        msg = logger.getLastMessage();
-        assertNull(msg);
+            logWriter.flush();
+            msg = logger.getLastMessage();
+            assertNotNull(msg);
+            assertEquals(tMsg, msg);
 
-        logWriter.flush();
-        msg = logger.getLastMessage();
-        assertNotNull(msg);
-        assertEquals(tMsg, msg);
+            // CR terminated line
+            logWriter.write(tMsg + "\r");
+            msg = logger.getLastMessage();
+            assertNotNull(msg);
+            assertEquals(tMsg, msg);
 
-        // CR terminated line
-        logWriter.write(tMsg + "\r");
-        msg = logger.getLastMessage();
-        assertNotNull(msg);
-        assertEquals(tMsg, msg);
-
-        // LF terminated line
-        logWriter.write(tMsg + "\n");
-        msg = logger.getLastMessage();
-        assertNotNull(msg);
-        assertEquals(tMsg, msg);
+            // LF terminated line
+            logWriter.write(tMsg + "\n");
+            msg = logger.getLastMessage();
+            assertNotNull(msg);
+            assertEquals(tMsg, msg);
+        }
     }
 
     private static class MockLogger implements Logger {
@@ -239,7 +238,7 @@ public class LogWriterTest extends TestCase {
             fail("Unexpected call");
         }
 
-        public void debug(String format, Object[] argArray) {
+        public void debug(String format, Object... argArray) {
             fail("Unexpected call");
         }
 
@@ -259,7 +258,7 @@ public class LogWriterTest extends TestCase {
             fail("Unexpected call");
         }
 
-        public void debug(Marker marker, String format, Object[] argArray) {
+        public void debug(Marker marker, String format, Object... argArray) {
             fail("Unexpected call");
         }
 
@@ -279,7 +278,7 @@ public class LogWriterTest extends TestCase {
             fail("Unexpected call");
         }
 
-        public void error(String format, Object[] argArray) {
+        public void error(String format, Object... argArray) {
             fail("Unexpected call");
         }
 
@@ -299,7 +298,7 @@ public class LogWriterTest extends TestCase {
             fail("Unexpected call");
         }
 
-        public void error(Marker marker, String format, Object[] argArray) {
+        public void error(Marker marker, String format, Object... argArray) {
             fail("Unexpected call");
         }
 
@@ -323,7 +322,7 @@ public class LogWriterTest extends TestCase {
             fail("Unexpected call");
         }
 
-        public void info(String format, Object[] argArray) {
+        public void info(String format, Object... argArray) {
             fail("Unexpected call");
         }
 
@@ -343,7 +342,7 @@ public class LogWriterTest extends TestCase {
             fail("Unexpected call");
         }
 
-        public void info(Marker marker, String format, Object[] argArray) {
+        public void info(Marker marker, String format, Object... argArray) {
             fail("Unexpected call");
         }
 
@@ -403,7 +402,7 @@ public class LogWriterTest extends TestCase {
             fail("Unexpected call");
         }
 
-        public void trace(String format, Object[] argArray) {
+        public void trace(String format, Object... argArray) {
             fail("Unexpected call");
         }
 
@@ -423,7 +422,7 @@ public class LogWriterTest extends TestCase {
             fail("Unexpected call");
         }
 
-        public void trace(Marker marker, String format, Object[] argArray) {
+        public void trace(Marker marker, String format, Object... argArray) {
             fail("Unexpected call");
         }
 
@@ -443,7 +442,7 @@ public class LogWriterTest extends TestCase {
             fail("Unexpected call");
         }
 
-        public void warn(String format, Object[] argArray) {
+        public void warn(String format, Object... argArray) {
             fail("Unexpected call");
         }
 
@@ -463,7 +462,7 @@ public class LogWriterTest extends TestCase {
             fail("Unexpected call");
         }
 
-        public void warn(Marker marker, String format, Object[] argArray) {
+        public void warn(Marker marker, String format, Object... argArray) {
             fail("Unexpected call");
         }
 

@@ -27,7 +27,7 @@ import javax.script.ScriptEngineFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SortableScriptEngineFactory implements ScriptEngineFactory, Comparable {
+public class SortableScriptEngineFactory implements ScriptEngineFactory, Comparable<SortableScriptEngineFactory> {
 
     private final ScriptEngineFactory delegate;
     private final int serviceRanking;
@@ -129,8 +129,7 @@ public class SortableScriptEngineFactory implements ScriptEngineFactory, Compara
     }
 
     @Override
-    public int compareTo(@NotNull Object o) {
-        SortableScriptEngineFactory other = (SortableScriptEngineFactory) o;
+    public int compareTo(SortableScriptEngineFactory other) {
         if (equals(other)) {
             return 0;
         }

@@ -87,7 +87,9 @@ public class SlingScriptEngineManagerTest {
                 (latch, "org/apache/sling/scripting/core/impl/jsr223/SlingScriptEngineManager/UPDATED");
         context.registerService(
                 EventHandler.class, eventHandler,
-                new HashMap<String, Object>() {{
+                new HashMap<String, Object>() {
+                    private static final long serialVersionUID = -826334194042415106L;
+                {
                     put(EventConstants.EVENT_TOPIC, "org/apache/sling/scripting/core/impl/jsr223/SlingScriptEngineManager/*");
                 }}
         );
@@ -98,11 +100,15 @@ public class SlingScriptEngineManagerTest {
                 .singletonList("f2/text"));
 
         ServiceRegistration<ScriptEngineFactory> f1SR = context.bundleContext().registerService(ScriptEngineFactory.class, f1, new
-                Hashtable<String, Object>() {{
+                Hashtable<String, Object>() {
+                    private static final long serialVersionUID = 3476669145432094983L;
+                {
                     put(Constants.SERVICE_RANKING, 2);
                 }});
         context.bundleContext().registerService(ScriptEngineFactory.class, f2, new
-                Hashtable<String, Object>() {{
+                Hashtable<String, Object>() {
+                    private static final long serialVersionUID = 625624336896085659L;
+                {
                     put(Constants.SERVICE_RANKING, 1);
                 }});
 

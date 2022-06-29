@@ -24,6 +24,8 @@ import javax.script.SimpleBindings;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.Test.None;
+
 import static org.junit.Assert.*;
 
 
@@ -52,12 +54,12 @@ public class ProtectedBindingsTest {
         bindings.remove("test1");
     }
 
-    @Test
+    @Test(expected=None.class)
     public void testAddingAllowed() {
         bindings.put("test2", "value2");
     }
 
-    @Test
+    @Test(expected=None.class)
     public void testOverwriteNonProtectedAllowed() {
         bindings.put("test2", "value2");
         bindings.put("test2", "value3");

@@ -114,7 +114,7 @@ public class ScriptContextProvider {
         bindings.put(SlingBindings.SLING, scriptHelper);
         bindings.put(BundledRenderUnit.VARIABLE, executable);
         bindings.put(ScriptEngine.FILENAME, executable.getPath());
-        bindings.put(ScriptEngine.FILENAME.replaceAll("\\.", "_"), executable.getPath());
+        bindings.put(ScriptEngine.FILENAME.replace(".", "_"), executable.getPath());
 
         ProtectedBindings protectedBindings = new ProtectedBindings(bindings, PROTECTED_BINDINGS);
         long inclusionStart = System.nanoTime();
@@ -131,8 +131,10 @@ public class ScriptContextProvider {
                     request.getRequestProgressTracker().log(String.format(BINDINGS_THRESHOLD_MESSAGE, bindingsValuesProvider.getClass().getName(),
                             (stop-start)/1000, WARN_LIMIT_FOR_BVP_NANOS/1000));
                 } else {
-                    LOG.info(String.format(BINDINGS_THRESHOLD_MESSAGE, bindingsValuesProvider.getClass().getName(), (stop-start)/1000,
-                            WARN_LIMIT_FOR_BVP_NANOS/1000));
+                    if (LOG.isInfoEnabled()) {
+                        LOG.info(String.format(BINDINGS_THRESHOLD_MESSAGE, bindingsValuesProvider.getClass().getName(), (stop-start)/1000,
+                                WARN_LIMIT_FOR_BVP_NANOS/1000));
+                    }
                 }
             }
         }

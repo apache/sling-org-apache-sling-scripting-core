@@ -18,13 +18,12 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.scripting.core.impl.bundled;
 
-import org.apache.sling.scripting.core.impl.bundled.LogWriter;
-import org.junit.Test;
-import org.slf4j.Logger;
-
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+
+import org.junit.Test;
+import org.slf4j.Logger;
 
 public class LogWriterTest {
 

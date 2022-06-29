@@ -19,6 +19,7 @@ package org.apache.sling.scripting.core.impl;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
@@ -50,8 +51,8 @@ class ContextBvpCollector {
 
     ContextBvpCollector(BundleContext bc) {
         bundleContext = bc;
-        genericBindingsValuesProviders = new ConcurrentSkipListMap<ServiceReference, BindingsValuesProvider>();
-        langBindingsValuesProviders = new ConcurrentHashMap<String, Map<ServiceReference, BindingsValuesProvider>>();
+        genericBindingsValuesProviders = new ConcurrentSkipListMap<>();
+        langBindingsValuesProviders = new ConcurrentHashMap<>();
     }
 
     @SuppressWarnings("unchecked")
@@ -69,12 +70,7 @@ class ContextBvpCollector {
                 genericBindingsValuesProviders.put(ref, (BindingsValuesProvider) service);
             } else {
                 for (String engineName : engineNames) {
-                    Map<ServiceReference, BindingsValuesProvider> langProviders = langBindingsValuesProviders.get(engineName);
-                    if (langProviders == null) {
-                        langProviders = new ConcurrentSkipListMap<ServiceReference, BindingsValuesProvider>();
-                        langBindingsValuesProviders.put(engineName, langProviders);
-                    }
-
+                    Map<ServiceReference, BindingsValuesProvider> langProviders = langBindingsValuesProviders.computeIfAbsent(engineName, k -> new ConcurrentSkipListMap<>());
                     langProviders.put(ref, (BindingsValuesProvider) service);
                 }
             }
@@ -118,8 +114,8 @@ class ContextBvpCollector {
         }
 
         public void addBindings(Bindings bindings) {
-            for (String key : map.keySet()) {
-                bindings.put(key, map.get(key));
+            for (Entry<String, Object> entry : map.entrySet()) {
+                bindings.put(entry.getKey(), entry.getValue());
             }
         }
 

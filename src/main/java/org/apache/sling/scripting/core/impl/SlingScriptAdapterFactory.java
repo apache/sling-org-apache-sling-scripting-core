@@ -87,7 +87,7 @@ public class SlingScriptAdapterFactory implements AdapterFactory, MimeTypeProvid
 
     @Override
     @SuppressWarnings("unchecked")
-    public <AdapterType> AdapterType getAdapter(@NotNull final Object adaptable, @NotNull final Class<AdapterType> type) {
+    public <A> A getAdapter(@NotNull final Object adaptable, @NotNull final Class<A> type) {
 
         final Resource resource = (Resource) adaptable;
         final String path = resource.getPath();
@@ -95,7 +95,7 @@ public class SlingScriptAdapterFactory implements AdapterFactory, MimeTypeProvid
 
         final List<ScriptEngine> engines = scriptEngineManager.getEnginesByExtension(extension);
         final ScriptEngine engine;
-        if (engines.size() == 0) {
+        if (engines.isEmpty()) {
             return null;
         } else if (engines.size() == 1) {
             engine = engines.get(0);
@@ -105,7 +105,7 @@ public class SlingScriptAdapterFactory implements AdapterFactory, MimeTypeProvid
         if (engine != null) {
             final Collection<BindingsValuesProvider> bindingsValuesProviders = bindingsValuesProviderTracker.getBindingsValuesProviders(engine.getFactory(), BINDINGS_CONTEXT);
             // unchecked cast
-            return (AdapterType) new DefaultSlingScript(this.bundleContext, resource, engine, bindingsValuesProviders, this.serviceCache, scriptCache);
+            return (A) new DefaultSlingScript(this.bundleContext, resource, engine, bindingsValuesProviders, this.serviceCache, scriptCache);
         }
 
         return null;
@@ -131,7 +131,7 @@ public class SlingScriptAdapterFactory implements AdapterFactory, MimeTypeProvid
         ScriptEngine se = scriptEngineManager.getEngineByExtension(name);
         if (se != null) {
             List<?> mimeTypes = se.getFactory().getMimeTypes();
-            if (mimeTypes != null && mimeTypes.size() > 0) {
+            if (mimeTypes != null && !mimeTypes.isEmpty()) {
                 return String.valueOf(mimeTypes.get(0));
             }
         }
@@ -153,7 +153,7 @@ public class SlingScriptAdapterFactory implements AdapterFactory, MimeTypeProvid
         ScriptEngine se = scriptEngineManager.getEngineByMimeType(mimeType);
         if (se != null) {
             List<?> extensions = se.getFactory().getExtensions();
-            if (extensions != null && extensions.size() > 0) {
+            if (extensions != null && !extensions.isEmpty()) {
                 return String.valueOf(extensions.get(0));
             }
         }

@@ -61,7 +61,6 @@ public class AbstractBundledRenderUnitTest {
         serviceCache = new ServiceCache(bundleContext);
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Test
     public void testGetService() throws Exception {
         Object fooBarSvc = new Object();

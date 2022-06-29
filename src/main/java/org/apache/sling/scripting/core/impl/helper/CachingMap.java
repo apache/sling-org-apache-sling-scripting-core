@@ -36,6 +36,8 @@ import java.util.Map;
  */
 public class CachingMap<T> extends LinkedHashMap<String, SoftReference<T>> {
 
+    private static final long serialVersionUID = -3392702301736494889L;
+
     private int capacity;
 
     /**
@@ -51,4 +53,25 @@ public class CachingMap<T> extends LinkedHashMap<String, SoftReference<T>> {
     protected boolean removeEldestEntry(Map.Entry<String, SoftReference<T>> eldest) {
         return size() > capacity;
     }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + capacity;
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        CachingMap<?> other = (CachingMap<?>) obj;
+        return capacity != other.capacity;
+    }
+
 }

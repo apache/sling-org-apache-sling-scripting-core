@@ -52,14 +52,11 @@ public class SlingScriptEnginePicker {
 
     private final Logger logger = LoggerFactory.getLogger(SlingScriptEnginePicker.class);
 
-    public SlingScriptEnginePicker() {
-    }
-
     @Nullable ScriptEngine pickScriptEngine(@NotNull final List<ScriptEngine> scriptEngines, @NotNull Resource resource, @NotNull String extension) {
         final String scriptingMapping = findScriptingMapping(resource, extension);
         logger.debug("scripting mapping: {}", scriptingMapping);
         if (scriptingMapping == null || scriptingMapping.isEmpty()) {
-            return scriptEngines.size() > 0 ? scriptEngines.get(0) : null;
+            return !scriptEngines.isEmpty() ? scriptEngines.get(0) : null;
         }
 
         final Conditions conditions = parseScriptingMapping(scriptingMapping);
