@@ -97,10 +97,14 @@ class ContextBvpCollector {
         }
     }
 
+    // ServiceReference type can be either Map or BindingsValuesProvider so we must use generic type
+    @SuppressWarnings("java:S1452") 
     Map<ServiceReference<?>, BindingsValuesProvider> getGenericBindingsValuesProviders() {
         return genericBindingsValuesProviders;
     }
 
+    // ServiceReference type can be either Map or BindingsValuesProvider so we must use generic type
+    @SuppressWarnings("java:S1452") 
     Map<String, Map<ServiceReference<?>, BindingsValuesProvider>> getLangBindingsValuesProviders() {
         return langBindingsValuesProviders;
     }

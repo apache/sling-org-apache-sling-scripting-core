@@ -56,6 +56,7 @@ public class ProtectedBindings extends LazyBindings implements Bindings {
     /**
      * {@inheritDoc}
      */
+    @SuppressWarnings("java:S4968") // can't fix, so stop warning about it
     @Override
     public void putAll(Map<? extends String, ? extends Object> toMerge) {
         for (Entry<? extends String, ? extends Object> entry : toMerge.entrySet()) {
