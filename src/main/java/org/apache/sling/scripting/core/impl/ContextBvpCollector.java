@@ -42,12 +42,12 @@ class ContextBvpCollector {
     /**
      * The BindingsValuesProvider impls which apply to all languages. Keys are serviceIds.
      */
-    private final Map<ServiceReference, BindingsValuesProvider> genericBindingsValuesProviders;
+    private final Map<ServiceReference<?>, BindingsValuesProvider> genericBindingsValuesProviders;
 
     /**
      * The BindingsValuesProvider impls which apply to a specific language.
      */
-    private final Map<String, Map<ServiceReference, BindingsValuesProvider>> langBindingsValuesProviders;
+    private final Map<String, Map<ServiceReference<?>, BindingsValuesProvider>> langBindingsValuesProviders;
 
     ContextBvpCollector(BundleContext bc) {
         bundleContext = bc;
@@ -56,7 +56,7 @@ class ContextBvpCollector {
     }
 
     @SuppressWarnings("unchecked")
-    public Object addingService(final ServiceReference ref) {
+    public Object addingService(final ServiceReference<?> ref) {
         final String[] engineNames = PropertiesUtil
                 .toStringArray(ref.getProperty(ScriptEngine.NAME), new String[0]);
         Object service = bundleContext.getService(ref);
@@ -70,7 +70,7 @@ class ContextBvpCollector {
                 genericBindingsValuesProviders.put(ref, (BindingsValuesProvider) service);
             } else {
                 for (String engineName : engineNames) {
-                    Map<ServiceReference, BindingsValuesProvider> langProviders = langBindingsValuesProviders.computeIfAbsent(engineName, k -> new ConcurrentSkipListMap<>());
+                    Map<ServiceReference<?>, BindingsValuesProvider> langProviders = langBindingsValuesProviders.computeIfAbsent(engineName, k -> new ConcurrentSkipListMap<>());
                     langProviders.put(ref, (BindingsValuesProvider) service);
                 }
             }
@@ -78,7 +78,7 @@ class ContextBvpCollector {
         return service;
     }
 
-    public void modifiedService(final ServiceReference ref) {
+    public void modifiedService(final ServiceReference<?> ref) {
         removedService(ref);
         // Note that any calls to our get* methods at this
         // point won't see the service. We could synchronize
@@ -89,19 +89,19 @@ class ContextBvpCollector {
         addingService(ref);
     }
 
-    public void removedService(final ServiceReference ref) {
+    public void removedService(final ServiceReference<?> ref) {
         if (genericBindingsValuesProviders.remove(ref) == null) {
-            for (Map<ServiceReference, BindingsValuesProvider> coll : langBindingsValuesProviders.values()) {
+            for (Map<ServiceReference<?>, BindingsValuesProvider> coll : langBindingsValuesProviders.values()) {
                 coll.remove(ref);
             }
         }
     }
 
-    Map<ServiceReference, BindingsValuesProvider> getGenericBindingsValuesProviders() {
+    Map<ServiceReference<?>, BindingsValuesProvider> getGenericBindingsValuesProviders() {
         return genericBindingsValuesProviders;
     }
 
-    Map<String, Map<ServiceReference, BindingsValuesProvider>> getLangBindingsValuesProviders() {
+    Map<String, Map<ServiceReference<?>, BindingsValuesProvider>> getLangBindingsValuesProviders() {
         return langBindingsValuesProviders;
     }
 

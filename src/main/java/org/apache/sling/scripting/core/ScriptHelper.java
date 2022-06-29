@@ -21,7 +21,7 @@ package org.apache.sling.scripting.core;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -77,7 +77,7 @@ public class ScriptHelper implements SlingScriptHelper {
      * The list of references - we don't need to synchronize this as we are
      * running in one single request.
      */
-    protected List<ServiceReference> references;
+    protected List<ServiceReference<?>> references;
 
     /** A map of found services. */
     protected Map<String, Object> services;
@@ -206,9 +206,9 @@ public class ScriptHelper implements SlingScriptHelper {
     public <T> T getService(Class<T> type) {
         T service = (this.services == null ? null : (T) this.services.get(type.getName()));
         if (service == null) {
-            final ServiceReference ref = this.bundleContext.getServiceReference(type.getName());
+            final ServiceReference<T> ref = this.bundleContext.getServiceReference(type);
             if (ref != null) {
-                service = (T) this.bundleContext.getService(ref);
+                service = this.bundleContext.getService(ref);
                 if ( service != null ) {
                     if ( this.services == null ) {
                         this.services = new HashMap<>();
@@ -232,19 +232,19 @@ public class ScriptHelper implements SlingScriptHelper {
             Class<T> serviceType, String filter)
     throws InvalidServiceFilterSyntaxException {
         try {
-            final ServiceReference[] refs = this.bundleContext.getServiceReferences(
-                serviceType.getName(), filter);
+            Collection<ServiceReference<T>> refsCollection = this.bundleContext.getServiceReferences(
+                    serviceType, filter);
             T[] result = null;
-            if (refs != null) {
+            if (refsCollection != null) {
                 // sort by service ranking (lowest first) (see ServiceReference#compareTo(Object))
-                List<ServiceReference> refsList = Arrays.asList(refs);
+                List<ServiceReference<T>> refsList = new ArrayList<>(refsCollection);
                 Collections.sort(refsList);
                 // get the highest ranking first
                 Collections.reverse(refsList);
                 
                 final List<T> objects = new ArrayList<>();
-                for (ServiceReference reference : refsList) {
-                    final T service = (T) this.bundleContext.getService(reference);
+                for (ServiceReference<T> reference : refsList) {
+                    final T service = this.bundleContext.getService(reference);
                     if (service != null) {
                         if ( this.references == null ) {
                             this.references = new ArrayList<>();
@@ -270,9 +270,9 @@ public class ScriptHelper implements SlingScriptHelper {
      */
     public void cleanup() {
         if ( this.references != null ) {
-            final Iterator<ServiceReference> i = this.references.iterator();
+            final Iterator<ServiceReference<?>> i = this.references.iterator();
             while (i.hasNext()) {
-                final ServiceReference ref = i.next();
+                final ServiceReference<?> ref = i.next();
                 this.bundleContext.ungetService(ref);
             }
             this.references.clear();

@@ -58,7 +58,7 @@ public class ScriptingResourceResolver extends ResourceResolverWrapper {
         }
     }
 
-    void _close() {
+    void _close() { // NOSONAR
         delegate.close();
     }
 

@@ -48,7 +48,7 @@ public class SlingScriptEnginePicker {
      * "html=Thymeleaf:3.0"
      * ]
      */
-    private static String SLING_SCRIPTING = "sling:scripting";
+    private static final String SLING_SCRIPTING = "sling:scripting";
 
     private final Logger logger = LoggerFactory.getLogger(SlingScriptEnginePicker.class);
 

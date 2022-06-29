@@ -31,8 +31,9 @@ import org.apache.sling.scripting.core.impl.jsr223.SlingScriptEngineManager;
 import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
-import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 
 /**
@@ -163,12 +164,14 @@ public class SlingScriptAdapterFactory implements AdapterFactory, MimeTypeProvid
 
     // ---------- SCR integration ----------------------------------------------
 
-    protected void activate(ComponentContext context) {
-        bundleContext = context.getBundleContext();
+    @Activate
+    protected void activate(BundleContext bc) {
+        bundleContext = bc;
         this.serviceCache = new ServiceCache(this.bundleContext);
     }
 
-    protected void deactivate(ComponentContext context) {
+    @Deactivate
+    protected void deactivate() {
         this.serviceCache.dispose();
         this.serviceCache = null;
         this.bundleContext = null;
