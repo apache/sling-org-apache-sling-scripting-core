@@ -19,6 +19,7 @@ package org.apache.sling.scripting.core.impl;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
@@ -41,21 +42,21 @@ class ContextBvpCollector {
     /**
      * The BindingsValuesProvider impls which apply to all languages. Keys are serviceIds.
      */
-    private final Map<ServiceReference, BindingsValuesProvider> genericBindingsValuesProviders;
+    private final Map<ServiceReference<?>, BindingsValuesProvider> genericBindingsValuesProviders;
 
     /**
      * The BindingsValuesProvider impls which apply to a specific language.
      */
-    private final Map<String, Map<ServiceReference, BindingsValuesProvider>> langBindingsValuesProviders;
+    private final Map<String, Map<ServiceReference<?>, BindingsValuesProvider>> langBindingsValuesProviders;
 
     ContextBvpCollector(BundleContext bc) {
         bundleContext = bc;
-        genericBindingsValuesProviders = new ConcurrentSkipListMap<ServiceReference, BindingsValuesProvider>();
-        langBindingsValuesProviders = new ConcurrentHashMap<String, Map<ServiceReference, BindingsValuesProvider>>();
+        genericBindingsValuesProviders = new ConcurrentSkipListMap<>();
+        langBindingsValuesProviders = new ConcurrentHashMap<>();
     }
 
     @SuppressWarnings("unchecked")
-    public Object addingService(final ServiceReference ref) {
+    public Object addingService(final ServiceReference<?> ref) {
         final String[] engineNames = PropertiesUtil
                 .toStringArray(ref.getProperty(ScriptEngine.NAME), new String[0]);
         Object service = bundleContext.getService(ref);
@@ -69,12 +70,7 @@ class ContextBvpCollector {
                 genericBindingsValuesProviders.put(ref, (BindingsValuesProvider) service);
             } else {
                 for (String engineName : engineNames) {
-                    Map<ServiceReference, BindingsValuesProvider> langProviders = langBindingsValuesProviders.get(engineName);
-                    if (langProviders == null) {
-                        langProviders = new ConcurrentSkipListMap<ServiceReference, BindingsValuesProvider>();
-                        langBindingsValuesProviders.put(engineName, langProviders);
-                    }
-
+                    Map<ServiceReference<?>, BindingsValuesProvider> langProviders = langBindingsValuesProviders.computeIfAbsent(engineName, k -> new ConcurrentSkipListMap<>());
                     langProviders.put(ref, (BindingsValuesProvider) service);
                 }
             }
@@ -82,7 +78,7 @@ class ContextBvpCollector {
         return service;
     }
 
-    public void modifiedService(final ServiceReference ref) {
+    public void modifiedService(final ServiceReference<?> ref) {
         removedService(ref);
         // Note that any calls to our get* methods at this
         // point won't see the service. We could synchronize
@@ -93,19 +89,23 @@ class ContextBvpCollector {
         addingService(ref);
     }
 
-    public void removedService(final ServiceReference ref) {
+    public void removedService(final ServiceReference<?> ref) {
         if (genericBindingsValuesProviders.remove(ref) == null) {
-            for (Map<ServiceReference, BindingsValuesProvider> coll : langBindingsValuesProviders.values()) {
+            for (Map<ServiceReference<?>, BindingsValuesProvider> coll : langBindingsValuesProviders.values()) {
                 coll.remove(ref);
             }
         }
     }
 
-    Map<ServiceReference, BindingsValuesProvider> getGenericBindingsValuesProviders() {
+    // ServiceReference type can be either Map or BindingsValuesProvider so we must use generic type
+    @SuppressWarnings("java:S1452") 
+    Map<ServiceReference<?>, BindingsValuesProvider> getGenericBindingsValuesProviders() {
         return genericBindingsValuesProviders;
     }
 
-    Map<String, Map<ServiceReference, BindingsValuesProvider>> getLangBindingsValuesProviders() {
+    // ServiceReference type can be either Map or BindingsValuesProvider so we must use generic type
+    @SuppressWarnings("java:S1452") 
+    Map<String, Map<ServiceReference<?>, BindingsValuesProvider>> getLangBindingsValuesProviders() {
         return langBindingsValuesProviders;
     }
 
@@ -118,8 +118,8 @@ class ContextBvpCollector {
         }
 
         public void addBindings(Bindings bindings) {
-            for (String key : map.keySet()) {
-                bindings.put(key, map.get(key));
+            for (Entry<String, Object> entry : map.entrySet()) {
+                bindings.put(entry.getKey(), entry.getValue());
             }
         }
 

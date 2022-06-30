@@ -70,7 +70,7 @@ public class ScriptingResourceResolverProviderImpl implements ScriptingResourceR
                 description = "If enabled, all calls to ResourceResolver#close for the request-scoped resource resolvers will be logged " +
                         "with the full stack trace. Don't enable this setting on production systems."
         )
-        boolean log_stacktrace_onclose() default false;
+        boolean log_stacktrace_onclose() default false; // NOSONAR
 
     }
 

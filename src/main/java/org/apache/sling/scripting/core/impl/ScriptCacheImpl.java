@@ -34,8 +34,6 @@ import javax.script.Compilable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 
-import org.apache.sling.api.resource.LoginException;
-import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.api.resource.observation.ExternalResourceChangeListener;
 import org.apache.sling.api.resource.observation.ResourceChange;
@@ -79,7 +77,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ScriptCacheImpl implements ScriptCache, ResourceChangeListener, ExternalResourceChangeListener, EventHandler {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(ScriptCacheImpl.class);
+    private final Logger logger = LoggerFactory.getLogger(ScriptCacheImpl.class);
 
     public static final int DEFAULT_CACHE_SIZE = 65536;
 
@@ -88,7 +86,6 @@ public class ScriptCacheImpl implements ScriptCache, ResourceChangeListener, Ext
     private ServiceRegistration<ResourceChangeListener> resourceChangeListener;
     private Set<String> extensions = new HashSet<>();
     private String[] additionalExtensions = new String[]{};
-    private String[] searchPaths = {};
 
     // use a static policy so that we can reconfigure the watched script files if the search paths are changed
     @Reference
@@ -131,7 +128,7 @@ public class ScriptCacheImpl implements ScriptCache, ResourceChangeListener, Ext
         try {
             SoftReference<CachedScript> reference = new SoftReference<>(script);
             internalMap.put(script.getScriptPath(), reference);
-            LOGGER.debug("Added script {} to script cache.", script.getScriptPath());
+            logger.debug("Added script {} to script cache.", script.getScriptPath());
         } finally {
             writeLock.unlock();
         }
@@ -142,7 +139,7 @@ public class ScriptCacheImpl implements ScriptCache, ResourceChangeListener, Ext
         writeLock.lock();
         try {
             internalMap.clear();
-            LOGGER.debug("Cleared script cache.");
+            logger.debug("Cleared script cache.");
         } finally {
             writeLock.unlock();
         }
@@ -155,7 +152,7 @@ public class ScriptCacheImpl implements ScriptCache, ResourceChangeListener, Ext
             SoftReference<CachedScript> reference = internalMap.remove(scriptPath);
             boolean result = reference != null;
             if (result) {
-                LOGGER.debug("Removed script {} from script cache.", scriptPath);
+                logger.debug("Removed script {} from script cache.", scriptPath);
             }
             return result;
         } finally {
@@ -166,30 +163,27 @@ public class ScriptCacheImpl implements ScriptCache, ResourceChangeListener, Ext
     @Override
     public void onChange(@NotNull List<ResourceChange> list) {
         for (final ResourceChange change : list) {
-            Runnable eventTask = new Runnable() {
-                @Override
-                public void run() {
-                    String path = change.getPath();
-                    writeLock.lock();
-                    try {
-                        final boolean removed = internalMap.remove(path) != null;
-                        LOGGER.debug("Detected script change for {} - removed entry from the cache.", path);
-                        if ( !removed && change.getType() == ChangeType.REMOVED ) {
-                            final String prefix = path + "/";
-                            final Set<String> removal = new HashSet<>();
-                            for(final Map.Entry<String, SoftReference<CachedScript>> entry : internalMap.entrySet()) {
-                                if ( entry.getKey().startsWith(prefix) ) {
-                                    removal.add(entry.getKey());
-                                }
-                            }
-                            for(final String key : removal) {
-                                internalMap.remove(key);
-                                LOGGER.debug("Detected removal for {} - removed entry {} from the cache.", path, key);
+            Runnable eventTask = () -> {
+                String path = change.getPath();
+                writeLock.lock();
+                try {
+                    final boolean removed = internalMap.remove(path) != null;
+                    logger.debug("Detected script change for {} - removed entry from the cache.", path);
+                    if ( !removed && change.getType() == ChangeType.REMOVED ) {
+                        final String prefix = path + "/";
+                        final Set<String> removal = new HashSet<>();
+                        for(final Map.Entry<String, SoftReference<CachedScript>> entry : internalMap.entrySet()) {
+                            if ( entry.getKey().startsWith(prefix) ) {
+                                removal.add(entry.getKey());
                             }
                         }
-                    } finally {
-                        writeLock.unlock();
+                        for(final String key : removal) {
+                            internalMap.remove(key);
+                            logger.debug("Detected removal for {} - removed entry {} from the cache.", path, key);
+                        }
                     }
+                } finally {
+                    writeLock.unlock();
                 }
             };
             threadPool.execute(eventTask);
@@ -238,7 +232,7 @@ public class ScriptCacheImpl implements ScriptCache, ResourceChangeListener, Ext
                     for (String extension : extensions) {
                         globPatterns.add("glob:**/*." + extension);
                     }
-                    Dictionary<String, Object> resourceChangeListenerProperties = new Hashtable<>();
+                    Dictionary<String, Object> resourceChangeListenerProperties = new Hashtable<>(); // NOSONAR
                     resourceChangeListenerProperties
                             .put(ResourceChangeListener.PATHS, globPatterns.toArray(new String[globPatterns.size()]));
                     resourceChangeListenerProperties.put(ResourceChangeListener.CHANGES,

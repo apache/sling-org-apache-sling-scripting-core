@@ -60,7 +60,7 @@ import org.slf4j.LoggerFactory;
             Constants.SERVICE_VENDOR + "=The Apache Software Foundation"
     }
 )
-public class BindingsValuesProvidersByContextImpl implements BindingsValuesProvidersByContext, ServiceTrackerCustomizer {
+public class BindingsValuesProvidersByContextImpl implements BindingsValuesProvidersByContext {
 
     private final Map<String, ContextBvpCollector> customizers = new HashMap<>();
     public static final String [] DEFAULT_CONTEXT_ARRAY = new String [] { DEFAULT_CONTEXT };
@@ -69,11 +69,12 @@ public class BindingsValuesProvidersByContextImpl implements BindingsValuesProvi
     private static final String TOPIC_MODIFIED = "org/apache/sling/scripting/core/BindingsValuesProvider/MODIFIED";
     private static final String TOPIC_REMOVED = "org/apache/sling/scripting/core/BindingsValuesProvider/REMOVED";
 
-    private ServiceTracker bvpTracker;
-    private ServiceTracker mapsTracker;
+    private ServiceTracker<BindingsValuesProvider, Object> bvpTracker;
+    @SuppressWarnings("rawtypes")
+    private ServiceTracker<Map, Object> mapsTracker;
     private BundleContext bundleContext;
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final List<ServiceReference> pendingRefs = new ArrayList<>();
+    private final List<ServiceReference<?>> pendingRefs = new ArrayList<>();
 
     @Reference
     private SlingScriptEngineManager scriptEngineManager;
@@ -86,7 +87,11 @@ public class BindingsValuesProvidersByContextImpl implements BindingsValuesProvi
     private volatile EventAdmin eventAdmin;
 
     private abstract class ContextLoop {
-        Object apply(ServiceReference ref) {
+        private String [] getContexts(ServiceReference<?> reference) {
+            return PropertiesUtil.toStringArray(reference.getProperty(CONTEXT), new String[] { DEFAULT_CONTEXT });
+        }
+
+        Object apply(ServiceReference<?> ref) {
             final Object service = bundleContext.getService(ref);
             if(service != null) {
                 for(String context : getContexts(ref)) {
@@ -104,24 +109,26 @@ public class BindingsValuesProvidersByContextImpl implements BindingsValuesProvi
         }
 
         protected abstract void applyInContext(ContextBvpCollector c);
-    };
+    }
 
     @Activate
     public void activate(ComponentContext ctx) {
         bundleContext = ctx.getBundleContext();
 
         synchronized (pendingRefs) {
-            for(ServiceReference ref : pendingRefs) {
+            for(ServiceReference<?> ref : pendingRefs) {
                 addingService(ref);
             }
             pendingRefs.clear();
         }
 
-        bvpTracker = new ServiceTracker(bundleContext, BindingsValuesProvider.class.getName(), this);
+        bvpTracker = new ServiceTracker<>(bundleContext, BindingsValuesProvider.class,
+                new ProvidersServiceTrackerCustomizer<>());
         bvpTracker.open();
 
         // Map services can also be registered to provide bindings
-        mapsTracker = new ServiceTracker(bundleContext, Map.class.getName(), this);
+        mapsTracker = new ServiceTracker<>(bundleContext, Map.class,
+                new ProvidersServiceTrackerCustomizer<>());
         mapsTracker.open();
     }
 
@@ -155,7 +162,7 @@ public class BindingsValuesProvidersByContextImpl implements BindingsValuesProvi
         if (factoryProperties != null) {
             String[] compatibleLangs = PropertiesUtil.toStringArray(factoryProperties.get("compatible.javax.script.name"), new String[0]);
             for (final String name : compatibleLangs) {
-                final Map<ServiceReference, BindingsValuesProvider> langProviders = bvpc.getLangBindingsValuesProviders().get(name);
+                final Map<ServiceReference<?>, BindingsValuesProvider> langProviders = bvpc.getLangBindingsValuesProviders().get(name);
                 if (langProviders != null) {
                     results.addAll(langProviders.values());
                 }
@@ -164,7 +171,7 @@ public class BindingsValuesProvidersByContextImpl implements BindingsValuesProvi
         }
 
         for (final String name : scriptEngineFactory.getNames()) {
-            final Map<ServiceReference, BindingsValuesProvider> langProviders = bvpc.getLangBindingsValuesProviders().get(name);
+            final Map<ServiceReference<?>, BindingsValuesProvider> langProviders = bvpc.getLangBindingsValuesProviders().get(name);
             if (langProviders != null) {
                 results.addAll(langProviders.values());
             }
@@ -174,18 +181,13 @@ public class BindingsValuesProvidersByContextImpl implements BindingsValuesProvi
         return results;
     }
 
-    private String [] getContexts(ServiceReference reference) {
-        return PropertiesUtil.toStringArray(reference.getProperty(CONTEXT), new String[] { DEFAULT_CONTEXT });
-    }
-
-    private Event newEvent(final String topic, final ServiceReference reference) {
-        Dictionary<String, Object> props = new Hashtable<>();
+    private Event newEvent(final String topic, final ServiceReference<?> reference) {
+        Dictionary<String, Object> props = new Hashtable<>(); // NOSONAR
         props.put("service.id", reference.getProperty(Constants.SERVICE_ID));
         return new Event(topic, props);
     }
 
-    @Override
-    public Object addingService(final ServiceReference reference) {
+    private Object addingService(final ServiceReference<?> reference) {
         if(bundleContext == null) {
             synchronized (pendingRefs) {
                 pendingRefs.add(reference);
@@ -203,35 +205,46 @@ public class BindingsValuesProvidersByContextImpl implements BindingsValuesProvi
         }.apply(reference);
     }
 
-    @Override
-    public void modifiedService(final ServiceReference reference, final Object service) {
-        new ContextLoop() {
-            @Override
-            protected void applyInContext(ContextBvpCollector c) {
-                c.modifiedService(reference);
-                if (eventAdmin != null) {
-                    eventAdmin.postEvent(newEvent(TOPIC_MODIFIED, reference));
+    private class ProvidersServiceTrackerCustomizer<S, T> implements ServiceTrackerCustomizer<S, T> {
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public T addingService(ServiceReference<S> reference) {
+            return (T)BindingsValuesProvidersByContextImpl.this.addingService(reference);
+        }
+
+        @Override
+        public void modifiedService(ServiceReference<S> reference, T service) {
+            new ContextLoop() {
+                @Override
+                protected void applyInContext(ContextBvpCollector c) {
+                    c.modifiedService(reference);
+                    if (eventAdmin != null) {
+                        eventAdmin.postEvent(newEvent(TOPIC_MODIFIED, reference));
+                    }
                 }
+            }.apply(reference);
+        }
+
+        @Override
+        public void removedService(ServiceReference<S> reference, T service) {
+            if(bundleContext == null) {
+                synchronized (pendingRefs) {
+                    pendingRefs.remove(reference);
+                }
+                return;
             }
-        }.apply(reference);
+            new ContextLoop() {
+                @Override
+                protected void applyInContext(ContextBvpCollector c) {
+                    c.removedService(reference);
+                    if (eventAdmin != null) {
+                        eventAdmin.postEvent(newEvent(TOPIC_REMOVED, reference));
+                    }
+                }
+            }.apply(reference);
+        }
+
     }
 
-    @Override
-    public void removedService(final ServiceReference reference, final Object service) {
-        if(bundleContext == null) {
-            synchronized (pendingRefs) {
-                pendingRefs.remove(reference);
-            }
-            return;
-        }
-        new ContextLoop() {
-            @Override
-            protected void applyInContext(ContextBvpCollector c) {
-                c.removedService(reference);
-                if (eventAdmin != null) {
-                    eventAdmin.postEvent(newEvent(TOPIC_REMOVED, reference));
-                }
-            }
-        }.apply(reference);
-    }
 }

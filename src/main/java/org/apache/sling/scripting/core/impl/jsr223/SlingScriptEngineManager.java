@@ -504,7 +504,7 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
 
     private void postEvent(final String topic, final ScriptEngineFactory scriptEngineFactory) {
         if (eventAdmin != null) {
-            final Dictionary<String, Object> props = new Hashtable<>();
+            final Dictionary<String, Object> props = new Hashtable<>(); // NOSONAR
             props.put(SlingScriptConstants.PROPERTY_SCRIPT_ENGINE_FACTORY_NAME, scriptEngineFactory.getEngineName());
             props.put(SlingScriptConstants.PROPERTY_SCRIPT_ENGINE_FACTORY_VERSION, scriptEngineFactory.getEngineVersion());
             props.put(SlingScriptConstants.PROPERTY_SCRIPT_ENGINE_FACTORY_EXTENSIONS, scriptEngineFactory.getExtensions().toArray(new String[0]));

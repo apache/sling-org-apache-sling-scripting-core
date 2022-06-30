@@ -48,7 +48,7 @@ class OnDemandReader extends Reader {
 
     @Override
     public boolean markSupported() {
-        return (delegatee != null) ? delegatee.markSupported() : false;
+        return delegatee != null && delegatee.markSupported();
     }
 
     @Override

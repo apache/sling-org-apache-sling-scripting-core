@@ -97,11 +97,11 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
             "general page rendering performance.";
 
     /** Thread local containing the resource resolver. */
-    private static ThreadLocal<ResourceResolver> requestResourceResolver = new ThreadLocal<ResourceResolver>();
+    private static ThreadLocal<ResourceResolver> requestResourceResolver = new ThreadLocal<>();
 
     /** The set of protected keys. */
     private static final Set<String> PROTECTED_KEYS =
-        new HashSet<String>(Arrays.asList(REQUEST, RESPONSE, READER, SLING, RESOURCE, RESOLVER, OUT, LOG));
+        new HashSet<>(Arrays.asList(REQUEST, RESPONSE, READER, SLING, RESOURCE, RESOLVER, OUT, LOG));
 
     /** The resource pointing to the script. */
 
@@ -243,8 +243,9 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
                         case SlingScriptConstants.SLING_SCOPE : return slingScope;
                         case 100: return this.engineScope;
                         case 200: return this.globalScope;
+                        default:
+                            throw new IllegalArgumentException("Invalid scope");
                     }
-                    throw new IllegalArgumentException("Invalid scope");
                 }
 
                 /**
@@ -403,9 +404,9 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
                     throw new ScriptEvaluationException(this.scriptName, "Method " + method + " not found in script.", e);
                 }
             }
-            // optionall flush the output channel
+            // optional flush the output channel
             Object flushObject = bindings.get(FLUSH);
-            if (flushObject instanceof Boolean && (Boolean) flushObject) {
+            if (Boolean.TRUE.equals(flushObject)) {
                 ctx.getWriter().flush();
             }
 
@@ -455,7 +456,7 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
      */
     public void init(ServletConfig servletConfig) {
         if (servletConfig != null) {
-            final Dictionary<String, String> params = new Hashtable<String, String>();
+            final Dictionary<String, String> params = new Hashtable<>(); // NOSONAR
             for (Enumeration<?> ne = servletConfig.getInitParameterNames(); ne.hasMoreElements();) {
                 String name = String.valueOf(ne.nextElement());
                 String value = servletConfig.getInitParameter(name);
@@ -731,7 +732,7 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
         }
 
         if (!bindingsValuesProviders.isEmpty()) {
-            Set<String> protectedKeys = new HashSet<String>();
+            Set<String> protectedKeys = new HashSet<>();
             protectedKeys.addAll(PROTECTED_KEYS);
             ProtectedBindings protectedBindings = new ProtectedBindings(bindings, protectedKeys);
             
@@ -747,8 +748,10 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
                     if (request != null && request.getRequestProgressTracker() != null) {
                         request.getRequestProgressTracker().log(String.format(BINDINGS_THRESHOLD_MESSAGE, provider.getClass().getName(), (stop-start)/1000, WARN_LIMIT_FOR_BVP_NANOS/1000));
                     } else {
-                        LOGGER.info(String.format(BINDINGS_THRESHOLD_MESSAGE, provider.getClass().getName(), (stop-start)/1000,
-                                WARN_LIMIT_FOR_BVP_NANOS/1000));
+                        if (LOGGER.isInfoEnabled()) {
+                            LOGGER.info(String.format(BINDINGS_THRESHOLD_MESSAGE, provider.getClass().getName(), (stop-start)/1000,
+                                    WARN_LIMIT_FOR_BVP_NANOS/1000));
+                        }
                     }
                 }
             }
@@ -795,7 +798,7 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
      * This ensures that the input stream is only fetched from the repository
      * if it is really used by the script engines.
      */
-    public final static class LazyInputStream extends InputStream {
+    public static final class LazyInputStream extends InputStream {
 
         /** The script resource which is adapted to an inputm stream. */
         private final Resource resource;
@@ -895,7 +898,7 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
         private Resource delegatee;
 
         public LazyScriptResource(final String path, final String resourceType, final ResourceResolver resolver) {
-            super(null);
+            super(null); // NOSONAR
             this.path = path;
             this.resourceType = resourceType;
             this.resolver = resolver;

@@ -27,13 +27,13 @@ class LogWriter extends Writer {
     /**
      * The logger to which the error messages are written
      */
-    final private Logger logger;
+    private final Logger logger;
 
     /**
      * The internal buffer to gather message data until being flushed or a CR or
      * LF is encountered in the message data.
      */
-    final private StringBuilder lineBuffer;
+    private final StringBuilder lineBuffer;
 
     /**
      * Creates a writer based on the given logger.

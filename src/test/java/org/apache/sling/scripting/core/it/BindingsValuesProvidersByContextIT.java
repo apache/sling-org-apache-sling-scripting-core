@@ -60,7 +60,7 @@ public class BindingsValuesProvidersByContextIT extends ScriptingCoreTestSupport
     @Inject
     private BundleContext bundleContext;
 
-    private final List<ServiceRegistration> regs = new ArrayList<ServiceRegistration>();
+    private final List<ServiceRegistration<?>> regs = new ArrayList<>();
 
     @Before
     public void setup() {
@@ -69,7 +69,7 @@ public class BindingsValuesProvidersByContextIT extends ScriptingCoreTestSupport
 
     @After
     public void cleanup() {
-        for (ServiceRegistration reg : regs) {
+        for (ServiceRegistration<?> reg : regs) {
             reg.unregister();
         }
     }

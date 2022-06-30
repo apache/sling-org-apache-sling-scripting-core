@@ -54,11 +54,11 @@ public class ScriptingResourceResolver extends ResourceResolverWrapper {
             StringWriter writer = new StringWriter();
             Throwable t = new Throwable();
             t.printStackTrace(new PrintWriter(writer));
-            LOGGER.warn("The following code attempted to close the per-request resource resolver: {}", writer.toString());
+            LOGGER.warn("The following code attempted to close the per-request resource resolver: {}", writer);
         }
     }
 
-    void _close() {
+    void _close() { // NOSONAR
         delegate.close();
     }
 

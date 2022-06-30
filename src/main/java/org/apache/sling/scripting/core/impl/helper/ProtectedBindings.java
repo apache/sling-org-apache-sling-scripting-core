@@ -30,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class ProtectedBindings extends LazyBindings implements Bindings {
 
+    private static final long serialVersionUID = -5988579857015221345L;
+
     private final Bindings wrapped;
     private final Set<String> protectedKeys;
 
@@ -43,6 +45,7 @@ public class ProtectedBindings extends LazyBindings implements Bindings {
      *
      * @throws IllegalArgumentException if the key is protected
      */
+    @Override
     public Object put(String key, Object value) {
         if (protectedKeys.contains(key)) {
             throw new IllegalArgumentException(String.format("Key %s is protected.", key));
@@ -53,10 +56,13 @@ public class ProtectedBindings extends LazyBindings implements Bindings {
     /**
      * {@inheritDoc}
      */
+    @SuppressWarnings("java:S4968") // can't fix, so stop warning about it
+    @Override
     public void putAll(Map<? extends String, ? extends Object> toMerge) {
-        for (String key : toMerge.keySet()) {
+        for (Entry<? extends String, ? extends Object> entry : toMerge.entrySet()) {
+            String key = entry.getKey();
             if (!protectedKeys.contains(key)) {
-                wrapped.put(key, toMerge.get(key));
+                wrapped.put(key, entry.getValue());
             }
         }
     }
@@ -66,6 +72,7 @@ public class ProtectedBindings extends LazyBindings implements Bindings {
      *
      * @throws IllegalArgumentException if the key is protected
      */
+    @Override
     public Object remove(Object key) {
         if (protectedKeys.contains(key)) {
             throw new IllegalArgumentException(String.format("Key %s is protected.", key));
@@ -76,6 +83,7 @@ public class ProtectedBindings extends LazyBindings implements Bindings {
     /**
      * The clear operation is not supported.
      */
+    @Override
     public void clear() {
         throw new UnsupportedOperationException("ProtectedBindings does not support clear()");
     }
@@ -83,6 +91,7 @@ public class ProtectedBindings extends LazyBindings implements Bindings {
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean containsValue(Object value) {
         return wrapped.containsValue(value);
     }
@@ -93,6 +102,7 @@ public class ProtectedBindings extends LazyBindings implements Bindings {
      *
      * @return an unmodifiable Set view of the map
      */
+    @Override
     @NotNull
     public Set<Entry<String, Object>> entrySet() {
         return Collections.unmodifiableSet(wrapped.entrySet());
@@ -101,6 +111,7 @@ public class ProtectedBindings extends LazyBindings implements Bindings {
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean isEmpty() {
         return wrapped.isEmpty();
     }
@@ -111,6 +122,7 @@ public class ProtectedBindings extends LazyBindings implements Bindings {
      *
      * @return an unmodifiable Set view of the map's keys
      */
+    @Override
     @NotNull
     public Set<String> keySet() {
         return Collections.unmodifiableSet(wrapped.keySet());
@@ -119,6 +131,7 @@ public class ProtectedBindings extends LazyBindings implements Bindings {
     /**
      * {@inheritDoc}
      */
+    @Override
     public int size() {
         return wrapped.size();
     }
@@ -129,6 +142,7 @@ public class ProtectedBindings extends LazyBindings implements Bindings {
      *
      * @return an unmodifiable Collection view of the map's values
      */
+    @Override
     @NotNull
     public Collection<Object> values() {
         return Collections.unmodifiableCollection(wrapped.values());
@@ -137,6 +151,7 @@ public class ProtectedBindings extends LazyBindings implements Bindings {
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean containsKey(Object key) {
         return wrapped.containsKey(key);
     }
@@ -144,8 +159,40 @@ public class ProtectedBindings extends LazyBindings implements Bindings {
     /**
      * {@inheritDoc}
      */
+    @Override
     public Object get(Object key) {
         return wrapped.get(key);
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + ((protectedKeys == null) ? 0 : protectedKeys.hashCode());
+        result = prime * result + ((wrapped == null) ? 0 : wrapped.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        ProtectedBindings other = (ProtectedBindings) obj;
+        if (protectedKeys == null) {
+            if (other.protectedKeys != null)
+                return false;
+        } else if (!protectedKeys.equals(other.protectedKeys))
+            return false;
+        if (wrapped == null) {
+            if (other.wrapped != null)
+                return false;
+        } else if (!wrapped.equals(other.wrapped))
+            return false;
+        return true;
     }
 
 }

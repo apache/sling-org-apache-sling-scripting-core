@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
@@ -80,7 +81,7 @@ class Script extends AbstractBundledRenderUnit {
     @Override
     public InputStream getInputStream() {
         try {
-            return IOUtils.toInputStream(getSourceCode());
+            return IOUtils.toInputStream(getSourceCode(), Charset.defaultCharset());
         }
         catch (IOException e) {
             return null;
