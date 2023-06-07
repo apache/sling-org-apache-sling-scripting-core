@@ -62,7 +62,7 @@ public final class CaptureResponseWrapper extends HttpServletResponseWrapper {
         if (isBinaryResponse()) {
             getResponse().getOutputStream().flush();
         } else {
-            writer.flush();
+            getWriter.flush();
         }
     }
 
