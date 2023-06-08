@@ -28,13 +28,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import javax.servlet.ServletRequestEvent;
 
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.internal.util.reflection.Whitebox;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -49,7 +49,7 @@ public class ScriptingResourceResolverProviderImplTest {
     private Set<ResourceResolver> delegates;
 
     @Before
-    public void setUp() throws LoginException {
+    public void setUp() throws LoginException, ReflectiveOperationException {
         delegates = Collections.synchronizedSet(new HashSet<ResourceResolver>());
         ResourceResolverFactory rrf = mock(ResourceResolverFactory.class);
         when(rrf.getServiceResourceResolver(null)).thenAnswer(new Answer<ResourceResolver>() {
@@ -61,7 +61,7 @@ public class ScriptingResourceResolverProviderImplTest {
             }
         });
         scriptingResourceResolverFactory = new ScriptingResourceResolverProviderImpl();
-        Whitebox.setInternalState(scriptingResourceResolverFactory, "rrf", rrf);
+        FieldUtils.getField(ScriptingResourceResolverProviderImpl.class, "rrf", true).set(scriptingResourceResolverFactory, rrf);
     }
 
     @After
