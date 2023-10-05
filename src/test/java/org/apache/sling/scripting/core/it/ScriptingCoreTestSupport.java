@@ -46,8 +46,10 @@ public class ScriptingCoreTestSupport extends TestSupport {
     public ModifiableCompositeOption baseConfiguration() {
         versionResolver.setVersionFromProject("org.apache.sling", "org.apache.sling.api");
         versionResolver.setVersionFromProject("org.apache.sling", "org.apache.sling.resourceresolver");
+        versionResolver.setVersionFromProject("org.apache.sling", "org.apache.sling.engine");
         versionResolver.setVersionFromProject("org.apache.sling", "org.apache.sling.servlets.resolver");
         versionResolver.setVersionFromProject("org.apache.sling", "org.apache.sling.scripting.api");
+        versionResolver.setVersionFromProject("org.apache.sling", "org.apache.sling.auth.core");
         return composite(
             super.baseConfiguration(),
             // Sling Scripting
@@ -67,11 +69,13 @@ public class ScriptingCoreTestSupport extends TestSupport {
             mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.commons.compiler").versionAsInProject(),
             mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.commons.johnzon").versionAsInProject(),
             mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.scripting.spi").versionAsInProject(),
+            mavenBundle().groupId("commons-fileupload").artifactId("commons-fileupload").version("1.5"),
+            mavenBundle().groupId("commons-codec").artifactId("commons-codec").version("1.13"),
             junitBundles(),
             awaitility(),
             jacoco() // remove with Testing PaxExam 4.0
         ).add(
-            mavenBundle().groupId("org.apache.felix").artifactId("org.apache.felix.converter").version("1.0.12") // new Sling API dependency
+            mavenBundle().groupId("org.osgi").artifactId("org.osgi.util.converter").version("1.0.9") // new Sling API dependency
         ).remove(
             scriptingCore
         );

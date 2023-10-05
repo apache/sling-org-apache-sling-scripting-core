@@ -103,13 +103,13 @@
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.api</artifactId>
-            <version>2.23.4</version>
+            <version>2.27.2</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.commons.mime</artifactId>
-            <version>2.0.2-incubator</version>
+            <version>2.2.2</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -174,7 +174,7 @@
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.testing.paxexam</artifactId>
-            <version>3.1.0</version>
+            <version>4.0.0</version>
             <scope>test</scope>
         </dependency>
         <!-- OSGi -->
@@ -236,7 +236,7 @@
         <dependency>
             <groupId>org.apache.felix</groupId>
             <artifactId>org.apache.felix.framework</artifactId>
-            <version>6.0.3</version>
+            <version>7.0.5</version>
             <scope>test</scope>
         </dependency>
 
@@ -337,19 +337,31 @@
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.resourceresolver</artifactId>
-            <version>1.6.16</version>
+            <version>1.11.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.servlets.resolver</artifactId>
-            <version>2.8.2</version>
+            <version>2.9.14</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.engine</artifactId>
+            <version>2.15.6</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.auth.core</artifactId>
+            <version>1.6.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.commons.johnzon</artifactId>
-            <version>1.2.6</version>
+            <version>1.2.16</version>
             <scope>test</scope>
         </dependency>
         <dependency>

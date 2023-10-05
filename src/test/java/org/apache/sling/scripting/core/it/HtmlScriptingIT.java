@@ -19,7 +19,7 @@
 package org.apache.sling.scripting.core.it;
 
 import static org.apache.sling.testing.paxexam.SlingOptions.slingQuickstartOakTar;
-import static org.apache.sling.testing.paxexam.SlingOptions.slingScriptingSightly;
+import static org.apache.sling.testing.paxexam.SlingOptions.slingScriptingHtl;
 import static org.apache.sling.testing.paxexam.SlingOptions.slingScriptingThymeleaf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -90,7 +90,7 @@ public class HtmlScriptingIT extends ScriptingCoreTestSupport {
         return options(
             composite(
                 super.baseConfiguration(),
-                slingScriptingSightly(),
+                slingScriptingHtl(),
                 slingScriptingThymeleaf(),
                 slingQuickstartOakTar(workingDirectory, httpPort),
                 factoryConfiguration("org.apache.sling.resource.presence.internal.ResourcePresenter")
