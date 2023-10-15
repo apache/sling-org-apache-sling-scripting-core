@@ -28,7 +28,7 @@ import javax.script.Bindings;
 import org.apache.sling.api.scripting.LazyBindings;
 import org.jetbrains.annotations.NotNull;
 
-public class ProtectedBindings extends LazyBindings implements Bindings {
+public class ProtectedBindings extends LazyBindings {
 
     private static final long serialVersionUID = -5988579857015221345L;
 

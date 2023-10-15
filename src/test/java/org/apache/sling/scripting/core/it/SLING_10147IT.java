@@ -26,7 +26,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.ops4j.pax.exam.CoreOptions.composite;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
-import static org.ops4j.pax.exam.CoreOptions.vmOption;
 import static org.ops4j.pax.exam.cm.ConfigurationAdminOptions.factoryConfiguration;
 
 import java.io.IOException;
@@ -61,8 +60,6 @@ import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.junit.PaxExam;
-import org.ops4j.pax.exam.options.ModifiableCompositeOption;
-import org.ops4j.pax.exam.options.extra.VMOption;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 import org.osgi.framework.BundleContext;
@@ -172,37 +169,15 @@ public class SLING_10147IT {
 
         @Configuration
         public Option[] configuration() {
-            versionResolver.setVersionFromProject("org.apache.sling", "org.apache.sling.api");
-            versionResolver.setVersionFromProject("org.apache.sling", "org.apache.sling.resourceresolver");
-            versionResolver.setVersionFromProject("org.apache.sling", "org.apache.sling.servlets.resolver");
-            versionResolver.setVersionFromProject("org.apache.sling", "org.apache.sling.scripting.api");
-
-            final Option webconsolesecurityprovider = mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.extensions.webconsolesecurityprovider").versionAsInProject();
             return composite(
+                        baseConfiguration(),
                         slingQuickstartOakTar(String.format("target/%s", getClass().getSimpleName()), httpPort),
                         slingScriptingJavascript(),
                         slingAuthForm(),
-                        baseConfiguration(),
                         mavenBundle().groupId("org.apache.httpcomponents").artifactId("httpcore-osgi").version(versionResolver),
                         mavenBundle().groupId("org.apache.httpcomponents").artifactId("httpclient-osgi").version(versionResolver),
-                        webconsolesecurityprovider,
-                        optionalRemoteDebug()
-                    ).remove(
-                        scriptingCore // remove the old version
+                        webconsolesecurityprovider()
                     ).getOptions();
-        }
-
-        /**
-         * Optionally configure remote debugging on the port supplied by the "debugPort"
-         * system property.
-         */
-        protected ModifiableCompositeOption optionalRemoteDebug() {
-            VMOption option = null;
-            String property = System.getProperty("debugPort");
-            if (property != null) {
-                option = vmOption(String.format("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=%s", property));
-            }
-            return composite(option);
         }
 
         protected void checkContentType(CloseableHttpResponse response ,String expected) {
@@ -321,9 +296,8 @@ public class SLING_10147IT {
         @Override
         public Option[] configuration() {
             // remove the security provider bundle from the configuration
-            final Option webconsolesecurityprovider = mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.extensions.webconsolesecurityprovider").versionAsInProject();
             return composite(super.configuration())
-                    .remove(webconsolesecurityprovider)
+                    .remove(webconsolesecurityprovider())
                     .getOptions();
         }
 
