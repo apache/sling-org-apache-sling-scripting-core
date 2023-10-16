@@ -19,7 +19,7 @@
 package org.apache.sling.scripting.core.it;
 
 import static org.apache.sling.testing.paxexam.SlingOptions.slingQuickstartOakTar;
-import static org.apache.sling.testing.paxexam.SlingOptions.slingScriptingSightly;
+import static org.apache.sling.testing.paxexam.SlingOptions.slingScriptingHtl;
 import static org.apache.sling.testing.paxexam.SlingOptions.slingScriptingThymeleaf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -28,7 +28,6 @@ import static org.ops4j.pax.exam.CoreOptions.options;
 import static org.ops4j.pax.exam.cm.ConfigurationAdminOptions.factoryConfiguration;
 
 import java.io.IOException;
-
 import javax.inject.Inject;
 import javax.script.ScriptEngineFactory;
 
@@ -90,9 +89,14 @@ public class HtmlScriptingIT extends ScriptingCoreTestSupport {
         return options(
             composite(
                 super.baseConfiguration(),
-                slingScriptingSightly(),
+                slingScriptingHtl(),
                 slingScriptingThymeleaf(),
                 slingQuickstartOakTar(workingDirectory, httpPort),
+                factoryConfiguration("org.apache.sling.jcr.repoinit.RepositoryInitializer")
+                    .put("scripts", new String[]{
+                        "create path (sling:OrderedFolder) /content\nset ACL for everyone\nallow jcr:read on /content\nend"
+                    })
+                    .asOption(),
                 factoryConfiguration("org.apache.sling.resource.presence.internal.ResourcePresenter")
                     .put("path", "/apps/htl")
                     .asOption(),
@@ -110,10 +114,7 @@ public class HtmlScriptingIT extends ScriptingCoreTestSupport {
 
     @ProbeBuilder
     public TestProbeBuilder probeConfiguration(final TestProbeBuilder testProbeBuilder) {
-        testProbeBuilder.setHeader("Sling-Initial-Content", String.join(",",
-            "apps;path:=/apps;overwrite:=true;uninstall:=true",
-            "content;path:=/content;overwrite:=true;uninstall:=true"
-        ));
+        testProbeBuilder.setHeader("Sling-Initial-Content", "initial-content");
         return testProbeBuilder;
     }
 
