@@ -41,7 +41,7 @@
 
 	function lookupVariables(path, extension) {
 		if (/^\//.test(path)) {
-			$.ajax(appendSelectorToPath(path) + "?extension="+extension,
+			$.ajax("scriptingvariables/show?path=" + encodeURIComponent(path) + "&extension="+encodeURIComponent(extension),
 					{
 						type: 'GET'
 					}
@@ -58,11 +58,6 @@
 			$('#response').html('Invalid path given.');
 		}
 	}
-
-	function appendSelectorToPath(path) {
-		return path + ".SLING_availablebindings.json";
-	}
-
     
 	function produceTableRow(variable, i) {
 		return "<tr class='" + (i % 2 === 0 ? "even" : "odd") + " ui-state-default'>"
