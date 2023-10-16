@@ -92,6 +92,11 @@ public class HtmlScriptingIT extends ScriptingCoreTestSupport {
                 slingScriptingHtl(),
                 slingScriptingThymeleaf(),
                 slingQuickstartOakTar(workingDirectory, httpPort),
+                factoryConfiguration("org.apache.sling.jcr.repoinit.RepositoryInitializer")
+                    .put("scripts", new String[]{
+                        "create path (sling:OrderedFolder) /content\nset ACL for everyone\nallow jcr:read on /content\nend"
+                    })
+                    .asOption(),
                 factoryConfiguration("org.apache.sling.resource.presence.internal.ResourcePresenter")
                     .put("path", "/apps/htl")
                     .asOption(),
@@ -109,10 +114,7 @@ public class HtmlScriptingIT extends ScriptingCoreTestSupport {
 
     @ProbeBuilder
     public TestProbeBuilder probeConfiguration(final TestProbeBuilder testProbeBuilder) {
-        testProbeBuilder.setHeader("Sling-Initial-Content", String.join(",",
-            "apps;path:=/apps;overwrite:=true;uninstall:=true",
-            "content;path:=/content;overwrite:=true;uninstall:=true"
-        ));
+        testProbeBuilder.setHeader("Sling-Initial-Content", "initial-content");
         return testProbeBuilder;
     }
 

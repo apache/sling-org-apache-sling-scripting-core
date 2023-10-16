@@ -65,8 +65,7 @@ public class ScriptingCoreTestSupport extends TestSupport {
             mavenBundle().groupId("org.hamcrest").artifactId("hamcrest").versionAsInProject(),
             optionalRemoteDebug()
         ).remove(
-            scriptingCore,
-            mavenBundle().groupId("org.apache.servicemix.bundles").artifactId("org.apache.servicemix.bundles.hamcrest").version(versionResolver)
+            scriptingCore
         );
     }
 
