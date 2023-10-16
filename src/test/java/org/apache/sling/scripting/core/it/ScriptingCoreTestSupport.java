@@ -45,6 +45,11 @@ public class ScriptingCoreTestSupport extends TestSupport {
 
     public ModifiableCompositeOption baseConfiguration() {
         versionResolver.setVersionFromProject("org.awaitility", "awaitility");
+        // Overrides to newer Sling bundles, until Sling Testing PAXExam catches up
+        versionResolver.setVersionFromProject("org.apache.sling", "org.apache.sling.api");
+        versionResolver.setVersion("org.apache.sling", "org.apache.sling.resourceresolver", "1.11.0");
+        versionResolver.setVersion("org.apache.sling", "org.apache.sling.engine", "2.15.6");
+        versionResolver.setVersion("org.apache.sling", "org.apache.sling.servlets.resolver", "2.9.14");
         return composite(
             super.baseConfiguration(),
             newConfiguration("org.apache.felix.http")

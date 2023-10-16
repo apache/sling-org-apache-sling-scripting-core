@@ -18,7 +18,11 @@ package org.apache.sling.scripting.core.impl;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URL;
+import java.util.Collection;
+import java.util.Map;
 
+import javax.script.Bindings;
+import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
 import javax.servlet.Servlet;
@@ -26,9 +30,21 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.felix.utils.json.JSONWriter;
 import org.apache.felix.webconsole.AbstractWebConsolePlugin;
 import org.apache.felix.webconsole.WebConsoleConstants;
+import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.request.builder.Builders;
+import org.apache.sling.api.resource.NonExistingResource;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.scripting.SlingBindings;
+import org.apache.sling.api.scripting.SlingScriptConstants;
+import org.apache.sling.scripting.api.BindingsValuesProvider;
+import org.apache.sling.scripting.api.BindingsValuesProvidersByContext;
+import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -48,6 +64,13 @@ public class ScriptingVariablesConsolePlugin extends AbstractWebConsolePlugin {
 
     protected static final String LABEL = "scriptingvariables";
     protected static final String TITLE = "Scripting Variables";
+    protected static final String FORWARD_PATH = "/" + LABEL + "/show";
+
+    private static final String PARAMETER_EXTENSION = "extension";
+    private static final String PARAMETER_PATH = "path";
+
+    protected static final String REQUEST_ATTR = ScriptingVariablesConsolePlugin.class.getName() + ".auth";
+
     /**
      *
      */
@@ -60,6 +83,19 @@ public class ScriptingVariablesConsolePlugin extends AbstractWebConsolePlugin {
      */
     @Reference
     private ScriptEngineManager scriptEngineManager;
+
+    /**
+     * The BindingsValuesProviderTracker
+     */
+    @Reference
+    private BindingsValuesProvidersByContext bindingsValuesProviderTracker;
+
+    private BundleContext bundleContext;
+
+    @Activate
+    protected void init(final BundleContext context) {
+        this.bundleContext = context;
+    }
 
     /**
      * Automatically called from
@@ -83,6 +119,33 @@ public class ScriptingVariablesConsolePlugin extends AbstractWebConsolePlugin {
     @Override
     public String getTitle() {
         return TITLE;
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        final String path = request.getPathInfo();
+        if ( FORWARD_PATH.equals(path)) {
+            final ResourceResolver resolver = (ResourceResolver) request.getAttribute("org.apache.sling.auth.core.ResourceResolver");
+            if ( resolver == null ) {
+                log("Access forbidden as the request was not authenticated through the web console");
+                if (!response.isCommitted()) {
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                }
+                return;
+            }
+            final String resourcePath = request.getParameter(PARAMETER_PATH);
+            final String extension = request.getParameter(PARAMETER_EXTENSION);
+            // resolve is used to get non existing resources as well
+            final Resource resource = resolver.resolve(resourcePath);
+            final SlingHttpServletRequest slingRequest = Builders.newRequestBuilder(resource)
+                .useServletContextFrom(request)
+                .useAttributesFrom(request)
+                .build();
+            this.showBindings(slingRequest, response, extension);
+            return;
+        }
+        super.doGet(request, response);
     }
 
     @Override
@@ -110,5 +173,80 @@ public class ScriptingVariablesConsolePlugin extends AbstractWebConsolePlugin {
         pw.append("</select> ");
         pw.append("<button type='button' id='submitButton'> Retrieve Variables </button></td></tr></table>");
         pw.append("<div id='response'></div>");
+    }
+
+
+    protected void showBindings(SlingHttpServletRequest request, HttpServletResponse response, final String requestedExtension)
+            throws ServletException, IOException {
+        response.setContentType("application/json");
+        JSONWriter jsonWriter = new JSONWriter(response.getWriter());
+        jsonWriter.array();
+        // get filter by engine selector
+        if (requestedExtension != null && !requestedExtension.isEmpty() ) {
+            ScriptEngine selectedScriptEngine = scriptEngineManager.getEngineByExtension(requestedExtension);
+            if (selectedScriptEngine == null) {
+                throw new IllegalArgumentException("Invalid extension requested: "+requestedExtension);
+            } else {
+                writeBindingsToJsonWriter(jsonWriter, selectedScriptEngine.getFactory(), request);
+            }
+        } else {
+            for (ScriptEngineFactory engineFactory : scriptEngineManager.getEngineFactories()) {
+                writeBindingsToJsonWriter(jsonWriter, engineFactory, request);
+            }
+        }
+        jsonWriter.endArray();
+    }
+
+    private void writeBindingsToJsonWriter(JSONWriter jsonWriter, ScriptEngineFactory engineFactory, SlingHttpServletRequest request) throws IOException {
+        jsonWriter.object();
+        jsonWriter.key("engine");
+        jsonWriter.value(engineFactory.getEngineName());
+        jsonWriter.key("extensions");
+        jsonWriter.value(engineFactory.getExtensions());
+        Bindings bindings = getBindingsByEngine(engineFactory, request);
+        jsonWriter.key("bindings");
+        jsonWriter.array();
+        for (Map.Entry<String, Object> entry : bindings.entrySet()) {
+            jsonWriter.object();
+            jsonWriter.key("name");
+            jsonWriter.value(entry.getKey());
+            jsonWriter.key("class");
+            jsonWriter.value(entry.getValue() == null ? "&lt;NO VALUE&gt;" : entry.getValue().getClass().getName());
+            jsonWriter.endObject();
+        }
+        jsonWriter.endArray();
+        jsonWriter.endObject();
+    }
+
+    /**
+     * Gets the {@link Bindings} object for the given {@link ScriptEngineFactory}.
+     * It only considers the default context "request".
+     *
+     * @see <a href="https://issues.apache.org/jira/browse/SLING-3038">binding contexts(SLING-3083)</a>
+     *
+     * @param scriptEngineFactory the factory of the script engine, for which to retrieve the bindings
+     * @param request the current request (necessary to create the bindings)
+     * @param response the current response (necessary to create the bindings)
+     * @return the bindings (list of key/value pairs) as defined by {@link Bindings} for the given script engine.
+     * @throws IOException
+     */
+    private Bindings getBindingsByEngine(ScriptEngineFactory scriptEngineFactory, SlingHttpServletRequest request) throws IOException {
+        String context = SlingScriptAdapterFactory.BINDINGS_CONTEXT; // use default context only
+        final Collection<BindingsValuesProvider> bindingsValuesProviders =
+                bindingsValuesProviderTracker.getBindingsValuesProviders(scriptEngineFactory, context);
+
+        Resource invalidScriptResource = new NonExistingResource(request.getResourceResolver(), "some/invalid/scriptpath");
+        DefaultSlingScript defaultSlingScript = new DefaultSlingScript(bundleContext, invalidScriptResource, scriptEngineFactory.getScriptEngine(), bindingsValuesProviders, null, null);
+
+        // prepare the bindings (similar as in DefaultSlingScript#service)
+        final SlingBindings initalBindings = new SlingBindings();
+        initalBindings.setRequest(request);
+        initalBindings.setResponse(Builders.newResponseBuilder().build());
+        final Bindings bindings = defaultSlingScript.verifySlingBindings(initalBindings);
+
+        // only thing being added in {DefaultSlingScript#call(...)} is resource resolver
+        bindings.put(SlingScriptConstants.ATTR_SCRIPT_RESOURCE_RESOLVER, request.getResourceResolver());
+
+        return bindings;
     }
 }
