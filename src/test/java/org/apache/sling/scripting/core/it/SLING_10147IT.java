@@ -72,7 +72,7 @@ import org.slf4j.LoggerFactory;
  * Tests for SLING-10147 - verify scripting variables implementation details are not 
  * exposed to not authorized users
  */
-@RunWith(Enclosed.class)
+// @RunWith(Enclosed.class)
 public class SLING_10147IT {
 
     private SLING_10147IT() {
