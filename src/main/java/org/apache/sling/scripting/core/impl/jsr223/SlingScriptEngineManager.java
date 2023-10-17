@@ -38,7 +38,6 @@ import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
 
 import org.apache.sling.api.scripting.SlingScriptConstants;
-import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleEvent;
@@ -449,7 +448,10 @@ public class SlingScriptEngineManager extends ScriptEngineManager implements Bun
                             for (final String key : serviceReference.getPropertyKeys()) {
                                 factoryProperties.put(key, serviceReference.getProperty(key));
                             }
-                            final SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(scriptEngineFactory, serviceReference.getBundle().getBundleId(), PropertiesUtil.toInteger(serviceReference.getProperty(Constants.SERVICE_RANKING), 0), factoryProperties);
+                            final Object prop = serviceReference.getProperty(Constants.SERVICE_RANKING);
+                            final int ranking = prop instanceof Integer ? (Integer) prop : 0;
+                            final SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(scriptEngineFactory, serviceReference.getBundle().getBundleId(),
+                                ranking, factoryProperties);
                             factories.add(sortableScriptEngineFactory);
                         }
                     }

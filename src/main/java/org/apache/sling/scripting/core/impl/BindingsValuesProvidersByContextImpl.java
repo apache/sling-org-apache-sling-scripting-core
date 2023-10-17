@@ -31,7 +31,6 @@ import java.util.Map;
 
 import javax.script.ScriptEngineFactory;
 
-import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.scripting.api.BindingsValuesProvider;
 import org.apache.sling.scripting.api.BindingsValuesProvidersByContext;
 import org.apache.sling.scripting.core.impl.jsr223.SlingScriptEngineManager;
@@ -48,6 +47,7 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
+import org.osgi.util.converter.Converters;
 import org.osgi.util.tracker.ServiceTracker;
 import org.osgi.util.tracker.ServiceTrackerCustomizer;
 import org.slf4j.Logger;
@@ -88,7 +88,7 @@ public class BindingsValuesProvidersByContextImpl implements BindingsValuesProvi
 
     private abstract class ContextLoop {
         private String [] getContexts(ServiceReference<?> reference) {
-            return PropertiesUtil.toStringArray(reference.getProperty(CONTEXT), new String[] { DEFAULT_CONTEXT });
+            return Converters.standardConverter().convert(reference.getProperty(CONTEXT)).defaultValue(DEFAULT_CONTEXT_ARRAY).to(String[].class);
         }
 
         Object apply(ServiceReference<?> ref) {
@@ -160,7 +160,7 @@ public class BindingsValuesProvidersByContextImpl implements BindingsValuesProvi
         // overrides these
         final Map<String, Object> factoryProperties = scriptEngineManager.getServiceProperties(scriptEngineFactory);
         if (factoryProperties != null) {
-            String[] compatibleLangs = PropertiesUtil.toStringArray(factoryProperties.get("compatible.javax.script.name"), new String[0]);
+            String[] compatibleLangs = Converters.standardConverter().convert(factoryProperties.get("compatible.javax.script.name")).to(String[].class);
             for (final String name : compatibleLangs) {
                 final Map<ServiceReference<?>, BindingsValuesProvider> langProviders = bvpc.getLangBindingsValuesProviders().get(name);
                 if (langProviders != null) {

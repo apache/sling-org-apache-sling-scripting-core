@@ -7,9 +7,6 @@ Conditional-Package:\
 
 -exportcontents: ${packages;VERSIONED}
 
--includeresource:\
-  @org.apache.sling.commons.osgi-*.jar!/org/apache/sling/commons/osgi/PropertiesUtil.*
-
 -removeheaders:\
   Include-Resource,\
   Private-Package

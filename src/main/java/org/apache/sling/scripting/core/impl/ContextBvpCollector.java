@@ -26,10 +26,10 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import javax.script.Bindings;
 import javax.script.ScriptEngine;
 
-import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.scripting.api.BindingsValuesProvider;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
+import org.osgi.util.converter.Converters;
 
 /** Keeps track of {@link BindingsValuesProvider} for a single context */
 class ContextBvpCollector {
@@ -57,8 +57,7 @@ class ContextBvpCollector {
 
     @SuppressWarnings("unchecked")
     public Object addingService(final ServiceReference<?> ref) {
-        final String[] engineNames = PropertiesUtil
-                .toStringArray(ref.getProperty(ScriptEngine.NAME), new String[0]);
+        final String[] engineNames = Converters.standardConverter().convert(ref.getProperty(ScriptEngine.NAME)).to(String[].class);
         Object service = bundleContext.getService(ref);
         if (service != null) {
             if (service instanceof Map) {
