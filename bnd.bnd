@@ -3,7 +3,7 @@ Import-Package:\
   *
 
 Conditional-Package:\
-  org.apache.felix.utils.json.*
+  org.apache.felix.utils.json.*,org.apache.sling.commons.compiler.source.*
 
 -exportcontents: ${packages;VERSIONED}
 

@@ -27,6 +27,9 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -39,8 +42,6 @@ import org.apache.sling.api.resource.observation.ExternalResourceChangeListener;
 import org.apache.sling.api.resource.observation.ResourceChange;
 import org.apache.sling.api.resource.observation.ResourceChange.ChangeType;
 import org.apache.sling.api.resource.observation.ResourceChangeListener;
-import org.apache.sling.commons.threads.ThreadPool;
-import org.apache.sling.commons.threads.ThreadPoolManager;
 import org.apache.sling.scripting.api.CachedScript;
 import org.apache.sling.scripting.api.ScriptCache;
 import org.apache.sling.scripting.core.impl.helper.CachingMap;
@@ -91,13 +92,11 @@ public class ScriptCacheImpl implements ScriptCache, ResourceChangeListener, Ext
     @Reference
     private ResourceResolverFactory rrf;
 
-    @Reference
-    private ThreadPoolManager threadPoolManager;
 
     @Reference
     private SlingScriptEngineManager slingScriptEngineManager;
 
-    private ThreadPool threadPool;
+    private volatile ExecutorService threadPool;
     private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
     private final Lock readLock = rwl.readLock();
     private final Lock writeLock = rwl.writeLock();
@@ -201,7 +200,7 @@ public class ScriptCacheImpl implements ScriptCache, ResourceChangeListener, Ext
 
     @Activate
     protected void activate(ScriptCacheImplConfiguration configuration, BundleContext bundleCtx) {
-        threadPool = threadPoolManager.get("Script Cache Thread Pool");
+        threadPool = Executors.newSingleThreadExecutor();
         bundleContext = bundleCtx;
         additionalExtensions = configuration.org_apache_sling_scripting_cache_additional__extensions();
         int newMaxCacheSize = configuration.org_apache_sling_scripting_cache_size();
@@ -260,7 +259,12 @@ public class ScriptCacheImpl implements ScriptCache, ResourceChangeListener, Ext
                 resourceChangeListener = null;
             }
             if (threadPool != null) {
-                threadPoolManager.release(threadPool);
+                threadPool.shutdown();
+                try {
+                    threadPool.awaitTermination(1, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    logger.warn("Unable to shutdown script cache thread in time");
+                }
                 threadPool = null;
             }
             active = false;
