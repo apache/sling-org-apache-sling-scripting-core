@@ -59,11 +59,7 @@ public class ScriptCacheConsolePlugin extends AbstractWebConsolePlugin {
     private static final String POST_SCRIPT = "script";
 
     @Reference
-    private ScriptCache scriptCache = null;
-
-    public ScriptCacheConsolePlugin() {
-        super();
-    }
+    private ScriptCache scriptCache;
 
     @Override
     public String getTitle() {
@@ -132,7 +128,6 @@ public class ScriptCacheConsolePlugin extends AbstractWebConsolePlugin {
         } else {
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
-
     }
 }
 
