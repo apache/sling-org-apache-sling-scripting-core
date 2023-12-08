@@ -20,6 +20,7 @@
 package org.apache.sling.scripting.core.impl;
 
 import java.lang.ref.SoftReference;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.HashSet;
@@ -27,6 +28,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -82,21 +84,20 @@ public class ScriptCacheImpl implements ScriptCache, ResourceChangeListener, Ext
 
     public static final int DEFAULT_CACHE_SIZE = 65536;
 
-    private BundleContext bundleContext;
-    private Map<String, SoftReference<CachedScript>> internalMap;
-    private ServiceRegistration<ResourceChangeListener> resourceChangeListener;
-    private Set<String> extensions = new HashSet<>();
-    private String[] additionalExtensions = new String[]{};
+    private final BundleContext bundleContext;
+    private final Map<String, SoftReference<CachedScript>> internalMap;
+    private final Set<String> extensions = new TreeSet<>();
+    private final String[] additionalExtensions;
+
+    private volatile ServiceRegistration<ResourceChangeListener> resourceChangeListener;
 
     // use a static policy so that we can reconfigure the watched script files if the search paths are changed
     @Reference
     private ResourceResolverFactory rrf;
 
+    private final SlingScriptEngineManager slingScriptEngineManager;
 
-    @Reference
-    private SlingScriptEngineManager slingScriptEngineManager;
-
-    private volatile ExecutorService threadPool;
+    private final ExecutorService threadPool;
     private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
     private final Lock readLock = rwl.readLock();
     private final Lock writeLock = rwl.writeLock();
@@ -105,8 +106,18 @@ public class ScriptCacheImpl implements ScriptCache, ResourceChangeListener, Ext
     @Reference
     private ServiceUserMapped serviceUserMapped;
 
-    public ScriptCacheImpl() {
-        internalMap = new CachingMap<>(DEFAULT_CACHE_SIZE);
+    @Activate
+    public ScriptCacheImpl(@Reference final SlingScriptEngineManager slingScriptEngineManager,
+        final ScriptCacheImplConfiguration configuration, 
+        final BundleContext bundleCtx) {
+        this.slingScriptEngineManager = slingScriptEngineManager;
+        this.threadPool = Executors.newSingleThreadExecutor();
+        this.bundleContext = bundleCtx;
+        this.additionalExtensions = configuration.org_apache_sling_scripting_cache_additional__extensions();
+        this.internalMap = new CachingMap<>(configuration.org_apache_sling_scripting_cache_size());
+        this.initializeExtensions();
+        this.active = true;
+        this.configureCache();
     }
 
     @Override
@@ -198,50 +209,40 @@ public class ScriptCacheImpl implements ScriptCache, ResourceChangeListener, Ext
         }
     }
 
-    @Activate
-    protected void activate(ScriptCacheImplConfiguration configuration, BundleContext bundleCtx) {
-        threadPool = Executors.newSingleThreadExecutor();
-        bundleContext = bundleCtx;
-        additionalExtensions = configuration.org_apache_sling_scripting_cache_additional__extensions();
-        int newMaxCacheSize = configuration.org_apache_sling_scripting_cache_size();
-        if (newMaxCacheSize != DEFAULT_CACHE_SIZE) {
-            // change the map only if there's a configuration change regarding the cache's max size
-            CachingMap<CachedScript> newMap = new CachingMap<>(newMaxCacheSize);
-            newMap.putAll(internalMap);
-            internalMap = newMap;
-        }
-        active = true;
-        configureCache();
-    }
-
     private void configureCache() {
         writeLock.lock();
         try {
             if (active) {
-                if (resourceChangeListener != null) {
-                    resourceChangeListener.unregister();
-                    resourceChangeListener = null;
-                }
-                internalMap.clear();
-                if (additionalExtensions != null) {
-                    extensions.addAll(Arrays.asList(additionalExtensions));
-                }
-                if (!extensions.isEmpty()) {
-                    Set<String> globPatterns = new HashSet<>(extensions.size());
-                    for (String extension : extensions) {
-                        globPatterns.add("glob:**/*." + extension);
+                this.clear();
+                if (extensions.isEmpty()) {
+                    if (resourceChangeListener != null) {
+                        resourceChangeListener.unregister();
+                        resourceChangeListener = null;
                     }
-                    Dictionary<String, Object> resourceChangeListenerProperties = new Hashtable<>(); // NOSONAR
-                    resourceChangeListenerProperties
-                            .put(ResourceChangeListener.PATHS, globPatterns.toArray(new String[globPatterns.size()]));
-                    resourceChangeListenerProperties.put(ResourceChangeListener.CHANGES,
+                } else {
+                    final List<String> globPatterns = new ArrayList<>(extensions.size());
+                    for (final String extension : extensions) {
+                        globPatterns.add("glob:**/*.".concat(extension));
+                    }
+                    final String[] paths = globPatterns.toArray(new String[globPatterns.size()]);
+                    if (resourceChangeListener != null) {
+                        final Dictionary<String, Object> resourceChangeListenerProperties = resourceChangeListener.getReference().getProperties();
+                        if ( !Arrays.equals(paths, (String[])resourceChangeListenerProperties.get(ResourceChangeListener.PATHS))) {
+                            resourceChangeListenerProperties.put(ResourceChangeListener.PATHS, paths);
+                            resourceChangeListener.setProperties(resourceChangeListenerProperties);
+                        }
+                    } else {
+                        final Dictionary<String, Object> resourceChangeListenerProperties = new Hashtable<>();
+                        resourceChangeListenerProperties.put(ResourceChangeListener.PATHS, paths);
+                        resourceChangeListenerProperties.put(ResourceChangeListener.CHANGES,
                             new String[]{ResourceChange.ChangeType.CHANGED.name(), ResourceChange.ChangeType.REMOVED.name()});
-                    resourceChangeListener =
+                        resourceChangeListener =
                             bundleContext.registerService(
                                     ResourceChangeListener.class,
                                     this,
                                     resourceChangeListenerProperties
                             );
+                    }
                 }
             }
         } finally {
@@ -251,6 +252,7 @@ public class ScriptCacheImpl implements ScriptCache, ResourceChangeListener, Ext
 
     @Deactivate
     protected void deactivate() {
+        this.active = false;
         writeLock.lock();
         try {
             internalMap.clear();
@@ -258,31 +260,39 @@ public class ScriptCacheImpl implements ScriptCache, ResourceChangeListener, Ext
                 resourceChangeListener.unregister();
                 resourceChangeListener = null;
             }
-            if (threadPool != null) {
-                threadPool.shutdown();
-                try {
-                    threadPool.awaitTermination(1, TimeUnit.SECONDS);
-                } catch (InterruptedException e) {
-                    logger.warn("Unable to shutdown script cache thread in time");
-                }
-                threadPool = null;
+            threadPool.shutdown();
+            try {
+                threadPool.awaitTermination(1, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                logger.warn("Unable to shutdown script cache thread in time");
             }
-            active = false;
         } finally {
             writeLock.unlock();
         }
     }
 
-    @Override
-    public void handleEvent(Event event) {
-        clear();
-        extensions.clear();
-        for (ScriptEngineFactory factory :  slingScriptEngineManager.getEngineFactories()) {
-            ScriptEngine scriptEngine = factory.getScriptEngine();
+    private void initializeExtensions() {
+        for (final ScriptEngineFactory factory : slingScriptEngineManager.getEngineFactories()) {
+            final ScriptEngine scriptEngine = factory.getScriptEngine();
             if (scriptEngine instanceof Compilable) {
                 extensions.addAll(factory.getExtensions());
             }
         }
-        configureCache();
+        if (this.additionalExtensions != null) {
+            extensions.addAll(Arrays.asList(this.additionalExtensions));
+        }
+    }
+
+    @Override
+    public void handleEvent(Event event) {
+        writeLock.lock();
+        try {
+            this.clear();
+            this.extensions.clear();
+            this.initializeExtensions();
+            this.configureCache();
+        } finally {
+            writeLock.unlock();
+        }
     }
 }
