@@ -20,7 +20,6 @@
 package org.apache.sling.scripting.core.impl;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -81,7 +80,7 @@ public class ScriptCacheConsolePlugin extends AbstractWebConsolePlugin {
             throws ServletException, IOException {
         if (scriptCache instanceof ScriptCacheImpl) {
             ScriptCacheImpl scriptCacheImpl = (ScriptCacheImpl) scriptCache;
-            List<String> scripts = new ArrayList<>(scriptCacheImpl.getCachedScripts());
+            List<String> scripts = scriptCacheImpl.getCachedScripts();
             StringBuilder sb = new StringBuilder();
             sb.append("<script type='text/javascript' src='").append(RESOURCES).append("/").append(SCRIPTCACHE_JS).append("'></script>");
             sb.append("<div id='cached-scripts' class='ui-widget statline'>");
