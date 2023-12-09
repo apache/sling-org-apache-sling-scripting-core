@@ -27,14 +27,11 @@ import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.scripting.api.CachedScript;
 import org.apache.sling.scripting.api.ScriptCache;
 import org.apache.sling.scripting.core.impl.helper.CachingMap;
-import org.apache.sling.serviceusermapping.ServiceUserMapped;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,16 +55,9 @@ public class ScriptCacheImpl implements ScriptCache {
 
     private final Map<String, SoftReference<CachedScript>> internalMap;
 
-    // use a static policy so that we can reconfigure the watched script files if the search paths are changed
-    @Reference
-    private ResourceResolverFactory rrf;
-
     private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
     private final Lock readLock = rwl.readLock();
     private final Lock writeLock = rwl.writeLock();
-
-    @Reference
-    private ServiceUserMapped serviceUserMapped;
 
     @Activate
     public ScriptCacheImpl(final ScriptCacheImplConfiguration configuration) {

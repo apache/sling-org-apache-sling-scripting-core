@@ -23,6 +23,7 @@ import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.scripting.api.resource.ScriptingResourceResolverProvider;
+import org.apache.sling.serviceusermapping.ServiceUserMapped;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -54,6 +55,9 @@ public class ScriptingResourceResolverProviderImpl implements ScriptingResourceR
 
     private final ThreadLocal<ScriptingResourceResolver> perThreadResourceResolver = new ThreadLocal<>();
     private boolean logStackTraceOnResolverClose;
+
+    @Reference
+    private ServiceUserMapped serviceUserMapped;
 
     @Reference
     private ResourceResolverFactory rrf;
