@@ -101,12 +101,15 @@ public class ScriptCacheImpl implements ScriptCache {
     public boolean removeScript(final String scriptPath) {
         writeLock.lock();
         try {
-            boolean result = false;
-            if (scriptPath.endsWith("/") ) {
+            boolean result = internalMap.remove(scriptPath) != null;
+            if (result) {
+                logger.debug("Removed script {} from script cache.", scriptPath);
+            } else {
                 // prefix removal
+                final String prefix = scriptPath.concat("/");
                 final Set<String> removal = new HashSet<>();
                 for(final Map.Entry<String, SoftReference<CachedScript>> entry : internalMap.entrySet()) {
-                    if ( entry.getKey().startsWith(scriptPath) ) {
+                    if ( entry.getKey().startsWith(prefix) ) {
                         removal.add(entry.getKey());
                     }
                 }
@@ -114,11 +117,6 @@ public class ScriptCacheImpl implements ScriptCache {
                     internalMap.remove(key);
                     logger.debug("Detected removal for {} - removed entry {} from the cache.", scriptPath, key);
                     result = true;
-                }
-            } else {
-                result = internalMap.remove(scriptPath) != null;
-                if (result) {
-                    logger.debug("Removed script {} from script cache.", scriptPath);
                 }
             }
             return result;

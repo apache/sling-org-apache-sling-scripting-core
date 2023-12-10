@@ -103,15 +103,12 @@ public class ScriptCacheInvalidator implements ResourceChangeListener, ExternalR
 
     @Override
     public void onChange(@NotNull List<ResourceChange> list) {
-        for (final ResourceChange change : list) {
-            Runnable eventTask = () -> {
-                final String path = change.getPath();
-                if (!this.scriptCache.removeScript(path)) {
-                    this.scriptCache.removeScript(path.concat("/"));
-                }
-            };
-            threadPool.execute(eventTask);
-        }
+        final Runnable eventTask = () -> {
+            for (final ResourceChange change : list) {
+                this.scriptCache.removeScript( change.getPath());
+            }
+        };
+        threadPool.execute(eventTask);
     }
 
     private void configureListener() {
