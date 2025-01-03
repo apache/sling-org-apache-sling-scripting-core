@@ -45,14 +45,18 @@ public class ScriptingCoreTestSupport extends TestSupport {
         versionResolver.setVersionFromProject("org.awaitility", "awaitility");
         // Overrides to newer Sling bundles, until Sling Testing PAXExam catches up
         versionResolver.setVersionFromProject("org.apache.sling", "org.apache.sling.api");
-        versionResolver.setVersion("org.apache.sling", "org.apache.sling.resourceresolver", "1.11.0");
-        versionResolver.setVersion("org.apache.sling", "org.apache.sling.engine", "2.15.6");
-        versionResolver.setVersion("org.apache.sling", "org.apache.sling.servlets.resolver", "2.9.14");
+        versionResolver.setVersion("org.apache.sling", "org.apache.sling.resourceresolver", "1.12.3-SNAPSHOT");
+        versionResolver.setVersion("org.apache.sling", "org.apache.sling.auth.core", "1.7.1-SNAPSHOT");
+        versionResolver.setVersion("org.apache.sling", "org.apache.sling.engine", "2.16.1-SNAPSHOT");
+        versionResolver.setVersion("org.apache.sling", "org.apache.sling.servlets.resolver", "2.11.9-SNAPSHOT");
+        // The following is needed until we update to Apache Felix Http Jetty12
+        versionResolver.setVersion("org.apache.felix", "org.apache.felix.http.servlet-api", "3.0.0");
         return composite(
             super.baseConfiguration(),
             newConfiguration("org.apache.felix.http")
                 .put("org.osgi.service.http.port", httpPort)
                 .asOption(),
+            mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.commons.johnzon").version("2.0.0"),
             // Sling Scripting
             slingScripting(),
             // Sling Scripting Core
@@ -60,6 +64,8 @@ public class ScriptingCoreTestSupport extends TestSupport {
             // debugging
             webconsole(),
             mavenBundle().groupId("org.apache.felix").artifactId("org.apache.felix.webconsole.plugins.ds").version(versionResolver),
+            // The following is needed until we update to Apache Felix Http Jetty12
+            mavenBundle().groupId("org.apache.felix").artifactId("org.apache.felix.http.wrappers").version("1.1.8"),
             // testing
             slingResourcePresence(),
             mavenBundle().groupId("org.jsoup").artifactId("jsoup").versionAsInProject(),
