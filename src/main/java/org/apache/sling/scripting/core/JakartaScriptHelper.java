@@ -26,22 +26,22 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletException;
 
-import org.apache.sling.api.SlingHttpServletRequest;
-import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.SlingJakartaHttpServletRequest;
+import org.apache.sling.api.SlingJakartaHttpServletResponse;
 import org.apache.sling.api.SlingIOException;
 import org.apache.sling.api.SlingServletException;
 import org.apache.sling.api.request.RequestDispatcherOptions;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.scripting.InvalidServiceFilterSyntaxException;
-import org.apache.sling.api.scripting.SlingScript;
-import org.apache.sling.api.scripting.SlingScriptHelper;
-import org.apache.sling.api.wrappers.SlingHttpServletRequestWrapper;
-import org.apache.sling.api.wrappers.SlingHttpServletResponseWrapper;
-import org.apache.sling.scripting.core.impl.helper.OnDemandReaderRequest;
-import org.apache.sling.scripting.core.impl.helper.OnDemandWriterResponse;
+import org.apache.sling.api.scripting.SlingJakartaScriptHelper;
+import org.apache.sling.api.scripting.SlingJakartaScript;
+import org.apache.sling.api.wrappers.SlingJakartaHttpServletRequestWrapper;
+import org.apache.sling.api.wrappers.SlingJakartaHttpServletResponseWrapper;
+import org.apache.sling.scripting.core.impl.helper.OnDemandReaderJakartaRequest;
+import org.apache.sling.scripting.core.impl.helper.OnDemandWriterJakartaResponse;
 import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.InvalidSyntaxException;
@@ -56,19 +56,18 @@ import org.slf4j.LoggerFactory;
  *
  * Client code using this object should take care to call {@link #cleanup()}
  * when the object is not used anymore!
- * @deprecated Use {@link JavaxScriptHelper} instead.
+ * @since 2.2.0
  */
-@Deprecated
-public class ScriptHelper implements SlingScriptHelper {
+public class JakartaScriptHelper implements SlingJakartaScriptHelper {
 
     /** The corresponding script. */
-    private final SlingScript script;
+    private final SlingJakartaScript script;
 
     /** The current request or <code>null</code>. */
-    private final SlingHttpServletRequest request;
+    private final SlingJakartaHttpServletRequest request;
 
     /** The current response or <code>null</code>. */
-    private final SlingHttpServletResponse response;
+    private final SlingJakartaHttpServletResponse response;
 
     /** The bundle context. */
     protected final BundleContext bundleContext;
@@ -82,7 +81,7 @@ public class ScriptHelper implements SlingScriptHelper {
     /** A map of found services. */
     protected Map<String, Object> services;
 
-    public ScriptHelper(final BundleContext ctx, final SlingScript script) {
+    public JakartaScriptHelper(final BundleContext ctx, final SlingJakartaScript script) {
         if (ctx == null ) {
             throw new IllegalArgumentException("Bundle context must not be null.");
         }
@@ -92,10 +91,10 @@ public class ScriptHelper implements SlingScriptHelper {
         this.bundleContext = ctx;
     }
 
-    public ScriptHelper(final BundleContext ctx,
-            final SlingScript script,
-            final SlingHttpServletRequest request,
-            final SlingHttpServletResponse response) {
+    public JakartaScriptHelper(final BundleContext ctx,
+            final SlingJakartaScript script,
+            final SlingJakartaHttpServletRequest request,
+            final SlingJakartaHttpServletResponse response) {
         if (ctx == null ) {
             throw new IllegalArgumentException("Bundle context must not be null.");
         }
@@ -106,42 +105,42 @@ public class ScriptHelper implements SlingScriptHelper {
     }
 
     /**
-     * @see org.apache.sling.api.scripting.SlingScriptHelper#getScript()
+     * @see org.apache.sling.api.scripting.SlingJakartaScriptHelper#getScript()
      */
-    public SlingScript getScript() {
+    public SlingJakartaScript getScript() {
         return script;
     }
 
     /**
-     * @see org.apache.sling.api.scripting.SlingScriptHelper#getRequest()
+     * @see org.apache.sling.api.scripting.SlingJakartaScriptHelper#getRequest()
      */
-    public SlingHttpServletRequest getRequest() {
+    public SlingJakartaHttpServletRequest getRequest() {
         return request;
     }
 
     /**
-     * @see org.apache.sling.api.scripting.SlingScriptHelper#getResponse()
+     * @see org.apache.sling.api.scripting.SlingJakartaScriptHelper#getResponse()
      */
-    public SlingHttpServletResponse getResponse() {
+    public SlingJakartaHttpServletResponse getResponse() {
         return response;
     }
 
     /**
-     * @see org.apache.sling.api.scripting.SlingScriptHelper#include(java.lang.String)
+     * @see org.apache.sling.api.scripting.SlingJakartaScriptHelper#include(java.lang.String)
      */
     public void include(String path) {
         include(path, (RequestDispatcherOptions) null);
     }
 
     /**
-     * @see org.apache.sling.api.scripting.SlingScriptHelper#include(java.lang.String, java.lang.String)
+     * @see org.apache.sling.api.scripting.SlingJakartaScriptHelper#include(java.lang.String, java.lang.String)
      */
     public void include(String path, String options) {
         include(path, new RequestDispatcherOptions(options));
     }
 
     /**
-     * @see org.apache.sling.api.scripting.SlingScriptHelper#include(java.lang.String, org.apache.sling.api.request.RequestDispatcherOptions)
+     * @see org.apache.sling.api.scripting.SlingJakartaScriptHelper#include(java.lang.String, org.apache.sling.api.request.RequestDispatcherOptions)
      */
     public void include(String path, RequestDispatcherOptions options) {
         final RequestDispatcher dispatcher = getRequest().getRequestDispatcher(
@@ -159,21 +158,21 @@ public class ScriptHelper implements SlingScriptHelper {
     }
 
     /**
-     * @see org.apache.sling.api.scripting.SlingScriptHelper#forward(java.lang.String)
+     * @see org.apache.sling.api.scripting.SlingJakartaScriptHelper#forward(java.lang.String)
      */
     public void forward(String path) {
         forward(path, (RequestDispatcherOptions) null);
     }
 
     /**
-     * @see org.apache.sling.api.scripting.SlingScriptHelper#forward(java.lang.String, java.lang.String)
+     * @see org.apache.sling.api.scripting.SlingJakartaScriptHelper#forward(java.lang.String, java.lang.String)
      */
     public void forward(String path, String options) {
         forward(path, new RequestDispatcherOptions(options));
     }
 
     /**
-     * @see org.apache.sling.api.scripting.SlingScriptHelper#forward(java.lang.String, org.apache.sling.api.request.RequestDispatcherOptions)
+     * @see org.apache.sling.api.scripting.SlingJakartaScriptHelper#forward(java.lang.String, org.apache.sling.api.request.RequestDispatcherOptions)
      */
     public void forward(String path, RequestDispatcherOptions options) {
         final RequestDispatcher dispatcher = getRequest().getRequestDispatcher(
@@ -191,7 +190,7 @@ public class ScriptHelper implements SlingScriptHelper {
     }
 
     /**
-     * @see org.apache.sling.api.scripting.SlingScriptHelper#dispose()
+     * @see org.apache.sling.api.scripting.SlingJakartaScriptHelper#dispose()
      * @deprecated This method is deprecated and should never be called by clients!
      */
     @Deprecated
@@ -200,7 +199,7 @@ public class ScriptHelper implements SlingScriptHelper {
     }
 
     /**
-     * @see org.apache.sling.api.scripting.SlingScriptHelper#getService(java.lang.Class)
+     * @see org.apache.sling.api.scripting.SlingJakartaScriptHelper#getService(java.lang.Class)
      */
     @SuppressWarnings("unchecked")
     public <T> T getService(Class<T> type) {
@@ -225,7 +224,7 @@ public class ScriptHelper implements SlingScriptHelper {
     }
 
     /**
-     * @see org.apache.sling.api.scripting.SlingScriptHelper#getServices(java.lang.Class, java.lang.String)
+     * @see org.apache.sling.api.scripting.SlingJakartaScriptHelper#getServices(java.lang.Class, java.lang.String)
      */
     @SuppressWarnings("unchecked")
     public <T> T[] getServices(
@@ -283,7 +282,7 @@ public class ScriptHelper implements SlingScriptHelper {
     }
 
     /**
-     * @see org.apache.sling.api.scripting.SlingScriptHelper#forward(org.apache.sling.api.resource.Resource)
+     * @see org.apache.sling.api.scripting.SlingJakartaScriptHelper#forward(org.apache.sling.api.resource.Resource)
      */
     public void forward(Resource resource) {
         forward(resource, (RequestDispatcherOptions) null);
@@ -291,14 +290,14 @@ public class ScriptHelper implements SlingScriptHelper {
 
 
     /**
-     * @see org.apache.sling.api.scripting.SlingScriptHelper#forward(org.apache.sling.api.resource.Resource, java.lang.String)
+     * @see org.apache.sling.api.scripting.SlingJakartaScriptHelper#forward(org.apache.sling.api.resource.Resource, java.lang.String)
      */
     public void forward(Resource resource, String options) {
         forward(resource, new RequestDispatcherOptions(options));
     }
 
     /**
-     * @see org.apache.sling.api.scripting.SlingScriptHelper#forward(org.apache.sling.api.resource.Resource, org.apache.sling.api.request.RequestDispatcherOptions)
+     * @see org.apache.sling.api.scripting.SlingJakartaScriptHelper#forward(org.apache.sling.api.resource.Resource, org.apache.sling.api.request.RequestDispatcherOptions)
      */
     public void forward(Resource resource, RequestDispatcherOptions options) {
         final RequestDispatcher dispatcher = getRequest().getRequestDispatcher(
@@ -316,21 +315,21 @@ public class ScriptHelper implements SlingScriptHelper {
     }
 
     /**
-     * @see org.apache.sling.api.scripting.SlingScriptHelper#forward(org.apache.sling.api.resource.Resource)
+     * @see org.apache.sling.api.scripting.SlingJakartaScriptHelper#forward(org.apache.sling.api.resource.Resource)
      */
     public void include(Resource resource) {
         include(resource, (RequestDispatcherOptions) null);
     }
 
     /**
-     * @see org.apache.sling.api.scripting.SlingScriptHelper#include(org.apache.sling.api.resource.Resource, java.lang.String)
+     * @see org.apache.sling.api.scripting.SlingJakartaScriptHelper#include(org.apache.sling.api.resource.Resource, java.lang.String)
      */
     public void include(Resource resource, String options) {
         include(resource, new RequestDispatcherOptions(options));
     }
 
     /**
-     * @see org.apache.sling.api.scripting.SlingScriptHelper#include(org.apache.sling.api.resource.Resource, org.apache.sling.api.request.RequestDispatcherOptions)
+     * @see org.apache.sling.api.scripting.SlingJakartaScriptHelper#include(org.apache.sling.api.resource.Resource, org.apache.sling.api.request.RequestDispatcherOptions)
      */
     public void include(Resource resource, RequestDispatcherOptions options) {
         final RequestDispatcher dispatcher = getRequest().getRequestDispatcher(
@@ -347,25 +346,25 @@ public class ScriptHelper implements SlingScriptHelper {
         }
     }
 
-    private SlingHttpServletRequest wrapIfNeeded(@NotNull SlingHttpServletRequest request) {
-        SlingHttpServletRequest initialRequest = request;
-        while (request instanceof SlingHttpServletRequestWrapper) {
-            if (request instanceof OnDemandReaderRequest) {
+    private SlingJakartaHttpServletRequest wrapIfNeeded(@NotNull SlingJakartaHttpServletRequest request) {
+        SlingJakartaHttpServletRequest initialRequest = request;
+        while (request instanceof SlingJakartaHttpServletRequestWrapper) {
+            if (request instanceof OnDemandReaderJakartaRequest) {
                 return initialRequest;
             }
-            request = ((SlingHttpServletRequestWrapper) request).getSlingRequest();
+            request = ((SlingJakartaHttpServletRequestWrapper) request).getSlingRequest();
         }
-        return new OnDemandReaderRequest(initialRequest);
+        return new OnDemandReaderJakartaRequest(initialRequest);
     }
 
-    private SlingHttpServletResponse wrapIfNeeded(@NotNull SlingHttpServletResponse response) {
-        SlingHttpServletResponse initialResponse = response;
-        while (response instanceof SlingHttpServletResponseWrapper) {
-            if (response instanceof OnDemandWriterResponse) {
+    private SlingJakartaHttpServletResponse wrapIfNeeded(@NotNull SlingJakartaHttpServletResponse response) {
+        SlingJakartaHttpServletResponse initialResponse = response;
+        while (response instanceof SlingJakartaHttpServletResponseWrapper) {
+            if (response instanceof OnDemandWriterJakartaResponse) {
                 return initialResponse;
             }
-            response = ((SlingHttpServletResponseWrapper) response).getSlingResponse();
+            response = ((SlingJakartaHttpServletResponseWrapper) response).getSlingResponse();
         }
-        return new OnDemandWriterResponse(initialResponse);
+        return new OnDemandWriterJakartaResponse(initialResponse);
     }
 }

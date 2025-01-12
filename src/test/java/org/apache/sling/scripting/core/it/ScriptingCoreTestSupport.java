@@ -45,10 +45,10 @@ public class ScriptingCoreTestSupport extends TestSupport {
         versionResolver.setVersionFromProject("org.awaitility", "awaitility");
         // Overrides to newer Sling bundles, until Sling Testing PAXExam catches up
         versionResolver.setVersionFromProject("org.apache.sling", "org.apache.sling.api");
-        versionResolver.setVersion("org.apache.sling", "org.apache.sling.resourceresolver", "1.12.3-SNAPSHOT");
-        versionResolver.setVersion("org.apache.sling", "org.apache.sling.auth.core", "1.7.1-SNAPSHOT");
-        versionResolver.setVersion("org.apache.sling", "org.apache.sling.engine", "2.16.1-SNAPSHOT");
-        versionResolver.setVersion("org.apache.sling", "org.apache.sling.servlets.resolver", "2.11.9-SNAPSHOT");
+        versionResolver.setVersion("org.apache.sling", "org.apache.sling.resourceresolver", "2.0.0-SNAPSHOT");
+        versionResolver.setVersion("org.apache.sling", "org.apache.sling.auth.core", "2.0.0-SNAPSHOT");
+        versionResolver.setVersion("org.apache.sling", "org.apache.sling.engine", "3.0.0-SNAPSHOT");
+        versionResolver.setVersion("org.apache.sling", "org.apache.sling.servlets.resolver", "3.0.0-SNAPSHOT");
         // The following is needed until we update to Apache Felix Http Jetty12
         versionResolver.setVersion("org.apache.felix", "org.apache.felix.http.servlet-api", "3.0.0");
         return composite(

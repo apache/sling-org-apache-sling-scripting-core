@@ -14,8 +14,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@Version("2.2.0")
-package org.apache.sling.scripting.core;
+package org.apache.sling.scripting.core.impl.helper;
 
-import org.osgi.annotation.versioning.Version;
+import java.io.BufferedReader;
 
+import org.apache.sling.api.SlingJakartaHttpServletRequest;
+import org.apache.sling.api.wrappers.SlingJakartaHttpServletRequestWrapper;
+
+public class OnDemandReaderJakartaRequest extends SlingJakartaHttpServletRequestWrapper {
+
+    private BufferedReader reader;
+
+    public OnDemandReaderJakartaRequest(SlingJakartaHttpServletRequest request) {
+        super(request);
+    }
+
+    @Override
+    public BufferedReader getReader() {
+        if (reader == null) {
+            reader = new BufferedReader(new OnDemandReaderJakarta(getSlingRequest()));
+        }
+        return reader;
+    }
+}

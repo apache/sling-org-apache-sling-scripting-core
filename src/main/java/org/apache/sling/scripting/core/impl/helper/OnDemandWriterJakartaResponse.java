@@ -14,8 +14,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@Version("2.2.0")
-package org.apache.sling.scripting.core;
+package org.apache.sling.scripting.core.impl.helper;
 
-import org.osgi.annotation.versioning.Version;
+import java.io.PrintWriter;
 
+import org.apache.sling.api.SlingJakartaHttpServletResponse;
+import org.apache.sling.api.wrappers.SlingJakartaHttpServletResponseWrapper;
+
+public class OnDemandWriterJakartaResponse extends SlingJakartaHttpServletResponseWrapper {
+
+    private PrintWriter writer;
+
+    public OnDemandWriterJakartaResponse(SlingJakartaHttpServletResponse delegatee) {
+        super(delegatee);
+    }
+
+    @Override
+    public PrintWriter getWriter() {
+        if (writer == null) {
+            writer = new PrintWriter(new OnDemandWriterJakarta(getResponse()));
+        }
+
+        return writer;
+    }
+}
