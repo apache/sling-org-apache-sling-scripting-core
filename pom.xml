@@ -37,6 +37,7 @@
 
     <properties>
         <org.ops4j.pax.exam.version>4.13.3</org.ops4j.pax.exam.version>
+        <sling.java.version>17</sling.java.version>
         <project.build.outputTimestamp>1725252814</project.build.outputTimestamp>
     </properties>
 
