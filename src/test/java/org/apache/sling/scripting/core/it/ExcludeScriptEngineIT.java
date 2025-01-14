@@ -23,7 +23,6 @@ import static org.junit.Assert.assertTrue;
 import static org.ops4j.pax.exam.CoreOptions.options;
 import static org.ops4j.pax.exam.CoreOptions.streamBundle;
 import static org.ops4j.pax.exam.cm.ConfigurationAdminOptions.newConfiguration;
-import static org.ops4j.pax.tinybundles.core.TinyBundles.withBnd;
 
 import java.util.List;
 
@@ -38,8 +37,8 @@ import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.junit.PaxExam;
-import org.ops4j.pax.tinybundles.core.TinyBundle;
-import org.ops4j.pax.tinybundles.core.TinyBundles;
+import org.ops4j.pax.tinybundles.TinyBundle;
+import org.ops4j.pax.tinybundles.TinyBundles;
 import org.osgi.framework.Constants;
 import org.osgi.framework.InvalidSyntaxException;
 
@@ -82,13 +81,13 @@ public class ExcludeScriptEngineIT {
          */
         private Option scriptingCoreFragmentBundle() {
             TinyBundle bundle = TinyBundles.bundle()
-                .set(Constants.FRAGMENT_HOST, "org.apache.sling.scripting.core")
-                .set(Constants.BUNDLE_MANIFESTVERSION, "2")
-                .set(Constants.BUNDLE_SYMBOLICNAME, "org.apache.sling.scripting.core.fragment")
-                .set(Constants.EXPORT_PACKAGE, "org.apache.sling.scripting.core.impl.jsr223");
+                .setHeader(Constants.FRAGMENT_HOST, "org.apache.sling.scripting.core")
+                .setHeader(Constants.BUNDLE_MANIFESTVERSION, "2")
+                .setHeader(Constants.BUNDLE_SYMBOLICNAME, "org.apache.sling.scripting.core.fragment")
+                .setHeader(Constants.EXPORT_PACKAGE, "org.apache.sling.scripting.core.impl.jsr223");
 
             return streamBundle(
-                        bundle.build(withBnd())
+                        bundle.build(TinyBundles.bndBuilder())
                     ).noStart();
         }
 
@@ -97,7 +96,7 @@ public class ExcludeScriptEngineIT {
          */
         protected ScriptEngineFactory getNashornScriptEngineFactory() {
             ScriptEngineFactory factory = null;
-            
+
             final ScriptEngineManager internalScriptEngineManager;
             final ClassLoader loader = Thread.currentThread().getContextClassLoader();
             try {
@@ -127,7 +126,7 @@ public class ExcludeScriptEngineIT {
     @RunWith(PaxExam.class)
     public static class NotExcludedIT extends BaseIT {
 
-        
+
         @Override
         protected String[] excludesPatterns() {
             return new String[0];
@@ -137,7 +136,7 @@ public class ExcludeScriptEngineIT {
         public void testScriptEngineFactoryPresent() throws InvalidSyntaxException {
             ScriptEngineFactory factory = getNashornScriptEngineFactory();
             assertNotNull("Expected nashorn ScriptEngine to exist", factory);
-            
+
             if (factory != null) {
                 // for backward compatibility, the "long name" also matches with the #getEnginesByName call
                 assertFalse("Expecting ScriptEngineFactory engines to exist: " + factory.getEngineName(), scriptEngineManager.getEnginesByName(factory.getEngineName()).isEmpty());
