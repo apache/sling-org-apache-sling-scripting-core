@@ -56,7 +56,7 @@ import org.slf4j.LoggerFactory;
  *
  * Client code using this object should take care to call {@link #cleanup()}
  * when the object is not used anymore!
- * @deprecated Use {@link JavaxScriptHelper} instead.
+ * @deprecated Use {@link JakartaScriptHelper} instead.
  */
 @Deprecated
 public class ScriptHelper implements SlingScriptHelper {

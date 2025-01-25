@@ -81,6 +81,11 @@ public class JakartaScriptHelper implements SlingJakartaScriptHelper {
     /** A map of found services. */
     protected Map<String, Object> services;
 
+    /**
+     * Create a new script helper
+     * @param ctx Bundle context
+     * @param script The script
+     */
     public JakartaScriptHelper(final BundleContext ctx, final SlingJakartaScript script) {
         if (ctx == null ) {
             throw new IllegalArgumentException("Bundle context must not be null.");
@@ -91,6 +96,13 @@ public class JakartaScriptHelper implements SlingJakartaScriptHelper {
         this.bundleContext = ctx;
     }
 
+    /**
+     * Create a new script helper
+     * @param ctx Bundle context
+     * @param script The script
+     * @param request The request
+     * @param response The response
+     */
     public JakartaScriptHelper(final BundleContext ctx,
             final SlingJakartaScript script,
             final SlingJakartaHttpServletRequest request,

@@ -71,22 +71,16 @@
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
-        </plugins>
-    </build>
-    <reporting>
-        <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <configuration>
                   <!-- No javadocs -->
-                    <excludePackageNames>
-                        org.apache.sling.scripting.core.impl
-                    </excludePackageNames>
+                    <excludePackageNames>org.apache.sling.scripting.core.impl:org.apache.sling.scripting.core.impl.bundled:org.apache.sling.scripting.core.impl.helper:org.apache.sling.scripting.core.impl.jsr223</excludePackageNames>
                 </configuration>
             </plugin>
         </plugins>
-    </reporting>
+    </build>
 
     <dependencies>
         <!-- javax -->
