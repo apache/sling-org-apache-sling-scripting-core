@@ -27,9 +27,9 @@ import static org.apache.sling.testing.paxexam.SlingOptions.versionResolver;
 import static org.apache.sling.testing.paxexam.SlingOptions.http;
 import static org.apache.sling.testing.paxexam.SlingOptions.scr;
 import static org.ops4j.pax.exam.CoreOptions.composite;
-import static org.ops4j.pax.exam.CoreOptions.junitBundles;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.vmOption;
+import static org.ops4j.pax.exam.cm.ConfigurationAdminOptions.factoryConfiguration;
 import static org.ops4j.pax.exam.cm.ConfigurationAdminOptions.newConfiguration;
 
 public class ScriptingCoreTestSupport extends TestSupport {
@@ -44,8 +44,8 @@ public class ScriptingCoreTestSupport extends TestSupport {
             newConfiguration("org.apache.felix.http")
                 .put("org.osgi.service.http.port", httpPort)
                 .asOption(),
-            http(),
             mavenBundle().groupId("org.osgi").artifactId("org.osgi.util.converter").versionAsInProject(),
+            http(),
             scr(),
             eventadmin(),
             mavenBundle().groupId("commons-io").artifactId("commons-io").versionAsInProject(),
@@ -57,12 +57,14 @@ public class ScriptingCoreTestSupport extends TestSupport {
             mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.scripting.spi").versionAsInProject(),
             mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.serviceusermapper").versionAsInProject(),
             mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.resource.presence").versionAsInProject(),
+            factoryConfiguration("org.apache.sling.serviceusermapping.impl.ServiceUserMapperImpl.amended")
+                .put("user.mapping", new String[]{"org.apache.sling.resource.presence=[sling-readall]"})
+                .asOption(),
             // Sling Scripting Core
             testBundle("bundle.filename"),
             // testing
             mavenBundle().groupId("org.jsoup").artifactId("jsoup").versionAsInProject(),
             awaitility(),
-            mavenBundle().groupId("org.hamcrest").artifactId("hamcrest").versionAsInProject(),
             optionalRemoteDebug()
         );
     }
