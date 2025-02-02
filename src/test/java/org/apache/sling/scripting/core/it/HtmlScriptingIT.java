@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.ops4j.pax.exam.CoreOptions.composite;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.options;
+import static org.ops4j.pax.exam.CoreOptions.streamBundle;
 import static org.ops4j.pax.exam.cm.ConfigurationAdminOptions.factoryConfiguration;
 import static org.ops4j.pax.exam.cm.ConfigurationAdminOptions.newConfiguration;
 
@@ -40,9 +41,11 @@ import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.options.ModifiableCompositeOption;
+import org.ops4j.pax.exam.options.UrlProvisionOption;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 import org.ops4j.pax.exam.util.Filter;
+import org.ops4j.pax.tinybundles.TinyBundle;
 import org.osgi.service.http.HttpService;
 
 @RunWith(PaxExam.class)
@@ -465,6 +468,8 @@ public class HtmlScriptingIT extends ScriptingCoreTestSupport {
                 mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.commons.threads").version("3.2.22"),
                 mavenBundle().groupId("org.apache.sling").artifactId("org.apache.sling.commons.scheduler").version("2.7.12"),
 
+                buildBundleWithBnd(MockXSSApi.class),
+
                 slingQuickstartOakTar(workingDirectory),
                 slingScriptingHtl(),
                 slingScriptingThymeleaf(),
@@ -484,6 +489,22 @@ public class HtmlScriptingIT extends ScriptingCoreTestSupport {
                     .asOption()
             )
         );
+    }
+
+   /**
+     * Builds an OSGi bundle with bnd from given classes and provides it as provisioning option.
+     *
+     * @param classes the classes to include in the OSGi bundle
+     * @return the provisioning option
+     */
+    public static UrlProvisionOption buildBundleWithBnd(final Class... classes) {
+        final TinyBundle bundle = org.ops4j.pax.tinybundles.TinyBundles.bundle();
+        for (final Class clazz : classes) {
+            bundle.addClass(clazz);
+        }
+        return streamBundle(
+            bundle.build()
+        ).start();
     }
 
     @ProbeBuilder
