@@ -23,8 +23,6 @@ import org.ops4j.pax.exam.options.extra.VMOption;
 
 import static org.apache.sling.testing.paxexam.SlingOptions.awaitility;
 import static org.apache.sling.testing.paxexam.SlingOptions.eventadmin;
-import static org.apache.sling.testing.paxexam.SlingOptions.versionResolver;
-import static org.apache.sling.testing.paxexam.SlingOptions.http;
 import static org.apache.sling.testing.paxexam.SlingOptions.scr;
 import static org.ops4j.pax.exam.CoreOptions.composite;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
@@ -37,15 +35,14 @@ public class ScriptingCoreTestSupport extends TestSupport {
     final int httpPort = findFreePort();
 
     public ModifiableCompositeOption baseConfiguration() {
-        versionResolver.setVersionFromProject("org.awaitility", "awaitility");
-        // Overrides to newer Sling bundles, until Sling Testing PAXExam catches up
         return composite(
             super.baseConfiguration(),
             newConfiguration("org.apache.felix.http")
                 .put("org.osgi.service.http.port", httpPort)
                 .asOption(),
             mavenBundle().groupId("org.osgi").artifactId("org.osgi.util.converter").versionAsInProject(),
-            http(),
+            mavenBundle().groupId("org.apache.felix").artifactId("org.apache.felix.http.servlet-api").version("3.0.0"),
+            mavenBundle().groupId("org.apache.felix").artifactId("org.apache.felix.http.jetty12").version("1.0.26"),
             scr(),
             eventadmin(),
             mavenBundle().groupId("commons-io").artifactId("commons-io").versionAsInProject(),
