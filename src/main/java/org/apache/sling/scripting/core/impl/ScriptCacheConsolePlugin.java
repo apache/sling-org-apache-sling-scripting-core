@@ -1,29 +1,31 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.apache.sling.scripting.core.impl;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
 
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.felix.webconsole.AbstractWebConsolePlugin;
@@ -34,15 +36,14 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 @Component(
-    property = {
-        Constants.SERVICE_DESCRIPTION + "=Script Cache",
-        Constants.SERVICE_VENDOR + "=The Apache Software Foundation",
-        WebConsoleConstants.PLUGIN_LABEL + "=" + ScriptCacheConsolePlugin.CONSOLE_LABEL,
-        WebConsoleConstants.PLUGIN_TITLE + "=" + ScriptCacheConsolePlugin.CONSOLE_TITLE,
-        "felix.webconsole.category=Sling"
-    },
-    service = { Servlet.class }
-)
+        property = {
+            Constants.SERVICE_DESCRIPTION + "=Script Cache",
+            Constants.SERVICE_VENDOR + "=The Apache Software Foundation",
+            WebConsoleConstants.PLUGIN_LABEL + "=" + ScriptCacheConsolePlugin.CONSOLE_LABEL,
+            WebConsoleConstants.PLUGIN_TITLE + "=" + ScriptCacheConsolePlugin.CONSOLE_TITLE,
+            "felix.webconsole.category=Sling"
+        },
+        service = {Servlet.class})
 public class ScriptCacheConsolePlugin extends AbstractWebConsolePlugin {
 
     private static final long serialVersionUID = 8073398598702884758L;
@@ -75,7 +76,11 @@ public class ScriptCacheConsolePlugin extends AbstractWebConsolePlugin {
             ScriptCacheImpl scriptCacheImpl = (ScriptCacheImpl) scriptCache;
             List<String> scripts = scriptCacheImpl.getCachedScripts();
             StringBuilder sb = new StringBuilder();
-            sb.append("<script type='text/javascript' src='").append(RESOURCES).append("/").append(SCRIPTCACHE_JS).append("'></script>");
+            sb.append("<script type='text/javascript' src='")
+                    .append(RESOURCES)
+                    .append("/")
+                    .append(SCRIPTCACHE_JS)
+                    .append("'></script>");
             sb.append("<div id='cached-scripts' class='ui-widget statline'>");
             if (!scripts.isEmpty()) {
                 Collections.sort(scripts);
@@ -83,9 +88,15 @@ public class ScriptCacheConsolePlugin extends AbstractWebConsolePlugin {
                 sb.append("<table class='nicetable ui-widget-content'>");
                 int i = 0;
                 for (String script : scripts) {
-                    sb.append("<tr class='").append(i % 2 == 0 ? "even" : "odd").append(" ui-state-default'><td>").append(++i).append
-                            ("<td><code>").append(script).append("</code></td><td><button type='button' " +
-                            "data-script='").append(script).append("'>Remove</button></td></tr>");
+                    sb.append("<tr class='")
+                            .append(i % 2 == 0 ? "even" : "odd")
+                            .append(" ui-state-default'><td>")
+                            .append(++i)
+                            .append("<td><code>")
+                            .append(script)
+                            .append("</code></td><td><button type='button' " + "data-script='")
+                            .append(script)
+                            .append("'>Remove</button></td></tr>");
                 }
                 sb.append("<tr><td colspan='3'><button type='button' id='clearcache'>Clear Cache</button></td></tr>");
                 sb.append("</table>");
@@ -99,10 +110,12 @@ public class ScriptCacheConsolePlugin extends AbstractWebConsolePlugin {
     }
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
         if (request.getRequestURI().endsWith(RESOURCES + "/" + SCRIPTCACHE_JS)) {
             response.setContentType(CTYPE_JAVASCRIPT);
-            IOUtils.copy(getClass().getResourceAsStream("/" + RESOURCES + "/" + SCRIPTCACHE_JS), response.getOutputStream());
+            IOUtils.copy(
+                    getClass().getResourceAsStream("/" + RESOURCES + "/" + SCRIPTCACHE_JS), response.getOutputStream());
         } else {
             super.doGet(request, response);
         }
@@ -127,5 +140,3 @@ public class ScriptCacheConsolePlugin extends AbstractWebConsolePlugin {
         }
     }
 }
-
-

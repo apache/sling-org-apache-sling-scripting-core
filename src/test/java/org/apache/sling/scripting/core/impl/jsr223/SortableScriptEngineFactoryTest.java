@@ -1,26 +1,28 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.apache.sling.scripting.core.impl.jsr223;
 
-import java.util.Collections;
-import java.util.List;
-
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
+
+import java.util.Collections;
+import java.util.List;
 
 import org.junit.Test;
 
@@ -42,7 +44,8 @@ public class SortableScriptEngineFactoryTest {
         String answer = "answer";
         ScriptEngineFactory scriptEngineFactory = mock(ScriptEngineFactory.class);
         when(scriptEngineFactory.getEngineName()).thenReturn(answer);
-        SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(scriptEngineFactory, 0, 0, null);
+        SortableScriptEngineFactory sortableScriptEngineFactory =
+                new SortableScriptEngineFactory(scriptEngineFactory, 0, 0, null);
         assertEquals(answer, sortableScriptEngineFactory.getEngineName());
     }
 
@@ -51,7 +54,8 @@ public class SortableScriptEngineFactoryTest {
         String answer = "answer";
         ScriptEngineFactory scriptEngineFactory = mock(ScriptEngineFactory.class);
         when(scriptEngineFactory.getEngineVersion()).thenReturn(answer);
-        SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(scriptEngineFactory, 0, 0, null);
+        SortableScriptEngineFactory sortableScriptEngineFactory =
+                new SortableScriptEngineFactory(scriptEngineFactory, 0, 0, null);
         assertEquals(answer, sortableScriptEngineFactory.getEngineVersion());
     }
 
@@ -60,7 +64,8 @@ public class SortableScriptEngineFactoryTest {
         List<String> answer = Collections.emptyList();
         ScriptEngineFactory scriptEngineFactory = mock(ScriptEngineFactory.class);
         when(scriptEngineFactory.getExtensions()).thenReturn(answer);
-        SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(scriptEngineFactory, 0, 0, null);
+        SortableScriptEngineFactory sortableScriptEngineFactory =
+                new SortableScriptEngineFactory(scriptEngineFactory, 0, 0, null);
         assertEquals(answer, sortableScriptEngineFactory.getExtensions());
     }
 
@@ -69,7 +74,8 @@ public class SortableScriptEngineFactoryTest {
         List<String> answer = Collections.emptyList();
         ScriptEngineFactory scriptEngineFactory = mock(ScriptEngineFactory.class);
         when(scriptEngineFactory.getMimeTypes()).thenReturn(answer);
-        SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(scriptEngineFactory, 0, 0, null);
+        SortableScriptEngineFactory sortableScriptEngineFactory =
+                new SortableScriptEngineFactory(scriptEngineFactory, 0, 0, null);
         assertEquals(answer, sortableScriptEngineFactory.getMimeTypes());
     }
 
@@ -78,7 +84,8 @@ public class SortableScriptEngineFactoryTest {
         List<String> answer = Collections.emptyList();
         ScriptEngineFactory scriptEngineFactory = mock(ScriptEngineFactory.class);
         when(scriptEngineFactory.getNames()).thenReturn(answer);
-        SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(scriptEngineFactory, 0, 0, null);
+        SortableScriptEngineFactory sortableScriptEngineFactory =
+                new SortableScriptEngineFactory(scriptEngineFactory, 0, 0, null);
         assertEquals(answer, sortableScriptEngineFactory.getNames());
     }
 
@@ -87,7 +94,8 @@ public class SortableScriptEngineFactoryTest {
         String answer = "answer";
         ScriptEngineFactory scriptEngineFactory = mock(ScriptEngineFactory.class);
         when(scriptEngineFactory.getLanguageName()).thenReturn(answer);
-        SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(scriptEngineFactory, 0, 0, null);
+        SortableScriptEngineFactory sortableScriptEngineFactory =
+                new SortableScriptEngineFactory(scriptEngineFactory, 0, 0, null);
         assertEquals(answer, sortableScriptEngineFactory.getLanguageName());
     }
 
@@ -96,7 +104,8 @@ public class SortableScriptEngineFactoryTest {
         String answer = "answer";
         ScriptEngineFactory scriptEngineFactory = mock(ScriptEngineFactory.class);
         when(scriptEngineFactory.getLanguageVersion()).thenReturn(answer);
-        SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(scriptEngineFactory, 0, 0, null);
+        SortableScriptEngineFactory sortableScriptEngineFactory =
+                new SortableScriptEngineFactory(scriptEngineFactory, 0, 0, null);
         assertEquals(answer, sortableScriptEngineFactory.getLanguageVersion());
     }
 
@@ -106,7 +115,8 @@ public class SortableScriptEngineFactoryTest {
         String key = "key";
         ScriptEngineFactory scriptEngineFactory = mock(ScriptEngineFactory.class);
         when(scriptEngineFactory.getParameter(key)).thenReturn(answer);
-        SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(scriptEngineFactory, 0, 0, null);
+        SortableScriptEngineFactory sortableScriptEngineFactory =
+                new SortableScriptEngineFactory(scriptEngineFactory, 0, 0, null);
         assertEquals(answer, sortableScriptEngineFactory.getParameter(key));
     }
 
@@ -118,7 +128,8 @@ public class SortableScriptEngineFactoryTest {
         String[] args = new String[0];
         ScriptEngineFactory scriptEngineFactory = mock(ScriptEngineFactory.class);
         when(scriptEngineFactory.getMethodCallSyntax(obj, m, args)).thenReturn(answer);
-        SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(scriptEngineFactory, 0, 0, null);
+        SortableScriptEngineFactory sortableScriptEngineFactory =
+                new SortableScriptEngineFactory(scriptEngineFactory, 0, 0, null);
         assertEquals(answer, sortableScriptEngineFactory.getMethodCallSyntax(obj, m, args));
     }
 
@@ -128,7 +139,8 @@ public class SortableScriptEngineFactoryTest {
         String toDisplay = "toDisplay";
         ScriptEngineFactory scriptEngineFactory = mock(ScriptEngineFactory.class);
         when(scriptEngineFactory.getOutputStatement(toDisplay)).thenReturn(answer);
-        SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(scriptEngineFactory, 0, 0, null);
+        SortableScriptEngineFactory sortableScriptEngineFactory =
+                new SortableScriptEngineFactory(scriptEngineFactory, 0, 0, null);
         assertEquals(answer, sortableScriptEngineFactory.getOutputStatement(toDisplay));
     }
 
@@ -138,7 +150,8 @@ public class SortableScriptEngineFactoryTest {
         String[] statements = new String[0];
         ScriptEngineFactory scriptEngineFactory = mock(ScriptEngineFactory.class);
         when(scriptEngineFactory.getProgram(statements)).thenReturn(answer);
-        SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(scriptEngineFactory, 0, 0, null);
+        SortableScriptEngineFactory sortableScriptEngineFactory =
+                new SortableScriptEngineFactory(scriptEngineFactory, 0, 0, null);
         assertEquals(answer, sortableScriptEngineFactory.getProgram(statements));
     }
 
@@ -147,7 +160,8 @@ public class SortableScriptEngineFactoryTest {
         ScriptEngine scriptEngine = mock(ScriptEngine.class);
         ScriptEngineFactory scriptEngineFactory = mock(ScriptEngineFactory.class);
         when(scriptEngineFactory.getScriptEngine()).thenReturn(scriptEngine);
-        SortableScriptEngineFactory sortableScriptEngineFactory = new SortableScriptEngineFactory(scriptEngineFactory, 0, 0, null);
+        SortableScriptEngineFactory sortableScriptEngineFactory =
+                new SortableScriptEngineFactory(scriptEngineFactory, 0, 0, null);
         assertEquals(scriptEngine, sortableScriptEngineFactory.getScriptEngine());
     }
 

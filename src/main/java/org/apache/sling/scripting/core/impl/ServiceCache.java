@@ -1,18 +1,20 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.apache.sling.scripting.core.impl;
 
@@ -86,7 +88,8 @@ public class ServiceCache implements ServiceListener {
         List<T> result = new ArrayList<>();
         try {
             SortedSet<Reference> cachedReferences = getCachedReferences(type);
-            final Collection<ServiceReference<T>> filteredReferences = this.bundleContext.getServiceReferences(type, filter);
+            final Collection<ServiceReference<T>> filteredReferences =
+                    this.bundleContext.getServiceReferences(type, filter);
             if (!filteredReferences.isEmpty()) {
                 List<ServiceReference<T>> localFilteredReferences = new ArrayList<>(filteredReferences);
                 Collections.sort(localFilteredReferences);
@@ -171,7 +174,6 @@ public class ServiceCache implements ServiceListener {
         }
         return references;
     }
-
 
     private final class Reference implements Comparable<Reference> {
         private final ServiceReference<?> serviceReference;

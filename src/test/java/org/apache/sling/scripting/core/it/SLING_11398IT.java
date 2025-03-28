@@ -1,26 +1,22 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.apache.sling.scripting.core.it;
-
-import static org.junit.Assert.assertNotNull;
-import static org.ops4j.pax.exam.CoreOptions.composite;
-import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
-import static org.ops4j.pax.exam.CoreOptions.options;
-import static org.ops4j.pax.exam.CoreOptions.vmOption;
 
 import javax.inject.Inject;
 import javax.script.ScriptEngine;
@@ -36,6 +32,12 @@ import org.ops4j.pax.exam.options.extra.VMOption;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 
+import static org.junit.Assert.assertNotNull;
+import static org.ops4j.pax.exam.CoreOptions.composite;
+import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
+import static org.ops4j.pax.exam.CoreOptions.options;
+import static org.ops4j.pax.exam.CoreOptions.vmOption;
+
 /**
  * Tests for SLING-11398 - verify serviceloader ScriptEngineFactory defined in a fragment bundle
  */
@@ -49,13 +51,20 @@ public class SLING_11398IT extends ScriptingCoreTestSupport {
     @Configuration
     public Option[] configuration() {
         return options(
-            baseConfiguration(),
-            optionalRemoteDebug(),
-            mavenBundle().groupId("org.codehaus.groovy").artifactId("groovy").version("3.0.9").startLevel(1),
-            // factory is defined in this fragment artifact – other versions of this bundle (e.g. 3.0.1) were 
-            //  released as regular bundle, not as fragment
-            mavenBundle().groupId("org.codehaus.groovy").artifactId("groovy-jsr223").version("3.0.9").noStart()
-        );
+                baseConfiguration(),
+                optionalRemoteDebug(),
+                mavenBundle()
+                        .groupId("org.codehaus.groovy")
+                        .artifactId("groovy")
+                        .version("3.0.9")
+                        .startLevel(1),
+                // factory is defined in this fragment artifact – other versions of this bundle (e.g. 3.0.1) were
+                //  released as regular bundle, not as fragment
+                mavenBundle()
+                        .groupId("org.codehaus.groovy")
+                        .artifactId("groovy-jsr223")
+                        .version("3.0.9")
+                        .noStart());
     }
 
     /**
@@ -76,5 +85,4 @@ public class SLING_11398IT extends ScriptingCoreTestSupport {
         ScriptEngine engineByExtension = scriptEngineManager.getEngineByExtension("groovy");
         assertNotNull(engineByExtension);
     }
-
 }

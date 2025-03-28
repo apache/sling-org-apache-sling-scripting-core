@@ -1,20 +1,25 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.apache.sling.scripting.core.impl;
+
+import javax.script.Bindings;
+import javax.script.ScriptEngine;
 
 import java.util.Arrays;
 import java.util.List;
@@ -22,9 +27,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-
-import javax.script.Bindings;
-import javax.script.ScriptEngine;
 
 import org.apache.sling.scripting.api.BindingsValuesProvider;
 import org.osgi.framework.BundleContext;
@@ -57,7 +59,9 @@ class ContextBvpCollector {
 
     @SuppressWarnings("unchecked")
     public Object addingService(final ServiceReference<?> ref) {
-        final String[] engineNames = Converters.standardConverter().convert(ref.getProperty(ScriptEngine.NAME)).to(String[].class);
+        final String[] engineNames = Converters.standardConverter()
+                .convert(ref.getProperty(ScriptEngine.NAME))
+                .to(String[].class);
         Object service = bundleContext.getService(ref);
         if (service != null) {
             if (service instanceof Map) {
@@ -69,7 +73,8 @@ class ContextBvpCollector {
                 genericBindingsValuesProviders.put(ref, (BindingsValuesProvider) service);
             } else {
                 for (String engineName : engineNames) {
-                    Map<ServiceReference<?>, BindingsValuesProvider> langProviders = langBindingsValuesProviders.computeIfAbsent(engineName, k -> new ConcurrentSkipListMap<>());
+                    Map<ServiceReference<?>, BindingsValuesProvider> langProviders =
+                            langBindingsValuesProviders.computeIfAbsent(engineName, k -> new ConcurrentSkipListMap<>());
                     langProviders.put(ref, (BindingsValuesProvider) service);
                 }
             }
@@ -97,20 +102,20 @@ class ContextBvpCollector {
     }
 
     // ServiceReference type can be either Map or BindingsValuesProvider so we must use generic type
-    @SuppressWarnings("java:S1452") 
+    @SuppressWarnings("java:S1452")
     Map<ServiceReference<?>, BindingsValuesProvider> getGenericBindingsValuesProviders() {
         return genericBindingsValuesProviders;
     }
 
     // ServiceReference type can be either Map or BindingsValuesProvider so we must use generic type
-    @SuppressWarnings("java:S1452") 
+    @SuppressWarnings("java:S1452")
     Map<String, Map<ServiceReference<?>, BindingsValuesProvider>> getLangBindingsValuesProviders() {
         return langBindingsValuesProviders;
     }
 
     private class MapWrappingBindingsValuesProvider implements BindingsValuesProvider {
 
-        private Map<String,Object> map;
+        private Map<String, Object> map;
 
         MapWrappingBindingsValuesProvider(Map<String, Object> map) {
             this.map = map;
@@ -127,5 +132,4 @@ class ContextBvpCollector {
             return map.toString();
         }
     }
-
 }
