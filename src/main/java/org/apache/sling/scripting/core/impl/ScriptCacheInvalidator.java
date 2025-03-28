@@ -1,20 +1,26 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.apache.sling.scripting.core.impl;
+
+import javax.script.Compilable;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,10 +32,6 @@ import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
-import javax.script.Compilable;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineFactory;
 
 import org.apache.sling.api.resource.observation.ExternalResourceChangeListener;
 import org.apache.sling.api.resource.observation.ResourceChange;
@@ -50,13 +52,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component(
-    immediate = true, // event handler should be immediate
-    service = {EventHandler.class},
-    property = {
-        EventConstants.EVENT_TOPIC + "=org/apache/sling/scripting/core/impl/jsr223/SlingScriptEngineManager/*"
-    },
-    configurationPid = "org.apache.sling.scripting.core.impl.ScriptCacheImpl"
-)
+        immediate = true, // event handler should be immediate
+        service = {EventHandler.class},
+        property = {
+            EventConstants.EVENT_TOPIC + "=org/apache/sling/scripting/core/impl/jsr223/SlingScriptEngineManager/*"
+        },
+        configurationPid = "org.apache.sling.scripting.core.impl.ScriptCacheImpl")
 public class ScriptCacheInvalidator implements ResourceChangeListener, ExternalResourceChangeListener, EventHandler {
 
     private final Logger logger = LoggerFactory.getLogger(ScriptCacheInvalidator.class);
@@ -74,10 +75,11 @@ public class ScriptCacheInvalidator implements ResourceChangeListener, ExternalR
     private final ScriptCache scriptCache;
 
     @Activate
-    public ScriptCacheInvalidator(@Reference final SlingScriptEngineManager slingScriptEngineManager,
-        @Reference final ScriptCache scriptCache,
-        final ScriptCacheImplConfiguration configuration, 
-        final BundleContext bundleCtx) {
+    public ScriptCacheInvalidator(
+            @Reference final SlingScriptEngineManager slingScriptEngineManager,
+            @Reference final ScriptCache scriptCache,
+            final ScriptCacheImplConfiguration configuration,
+            final BundleContext bundleCtx) {
 
         this.slingScriptEngineManager = slingScriptEngineManager;
         this.scriptCache = scriptCache;
@@ -105,7 +107,7 @@ public class ScriptCacheInvalidator implements ResourceChangeListener, ExternalR
     public void onChange(@NotNull List<ResourceChange> list) {
         final Runnable eventTask = () -> {
             for (final ResourceChange change : list) {
-                this.scriptCache.removeScript( change.getPath());
+                this.scriptCache.removeScript(change.getPath());
             }
         };
         threadPool.execute(eventTask);
@@ -125,22 +127,21 @@ public class ScriptCacheInvalidator implements ResourceChangeListener, ExternalR
             }
             final String[] paths = globPatterns.toArray(new String[globPatterns.size()]);
             if (resourceChangeListener != null) {
-                final Dictionary<String, Object> resourceChangeListenerProperties = resourceChangeListener.getReference().getProperties();
-                if ( !Arrays.equals(paths, (String[])resourceChangeListenerProperties.get(ResourceChangeListener.PATHS))) {
+                final Dictionary<String, Object> resourceChangeListenerProperties =
+                        resourceChangeListener.getReference().getProperties();
+                if (!Arrays.equals(
+                        paths, (String[]) resourceChangeListenerProperties.get(ResourceChangeListener.PATHS))) {
                     resourceChangeListenerProperties.put(ResourceChangeListener.PATHS, paths);
                     resourceChangeListener.setProperties(resourceChangeListenerProperties);
                 }
             } else {
                 final Dictionary<String, Object> resourceChangeListenerProperties = new Hashtable<>();
                 resourceChangeListenerProperties.put(ResourceChangeListener.PATHS, paths);
-                resourceChangeListenerProperties.put(ResourceChangeListener.CHANGES,
-                    new String[]{ResourceChange.ChangeType.CHANGED.name(), ResourceChange.ChangeType.REMOVED.name()});
-                resourceChangeListener =
-                    bundleContext.registerService(
-                            ResourceChangeListener.class,
-                            this,
-                            resourceChangeListenerProperties
-                    );
+                resourceChangeListenerProperties.put(ResourceChangeListener.CHANGES, new String[] {
+                    ResourceChange.ChangeType.CHANGED.name(), ResourceChange.ChangeType.REMOVED.name()
+                });
+                resourceChangeListener = bundleContext.registerService(
+                        ResourceChangeListener.class, this, resourceChangeListenerProperties);
             }
         }
     }
@@ -160,7 +161,7 @@ public class ScriptCacheInvalidator implements ResourceChangeListener, ExternalR
 
     @Override
     public void handleEvent(final Event event) {
-        synchronized ( this.extensions ) {
+        synchronized (this.extensions) {
             this.initializeExtensions();
             this.configureListener();
         }

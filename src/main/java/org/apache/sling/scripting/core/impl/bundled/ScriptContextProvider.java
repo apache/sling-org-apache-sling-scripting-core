@@ -1,20 +1,28 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.apache.sling.scripting.core.impl.bundled;
+
+import javax.script.Bindings;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -23,12 +31,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import javax.script.Bindings;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
@@ -47,19 +49,18 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Component(
-        service = ScriptContextProvider.class
-)
+@Component(service = ScriptContextProvider.class)
 public class ScriptContextProvider {
 
     private static final Logger LOG = LoggerFactory.getLogger(ScriptContextProvider.class);
 
     /** is defined on multiple files in this bundle*/
-    private static final long WARN_LIMIT_FOR_BVP_NANOS = (1000*1000); // 1 ms
+    private static final long WARN_LIMIT_FOR_BVP_NANOS = (1000 * 1000); // 1 ms
 
-    private static final String BINDINGS_THRESHOLD_MESSAGE = "Adding the bindings of %s took %s microseconds which is above the hardcoded" +
-            " limit of %s microseconds; if this message appears often it indicates that this BindingsValuesProvider has an impact on " +
-            "general page rendering performance.";
+    private static final String BINDINGS_THRESHOLD_MESSAGE =
+            "Adding the bindings of %s took %s microseconds which is above the hardcoded"
+                    + " limit of %s microseconds; if this message appears often it indicates that this BindingsValuesProvider has an impact on "
+                    + "general page rendering performance.";
 
     private static final Set<String> PROTECTED_BINDINGS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
             SlingBindings.REQUEST,
@@ -71,8 +72,7 @@ public class ScriptContextProvider {
             SlingBindings.LOG,
             SlingBindings.SLING,
             ScriptEngine.FILENAME,
-            BundledRenderUnit.VARIABLE
-    )));
+            BundledRenderUnit.VARIABLE)));
 
     @Reference
     private BindingsValuesProvidersByContext bvpTracker;
@@ -83,30 +83,35 @@ public class ScriptContextProvider {
     @Reference
     private ScriptingResourceResolverProvider scriptingResourceResolverProvider;
 
-
-    public ExecutableContext prepareScriptContext(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                                                  ExecutableUnit executable)
+    public ExecutableContext prepareScriptContext(
+            SlingHttpServletRequest request, SlingHttpServletResponse response, ExecutableUnit executable)
             throws IOException {
-        InternalScriptHelper scriptHelper = new InternalScriptHelper(executable.getBundleContext(), new SlingScriptAdapter(request.getResourceResolver(),
-                executable.getPath(), "sling/bundle/resource"), request, response,
+        InternalScriptHelper scriptHelper = new InternalScriptHelper(
+                executable.getBundleContext(),
+                new SlingScriptAdapter(request.getResourceResolver(), executable.getPath(), "sling/bundle/resource"),
+                request,
+                response,
                 executable.getServiceCache());
         ScriptEngine scriptEngine = scriptEngineManager.getEngineByName(executable.getScriptEngineName());
         if (scriptEngine == null) {
             scriptEngine = scriptEngineManager.getEngineByExtension(executable.getScriptExtension());
             if (scriptEngine == null) {
-                throw new IllegalStateException(String.format("Cannot find a script engine with name %s and extension %s for executable %s.",
-                    executable.getScriptEngineName(), executable.getScriptExtension(), executable.getPath()));
+                throw new IllegalStateException(String.format(
+                        "Cannot find a script engine with name %s and extension %s for executable %s.",
+                        executable.getScriptEngineName(), executable.getScriptExtension(), executable.getPath()));
             }
         }
         // prepare the SlingBindings
         Bindings bindings = new LazyBindings();
-        bindings.put("properties", (LazyBindings.Supplier) () -> scriptHelper.getRequest().getResource().getValueMap());
+        bindings.put("properties", (LazyBindings.Supplier)
+                () -> scriptHelper.getRequest().getResource().getValueMap());
         bindings.put(SlingBindings.REQUEST, scriptHelper.getRequest());
         bindings.put(SlingBindings.RESPONSE, scriptHelper.getResponse());
         bindings.put(SlingBindings.READER, scriptHelper.getRequest().getReader());
         bindings.put(SlingBindings.OUT, scriptHelper.getResponse().getWriter());
         bindings.put(SlingBindings.RESOURCE, scriptHelper.getRequest().getResource());
-        bindings.put(SlingBindings.RESOLVER, scriptHelper.getRequest().getResource().getResourceResolver());
+        bindings.put(
+                SlingBindings.RESOLVER, scriptHelper.getRequest().getResource().getResourceResolver());
         Logger scriptLogger = LoggerFactory.getLogger(executable.getName());
         bindings.put(SlingBindings.LOG, scriptLogger);
         bindings.put(SlingBindings.SLING, scriptHelper);
@@ -116,22 +121,31 @@ public class ScriptContextProvider {
 
         ProtectedBindings protectedBindings = new ProtectedBindings(bindings, PROTECTED_BINDINGS);
         long inclusionStart = System.nanoTime();
-        for (BindingsValuesProvider bindingsValuesProvider : bvpTracker.getBindingsValuesProviders(scriptEngine.getFactory(),
-                BindingsValuesProvider.DEFAULT_CONTEXT)) {
+        for (BindingsValuesProvider bindingsValuesProvider : bvpTracker.getBindingsValuesProviders(
+                scriptEngine.getFactory(), BindingsValuesProvider.DEFAULT_CONTEXT)) {
             long start = System.nanoTime();
             bindingsValuesProvider.addBindings(protectedBindings);
             long stop = System.nanoTime();
-            LOG.trace("Invoking addBindings() of {} took {} nanoseconds",
-                    bindingsValuesProvider.getClass().getName(), stop-start);
-            if (stop-start > WARN_LIMIT_FOR_BVP_NANOS) {
+            LOG.trace(
+                    "Invoking addBindings() of {} took {} nanoseconds",
+                    bindingsValuesProvider.getClass().getName(),
+                    stop - start);
+            if (stop - start > WARN_LIMIT_FOR_BVP_NANOS) {
                 // SLING-11182 - make this work with older implementations of the Sling API
                 if (request.getRequestProgressTracker() != null) {
-                    request.getRequestProgressTracker().log(String.format(BINDINGS_THRESHOLD_MESSAGE, bindingsValuesProvider.getClass().getName(),
-                            (stop-start)/1000, WARN_LIMIT_FOR_BVP_NANOS/1000));
+                    request.getRequestProgressTracker()
+                            .log(String.format(
+                                    BINDINGS_THRESHOLD_MESSAGE,
+                                    bindingsValuesProvider.getClass().getName(),
+                                    (stop - start) / 1000,
+                                    WARN_LIMIT_FOR_BVP_NANOS / 1000));
                 } else {
                     if (LOG.isInfoEnabled()) {
-                        LOG.info(String.format(BINDINGS_THRESHOLD_MESSAGE, bindingsValuesProvider.getClass().getName(), (stop-start)/1000,
-                                WARN_LIMIT_FOR_BVP_NANOS/1000));
+                        LOG.info(String.format(
+                                BINDINGS_THRESHOLD_MESSAGE,
+                                bindingsValuesProvider.getClass().getName(),
+                                (stop - start) / 1000,
+                                WARN_LIMIT_FOR_BVP_NANOS / 1000));
                     }
                 }
             }
@@ -144,7 +158,8 @@ public class ScriptContextProvider {
 
         ScriptContext scriptContext = new BundledScriptContext();
         Map<String, LazyBindings.Supplier> slingBindingsSuppliers = new HashMap<>();
-        slingBindingsSuppliers.put(SlingScriptConstants.ATTR_SCRIPT_RESOURCE_RESOLVER,
+        slingBindingsSuppliers.put(
+                SlingScriptConstants.ATTR_SCRIPT_RESOURCE_RESOLVER,
                 () -> scriptingResourceResolverProvider.getRequestScopedResourceResolver());
         LazyBindings slingScopeBindings = new LazyBindings(slingBindingsSuppliers);
         scriptContext.setBindings(slingScopeBindings, SlingScriptConstants.SLING_SCOPE);
@@ -180,5 +195,4 @@ public class ScriptContextProvider {
             }
         }
     }
-
 }

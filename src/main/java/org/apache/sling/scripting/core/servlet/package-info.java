@@ -18,4 +18,3 @@
 package org.apache.sling.scripting.core.servlet;
 
 import org.osgi.annotation.versioning.Version;
-

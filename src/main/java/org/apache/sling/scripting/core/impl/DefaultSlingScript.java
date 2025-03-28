@@ -1,30 +1,35 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.apache.sling.scripting.core.impl;
 
-import static org.apache.sling.api.scripting.SlingBindings.FLUSH;
-import static org.apache.sling.api.scripting.SlingBindings.LOG;
-import static org.apache.sling.api.scripting.SlingBindings.OUT;
-import static org.apache.sling.api.scripting.SlingBindings.READER;
-import static org.apache.sling.api.scripting.SlingBindings.REQUEST;
-import static org.apache.sling.api.scripting.SlingBindings.RESOURCE;
-import static org.apache.sling.api.scripting.SlingBindings.RESOLVER;
-import static org.apache.sling.api.scripting.SlingBindings.RESPONSE;
-import static org.apache.sling.api.scripting.SlingBindings.SLING;
+import javax.script.Bindings;
+import javax.script.Compilable;
+import javax.script.CompiledScript;
+import javax.script.Invocable;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+import javax.servlet.Servlet;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -43,19 +48,6 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import javax.script.Bindings;
-import javax.script.Compilable;
-import javax.script.CompiledScript;
-import javax.script.Invocable;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-import javax.servlet.Servlet;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 
 import org.apache.sling.api.SlingConstants;
 import org.apache.sling.api.SlingException;
@@ -82,27 +74,37 @@ import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.apache.sling.api.scripting.SlingBindings.FLUSH;
+import static org.apache.sling.api.scripting.SlingBindings.LOG;
+import static org.apache.sling.api.scripting.SlingBindings.OUT;
+import static org.apache.sling.api.scripting.SlingBindings.READER;
+import static org.apache.sling.api.scripting.SlingBindings.REQUEST;
+import static org.apache.sling.api.scripting.SlingBindings.RESOLVER;
+import static org.apache.sling.api.scripting.SlingBindings.RESOURCE;
+import static org.apache.sling.api.scripting.SlingBindings.RESPONSE;
+import static org.apache.sling.api.scripting.SlingBindings.SLING;
+
 class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
 
     /** The logger. */
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultSlingScript.class);
 
     /** is defined on multiple files in this bundle*/
-    private static final long WARN_LIMIT_FOR_BVP_NANOS = (1000*1000); // 1 ms
+    private static final long WARN_LIMIT_FOR_BVP_NANOS = (1000 * 1000); // 1 ms
 
-    private static final String BINDINGS_THRESHOLD_MESSAGE = "Adding the bindings of %s took %s microseconds which is above the hardcoded" +
-            " limit of %s microseconds; if this message appears often it indicates that this BindingsValuesProvider has an impact on " +
-            "general page rendering performance.";
+    private static final String BINDINGS_THRESHOLD_MESSAGE =
+            "Adding the bindings of %s took %s microseconds which is above the hardcoded"
+                    + " limit of %s microseconds; if this message appears often it indicates that this BindingsValuesProvider has an impact on "
+                    + "general page rendering performance.";
 
     /** Thread local containing the resource resolver. */
     private static ThreadLocal<ResourceResolver> requestResourceResolver = new ThreadLocal<>();
 
     /** The set of protected keys. */
     private static final Set<String> PROTECTED_KEYS =
-        new HashSet<>(Arrays.asList(REQUEST, RESPONSE, READER, SLING, RESOURCE, RESOLVER, OUT, LOG));
+            new HashSet<>(Arrays.asList(REQUEST, RESPONSE, READER, SLING, RESOURCE, RESOLVER, OUT, LOG));
 
     /** The resource pointing to the script. */
-
     private final Resource scriptResource;
 
     /** The name of the script (the resource path) */
@@ -140,7 +142,8 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
      * @param bindingsValuesProviders additional bindings values providers
      * @param cache serviceCache
      */
-    DefaultSlingScript(final BundleContext bundleContext,
+    DefaultSlingScript(
+            final BundleContext bundleContext,
             final Resource scriptResource,
             final ScriptEngine scriptEngine,
             final Collection<BindingsValuesProvider> bindingsValuesProviders,
@@ -173,12 +176,11 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
      */
     public Resource getScriptResource() {
         final ResourceResolver resolver = requestResourceResolver.get();
-        if ( resolver == null ) {
+        if (resolver == null) {
             // if we don't have a request resolver we directly return the script resource
             return scriptResource;
         }
-        return new LazyScriptResource(this.scriptName,
-                this.scriptResource.getResourceType(), resolver);
+        return new LazyScriptResource(this.scriptName, this.scriptResource.getResourceType(), resolver);
     }
 
     /**
@@ -190,7 +192,9 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
     }
 
     // ---------- Servlet interface --------------------------------------------
-    private static final Integer[] SCOPES = { SlingScriptConstants.SLING_SCOPE, Integer.valueOf(100), Integer.valueOf(200) };
+    private static final Integer[] SCOPES = {
+        SlingScriptConstants.SLING_SCOPE, Integer.valueOf(100), Integer.valueOf(200)
+    };
 
     /**
      * @see org.apache.sling.api.scripting.SlingScript#call(org.apache.sling.api.scripting.SlingBindings, java.lang.String, java.lang.Object[])
@@ -213,23 +217,26 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
                 private Bindings engineScope = b;
                 private Writer writer = (Writer) b.get(OUT);
                 private Writer errorWriter = new LogWriter((Logger) b.get(LOG));
-                private Reader reader = (Reader)b.get(READER);
+                private Reader reader = (Reader) b.get(READER);
                 private Bindings slingScope = new LazyBindings();
-
 
                 /**
                  * @see javax.script.ScriptContext#setBindings(javax.script.Bindings, int)
                  */
                 public void setBindings(final Bindings bindings, final int scope) {
                     switch (scope) {
-                        case SlingScriptConstants.SLING_SCOPE : this.slingScope = bindings;
-                                                                break;
-                        case 100: if (bindings == null) throw new NullPointerException("Bindings for ENGINE scope is null");
-                                  this.engineScope = bindings;
-                                  break;
-                        case 200: this.globalScope = bindings;
-                                  break;
-                        default: throw new IllegalArgumentException("Invalid scope");
+                        case SlingScriptConstants.SLING_SCOPE:
+                            this.slingScope = bindings;
+                            break;
+                        case 100:
+                            if (bindings == null) throw new NullPointerException("Bindings for ENGINE scope is null");
+                            this.engineScope = bindings;
+                            break;
+                        case 200:
+                            this.globalScope = bindings;
+                            break;
+                        default:
+                            throw new IllegalArgumentException("Invalid scope");
                     }
                 }
 
@@ -238,9 +245,12 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
                  */
                 public Bindings getBindings(final int scope) {
                     switch (scope) {
-                        case SlingScriptConstants.SLING_SCOPE : return slingScope;
-                        case 100: return this.engineScope;
-                        case 200: return this.globalScope;
+                        case SlingScriptConstants.SLING_SCOPE:
+                            return slingScope;
+                        case 100:
+                            return this.engineScope;
+                        case 200:
+                            return this.globalScope;
                         default:
                             throw new IllegalArgumentException("Invalid scope");
                     }
@@ -288,9 +298,9 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
                     if (name == null) throw new IllegalArgumentException("Name is null");
                     for (final int scope : SCOPES) {
                         final Bindings bindings = getBindings(scope);
-                        if ( bindings != null ) {
+                        if (bindings != null) {
                             final Object o = bindings.get(name);
-                            if ( o != null ) {
+                            if (o != null) {
                                 return o;
                             }
                         }
@@ -304,9 +314,9 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
                 public int getAttributesScope(String name) {
                     if (name == null) throw new IllegalArgumentException("Name is null");
                     for (final int scope : SCOPES) {
-                       if ((getBindings(scope) != null) && (getBindings(scope).containsKey(name))) {
-                           return scope;
-                       }
+                        if ((getBindings(scope) != null) && (getBindings(scope).containsKey(name))) {
+                            return scope;
+                        }
                     }
                     return -1;
                 }
@@ -362,17 +372,19 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
             };
 
             // set the current resource resolver if a request is available from the bindings
-            if ( props.getRequest() != null ) {
+            if (props.getRequest() != null) {
                 oldResolver = requestResourceResolver.get();
                 requestResourceResolver.set(props.getRequest().getResourceResolver());
             }
 
             // set the script resource resolver as an attribute
-            ctx.setAttribute(SlingScriptConstants.ATTR_SCRIPT_RESOURCE_RESOLVER,
-                    this.scriptResource.getResourceResolver(), SlingScriptConstants.SLING_SCOPE);
+            ctx.setAttribute(
+                    SlingScriptConstants.ATTR_SCRIPT_RESOURCE_RESOLVER,
+                    this.scriptResource.getResourceResolver(),
+                    SlingScriptConstants.SLING_SCOPE);
 
             reader = getScriptReader();
-            if ( method != null && !(this.scriptEngine instanceof Invocable)) {
+            if (method != null && !(this.scriptEngine instanceof Invocable)) {
                 reader = getWrapperReader(reader, method, args);
             }
 
@@ -395,11 +407,13 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
             }
 
             // call method - if supplied and script engine supports direct invocation
-            if ( method != null && (this.scriptEngine instanceof Invocable)) {
+            if (method != null && (this.scriptEngine instanceof Invocable)) {
                 try {
-                    ((Invocable)scriptEngine).invokeFunction(method, Arrays.asList(args).toArray());
+                    ((Invocable) scriptEngine)
+                            .invokeFunction(method, Arrays.asList(args).toArray());
                 } catch (NoSuchMethodException e) {
-                    throw new ScriptEvaluationException(this.scriptName, "Method " + method + " not found in script.", e);
+                    throw new ScriptEvaluationException(
+                            this.scriptName, "Method " + method + " not found in script.", e);
                 }
             }
             // optional flush the output channel
@@ -414,18 +428,16 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
             return result;
 
         } catch (IOException ioe) {
-            throw new ScriptEvaluationException(this.scriptName, ioe.getMessage(),
-                ioe);
+            throw new ScriptEvaluationException(this.scriptName, ioe.getMessage(), ioe);
 
         } catch (ScriptEvaluationException see) {
             throw see;
         } catch (ScriptException se) {
             Throwable cause = (se.getCause() == null) ? se : se.getCause();
-            throw new ScriptEvaluationException(this.scriptName, se.getMessage(),
-                cause);
+            throw new ScriptEvaluationException(this.scriptName, se.getMessage(), cause);
 
         } finally {
-            if ( props.getRequest() != null ) {
+            if (props.getRequest() != null) {
                 requestResourceResolver.set(oldResolver);
             }
 
@@ -439,13 +451,12 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
             }
 
             // dispose of the SlingScriptHelper
-            if ( bindings != null && disposeScriptHelper ) {
+            if (bindings != null && disposeScriptHelper) {
                 final InternalScriptHelper helper = (InternalScriptHelper) bindings.get(SLING);
-                if ( helper != null ) {
+                if (helper != null) {
                     helper.cleanup();
                 }
             }
-
         }
     }
 
@@ -455,7 +466,7 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
     public void init(ServletConfig servletConfig) {
         if (servletConfig != null) {
             final Dictionary<String, String> params = new Hashtable<>(); // NOSONAR
-            for (Enumeration<?> ne = servletConfig.getInitParameterNames(); ne.hasMoreElements();) {
+            for (Enumeration<?> ne = servletConfig.getInitParameterNames(); ne.hasMoreElements(); ) {
                 String name = String.valueOf(ne.nextElement());
                 String value = servletConfig.getInitParameter(name);
                 params.put(name, value);
@@ -509,8 +520,7 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
             // log in the request progress tracker
             logScriptError(request, e);
 
-            throw new SlingException("Cannot get DefaultSlingScript: "
-                + e.getMessage(), e);
+            throw new SlingException("Cannot get DefaultSlingScript: " + e.getMessage(), e);
         }
     }
 
@@ -574,7 +584,7 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
     private Reader getWrapperReader(final Reader scriptReader, final String method, final Object... args) {
         final StringBuilder buffer = new StringBuilder(method);
         buffer.append('(');
-        for(Object o : args) {
+        for (Object o : args) {
             buffer.append('"');
             buffer.append(o);
             buffer.append('"');
@@ -596,11 +606,11 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
 
             @Override
             public int read(char[] cbuf, int start, int len) throws IOException {
-                if ( doAppend ) {
+                if (doAppend) {
                     return methodReader.read(cbuf, start, len);
                 }
                 int readLen = scriptReader.read(cbuf, start, len);
-                if ( readLen == -1 ) {
+                if (readLen == -1) {
                     doAppend = true;
                     return this.read(cbuf, start, len);
                 }
@@ -609,11 +619,11 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
 
             @Override
             public int read() throws IOException {
-                if ( doAppend ) {
+                if (doAppend) {
                     return methodReader.read();
                 }
                 int value = scriptReader.read();
-                if ( value == -1 ) {
+                if (value == -1) {
                     doAppend = true;
                     return methodReader.read();
                 }
@@ -642,19 +652,20 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
         Object slingObject = slingBindings.get(SLING);
         if (slingObject == null) {
 
-            if ( request != null ) {
-                slingObject = new InternalScriptHelper(this.bundleContext, this, request, slingBindings.getResponse(), this.cache);
+            if (request != null) {
+                slingObject = new InternalScriptHelper(
+                        this.bundleContext, this, request, slingBindings.getResponse(), this.cache);
             } else {
                 slingObject = new InternalScriptHelper(this.bundleContext, this, this.cache);
             }
-        } else if (!(slingObject instanceof SlingScriptHelper) ) {
+        } else if (!(slingObject instanceof SlingScriptHelper)) {
             throw fail(SLING, "Wrong type");
         }
-        final SlingScriptHelper sling = (SlingScriptHelper)slingObject;
+        final SlingScriptHelper sling = (SlingScriptHelper) slingObject;
         bindings.put(SLING, sling);
 
         if (request != null) {
-        	final SlingHttpServletResponse response = slingBindings.getResponse();
+            final SlingHttpServletResponse response = slingBindings.getResponse();
             if (response == null) {
                 throw fail(RESPONSE, "Missing or wrong type");
             }
@@ -678,30 +689,25 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
             if (slingBindings.get(SLING) != null) {
 
                 if (sling.getRequest() != request) {
-                    throw fail(REQUEST,
-                        "Not the same as request field of SlingScriptHelper");
+                    throw fail(REQUEST, "Not the same as request field of SlingScriptHelper");
                 }
 
                 if (sling.getResponse() != response) {
-                    throw fail(RESPONSE,
-                        "Not the same as response field of SlingScriptHelper");
+                    throw fail(RESPONSE, "Not the same as response field of SlingScriptHelper");
                 }
 
-                if (resourceObject != null
-                    && sling.getRequest().getResource() != resourceObject) {
-                    throw fail(RESOURCE,
-                        "Not the same as resource of the SlingScriptHelper request");
+                if (resourceObject != null && sling.getRequest().getResource() != resourceObject) {
+                    throw fail(RESOURCE, "Not the same as resource of the SlingScriptHelper request");
                 }
 
                 if (resolverObject != null && sling.getRequest().getResourceResolver() != resolverObject) {
-                    throw fail(RESOLVER,
-                        "Not the same as the resource resolver of the SlingScriptHelper request's resolver");
+                    throw fail(
+                            RESOLVER,
+                            "Not the same as the resource resolver of the SlingScriptHelper request's resolver");
                 }
 
-                if (writerObject != null
-                    && sling.getResponse().getWriter() != writerObject) {
-                    throw fail(OUT,
-                        "Not the same as writer of the SlingScriptHelper response");
+                if (writerObject != null && sling.getResponse().getWriter() != writerObject) {
+                    throw fail(OUT, "Not the same as writer of the SlingScriptHelper response");
                 }
             }
 
@@ -733,22 +739,32 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
             Set<String> protectedKeys = new HashSet<>();
             protectedKeys.addAll(PROTECTED_KEYS);
             ProtectedBindings protectedBindings = new ProtectedBindings(bindings, protectedKeys);
-            
+
             long inclusionStart = System.nanoTime();
             for (BindingsValuesProvider provider : bindingsValuesProviders) {
                 long start = System.nanoTime();
                 provider.addBindings(protectedBindings);
                 long stop = System.nanoTime();
-                LOGGER.trace("Invoking addBindings() of {} took {} nanoseconds",
-                        provider.getClass().getName(), stop-start);
-                if (stop-start > WARN_LIMIT_FOR_BVP_NANOS) {
+                LOGGER.trace(
+                        "Invoking addBindings() of {} took {} nanoseconds",
+                        provider.getClass().getName(),
+                        stop - start);
+                if (stop - start > WARN_LIMIT_FOR_BVP_NANOS) {
                     // SLING-11182 - make this work with older implementations of the Sling API
                     if (request != null && request.getRequestProgressTracker() != null) {
-                        request.getRequestProgressTracker().log(String.format(BINDINGS_THRESHOLD_MESSAGE, provider.getClass().getName(), (stop-start)/1000, WARN_LIMIT_FOR_BVP_NANOS/1000));
+                        request.getRequestProgressTracker()
+                                .log(String.format(
+                                        BINDINGS_THRESHOLD_MESSAGE,
+                                        provider.getClass().getName(),
+                                        (stop - start) / 1000,
+                                        WARN_LIMIT_FOR_BVP_NANOS / 1000));
                     } else {
                         if (LOGGER.isInfoEnabled()) {
-                            LOGGER.info(String.format(BINDINGS_THRESHOLD_MESSAGE, provider.getClass().getName(), (stop-start)/1000,
-                                    WARN_LIMIT_FOR_BVP_NANOS/1000));
+                            LOGGER.info(String.format(
+                                    BINDINGS_THRESHOLD_MESSAGE,
+                                    provider.getClass().getName(),
+                                    (stop - start) / 1000,
+                                    WARN_LIMIT_FOR_BVP_NANOS / 1000));
                         }
                     }
                 }
@@ -764,15 +780,14 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
     }
 
     private ScriptEvaluationException fail(String variableName, String message) {
-        return new ScriptEvaluationException(this.scriptName, variableName + ": "
-            + message);
+        return new ScriptEvaluationException(this.scriptName, variableName + ": " + message);
     }
 
     private String getLoggerName() {
         String name = scriptName;
-        name = name.substring(1);       // cut-off leading slash
-        name = name.replace('.', '$');  // extension separator as part of name
-        name = name.replace('/', '.');  // hierarchy defined by dot
+        name = name.substring(1); // cut-off leading slash
+        name = name.replace('.', '$'); // extension separator as part of name
+        name = name.replace('/', '.'); // hierarchy defined by dot
         return name;
     }
 
@@ -780,8 +795,7 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
      * Logs the error caused by executing the script in the request progress
      * tracker.
      */
-    private void logScriptError(SlingHttpServletRequest request,
-            Throwable throwable) {
+    private void logScriptError(SlingHttpServletRequest request, Throwable throwable) {
         String message = throwable.getMessage();
         if (message != null) {
             message = throwable.getMessage().replace('\n', '/');
@@ -872,13 +886,11 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
             if (delegatee == null) {
                 delegatee = this.resource.adaptTo(InputStream.class);
                 if (delegatee == null) {
-                    throw new IOException("Cannot get a stream to the script resource "
-                        + this.resource.getPath());
+                    throw new IOException("Cannot get a stream to the script resource " + this.resource.getPath());
                 }
             }
             return delegatee;
         }
-
     }
 
     /**
@@ -907,8 +919,7 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
             if (this.delegatee == null) {
                 this.delegatee = this.resolver.getResource(this.path);
                 if (this.delegatee == null) {
-                    this.delegatee = new SyntheticResource(resolver, this.path,
-                        this.resourceType);
+                    this.delegatee = new SyntheticResource(resolver, this.path, this.resourceType);
                 }
             }
             return this.delegatee;

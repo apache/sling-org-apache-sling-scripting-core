@@ -1,18 +1,20 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.apache.sling.scripting.core;
 
@@ -28,16 +30,15 @@ import java.util.Map;
 
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
-
+import org.apache.sling.api.SlingIOException;
 import org.apache.sling.api.SlingJakartaHttpServletRequest;
 import org.apache.sling.api.SlingJakartaHttpServletResponse;
-import org.apache.sling.api.SlingIOException;
 import org.apache.sling.api.SlingServletException;
 import org.apache.sling.api.request.RequestDispatcherOptions;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.scripting.InvalidServiceFilterSyntaxException;
-import org.apache.sling.api.scripting.SlingJakartaScriptHelper;
 import org.apache.sling.api.scripting.SlingJakartaScript;
+import org.apache.sling.api.scripting.SlingJakartaScriptHelper;
 import org.apache.sling.api.wrappers.SlingJakartaHttpServletRequestWrapper;
 import org.apache.sling.api.wrappers.SlingJakartaHttpServletResponseWrapper;
 import org.apache.sling.scripting.core.impl.helper.OnDemandReaderJakartaRequest;
@@ -87,7 +88,7 @@ public class JakartaScriptHelper implements SlingJakartaScriptHelper {
      * @param script The script
      */
     public JakartaScriptHelper(final BundleContext ctx, final SlingJakartaScript script) {
-        if (ctx == null ) {
+        if (ctx == null) {
             throw new IllegalArgumentException("Bundle context must not be null.");
         }
         this.request = null;
@@ -103,11 +104,12 @@ public class JakartaScriptHelper implements SlingJakartaScriptHelper {
      * @param request The request
      * @param response The response
      */
-    public JakartaScriptHelper(final BundleContext ctx,
+    public JakartaScriptHelper(
+            final BundleContext ctx,
             final SlingJakartaScript script,
             final SlingJakartaHttpServletRequest request,
             final SlingJakartaHttpServletResponse response) {
-        if (ctx == null ) {
+        if (ctx == null) {
             throw new IllegalArgumentException("Bundle context must not be null.");
         }
         this.script = script;
@@ -155,8 +157,7 @@ public class JakartaScriptHelper implements SlingJakartaScriptHelper {
      * @see org.apache.sling.api.scripting.SlingJakartaScriptHelper#include(java.lang.String, org.apache.sling.api.request.RequestDispatcherOptions)
      */
     public void include(String path, RequestDispatcherOptions options) {
-        final RequestDispatcher dispatcher = getRequest().getRequestDispatcher(
-            path, options);
+        final RequestDispatcher dispatcher = getRequest().getRequestDispatcher(path, options);
 
         if (dispatcher != null) {
             try {
@@ -187,8 +188,7 @@ public class JakartaScriptHelper implements SlingJakartaScriptHelper {
      * @see org.apache.sling.api.scripting.SlingJakartaScriptHelper#forward(java.lang.String, org.apache.sling.api.request.RequestDispatcherOptions)
      */
     public void forward(String path, RequestDispatcherOptions options) {
-        final RequestDispatcher dispatcher = getRequest().getRequestDispatcher(
-            path, options);
+        final RequestDispatcher dispatcher = getRequest().getRequestDispatcher(path, options);
 
         if (dispatcher != null) {
             try {
@@ -207,7 +207,9 @@ public class JakartaScriptHelper implements SlingJakartaScriptHelper {
      */
     @Deprecated
     public void dispose() {
-        LoggerFactory.getLogger(this.getClass()).error("ScriptHelper#dispose has been called. This method is deprecated and should never be called by clients!");
+        LoggerFactory.getLogger(this.getClass())
+                .error(
+                        "ScriptHelper#dispose has been called. This method is deprecated and should never be called by clients!");
     }
 
     /**
@@ -220,11 +222,11 @@ public class JakartaScriptHelper implements SlingJakartaScriptHelper {
             final ServiceReference<T> ref = this.bundleContext.getServiceReference(type);
             if (ref != null) {
                 service = this.bundleContext.getService(ref);
-                if ( service != null ) {
-                    if ( this.services == null ) {
+                if (service != null) {
+                    if (this.services == null) {
                         this.services = new HashMap<>();
                     }
-                    if ( this.references == null ) {
+                    if (this.references == null) {
                         this.references = new ArrayList<>();
                     }
                     this.references.add(ref);
@@ -239,12 +241,10 @@ public class JakartaScriptHelper implements SlingJakartaScriptHelper {
      * @see org.apache.sling.api.scripting.SlingJakartaScriptHelper#getServices(java.lang.Class, java.lang.String)
      */
     @SuppressWarnings("unchecked")
-    public <T> T[] getServices(
-            Class<T> serviceType, String filter)
-    throws InvalidServiceFilterSyntaxException {
+    public <T> T[] getServices(Class<T> serviceType, String filter) throws InvalidServiceFilterSyntaxException {
         try {
-            Collection<ServiceReference<T>> refsCollection = this.bundleContext.getServiceReferences(
-                    serviceType, filter);
+            Collection<ServiceReference<T>> refsCollection =
+                    this.bundleContext.getServiceReferences(serviceType, filter);
             T[] result = null;
             if (refsCollection != null) {
                 // sort by service ranking (lowest first) (see ServiceReference#compareTo(Object))
@@ -257,7 +257,7 @@ public class JakartaScriptHelper implements SlingJakartaScriptHelper {
                 for (ServiceReference<T> reference : refsList) {
                     final T service = this.bundleContext.getService(reference);
                     if (service != null) {
-                        if ( this.references == null ) {
+                        if (this.references == null) {
                             this.references = new ArrayList<>();
                         }
                         this.references.add(reference);
@@ -271,8 +271,7 @@ public class JakartaScriptHelper implements SlingJakartaScriptHelper {
             }
             return result;
         } catch (InvalidSyntaxException ise) {
-            throw new InvalidServiceFilterSyntaxException(filter,
-                "Invalid filter syntax", ise);
+            throw new InvalidServiceFilterSyntaxException(filter, "Invalid filter syntax", ise);
         }
     }
 
@@ -280,7 +279,7 @@ public class JakartaScriptHelper implements SlingJakartaScriptHelper {
      * Clean up this instance.
      */
     public void cleanup() {
-        if ( this.references != null ) {
+        if (this.references != null) {
             final Iterator<ServiceReference<?>> i = this.references.iterator();
             while (i.hasNext()) {
                 final ServiceReference<?> ref = i.next();
@@ -288,7 +287,7 @@ public class JakartaScriptHelper implements SlingJakartaScriptHelper {
             }
             this.references.clear();
         }
-        if ( this.services != null ) {
+        if (this.services != null) {
             this.services.clear();
         }
     }
@@ -299,7 +298,6 @@ public class JakartaScriptHelper implements SlingJakartaScriptHelper {
     public void forward(Resource resource) {
         forward(resource, (RequestDispatcherOptions) null);
     }
-
 
     /**
      * @see org.apache.sling.api.scripting.SlingJakartaScriptHelper#forward(org.apache.sling.api.resource.Resource, java.lang.String)
@@ -312,8 +310,7 @@ public class JakartaScriptHelper implements SlingJakartaScriptHelper {
      * @see org.apache.sling.api.scripting.SlingJakartaScriptHelper#forward(org.apache.sling.api.resource.Resource, org.apache.sling.api.request.RequestDispatcherOptions)
      */
     public void forward(Resource resource, RequestDispatcherOptions options) {
-        final RequestDispatcher dispatcher = getRequest().getRequestDispatcher(
-            resource, options);
+        final RequestDispatcher dispatcher = getRequest().getRequestDispatcher(resource, options);
 
         if (dispatcher != null) {
             try {
@@ -344,8 +341,7 @@ public class JakartaScriptHelper implements SlingJakartaScriptHelper {
      * @see org.apache.sling.api.scripting.SlingJakartaScriptHelper#include(org.apache.sling.api.resource.Resource, org.apache.sling.api.request.RequestDispatcherOptions)
      */
     public void include(Resource resource, RequestDispatcherOptions options) {
-        final RequestDispatcher dispatcher = getRequest().getRequestDispatcher(
-            resource, options);
+        final RequestDispatcher dispatcher = getRequest().getRequestDispatcher(resource, options);
 
         if (dispatcher != null) {
             try {

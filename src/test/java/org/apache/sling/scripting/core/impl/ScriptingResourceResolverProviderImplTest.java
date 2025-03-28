@@ -1,20 +1,24 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.apache.sling.scripting.core.impl;
+
+import javax.servlet.ServletRequestEvent;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,7 +30,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import javax.servlet.ServletRequestEvent;
 
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.sling.api.resource.LoginException;
@@ -61,7 +64,8 @@ public class ScriptingResourceResolverProviderImplTest {
             }
         });
         scriptingResourceResolverFactory = new ScriptingResourceResolverProviderImpl();
-        FieldUtils.getField(ScriptingResourceResolverProviderImpl.class, "rrf", true).set(scriptingResourceResolverFactory, rrf);
+        FieldUtils.getField(ScriptingResourceResolverProviderImpl.class, "rrf", true)
+                .set(scriptingResourceResolverFactory, rrf);
     }
 
     @After
@@ -93,23 +97,33 @@ public class ScriptingResourceResolverProviderImplTest {
         for (Future<ResourceResolver> future : futures) {
             resolvers.add(future.get());
         }
-        assertEquals("The number of ScriptingResourceResolvers is not what we expected.", MAX_CONCURRENT_RESOLVERS, resolvers.size());
-        assertEquals("The number of delegate resource resolvers is not what we expected.", MAX_CONCURRENT_RESOLVERS, delegates.size());
+        assertEquals(
+                "The number of ScriptingResourceResolvers is not what we expected.",
+                MAX_CONCURRENT_RESOLVERS,
+                resolvers.size());
+        assertEquals(
+                "The number of delegate resource resolvers is not what we expected.",
+                MAX_CONCURRENT_RESOLVERS,
+                delegates.size());
         for (ResourceResolver delegate : delegates) {
             verify(delegate).close();
         }
-
     }
 
-    private Callable<ResourceResolver> createCallable(final ScriptingResourceResolverProviderImpl scriptingResourceResolverFactory) {
+    private Callable<ResourceResolver> createCallable(
+            final ScriptingResourceResolverProviderImpl scriptingResourceResolverFactory) {
         return new Callable<ResourceResolver>() {
             @Override
             public ResourceResolver call() {
                 ResourceResolver resourceResolver = scriptingResourceResolverFactory.getRequestScopedResourceResolver();
                 for (int i = 0; i < RESOLVER_REUSE_FOR_SAME_THREAD; i++) {
-                    ResourceResolver subsequentResolver = scriptingResourceResolverFactory.getRequestScopedResourceResolver();
-                    assertEquals("Expected that subsequent calls to ScriptingResourceResolverProvider#getRequestScopedResourceResolver() " +
-                            "from the same thread will not create additional resolvers.", resourceResolver, subsequentResolver);
+                    ResourceResolver subsequentResolver =
+                            scriptingResourceResolverFactory.getRequestScopedResourceResolver();
+                    assertEquals(
+                            "Expected that subsequent calls to ScriptingResourceResolverProvider#getRequestScopedResourceResolver() "
+                                    + "from the same thread will not create additional resolvers.",
+                            resourceResolver,
+                            subsequentResolver);
                 }
                 scriptingResourceResolverFactory.requestDestroyed(mock(ServletRequestEvent.class));
                 return resourceResolver;
@@ -122,5 +136,4 @@ public class ScriptingResourceResolverProviderImplTest {
         when(resolver.getUserID()).thenReturn("sling-scripting");
         return resolver;
     }
-
 }

@@ -1,25 +1,27 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.apache.sling.scripting.core.impl;
 
+import javax.script.ScriptEngine;
+
 import java.util.Collection;
 import java.util.List;
-
-import javax.script.ScriptEngine;
 
 import org.apache.sling.api.adapter.AdapterFactory;
 import org.apache.sling.api.resource.Resource;
@@ -41,19 +43,15 @@ import org.osgi.service.component.annotations.Reference;
  * executes the Resources as scripts.
  */
 @Component(
-    service = {
-        AdapterFactory.class,
-        MimeTypeProvider.class
-    },
-    property = {
-        Constants.SERVICE_VENDOR + "=The Apache Software Foundation",
-        Constants.SERVICE_DESCRIPTION + "=Default SlingScriptResolver",
-        "adaptables=org.apache.sling.api.resource.Resource",
-        "adapters=org.apache.sling.api.scripting.SlingScript",
-        "adapters=javax.servlet.Servlet",
-        "adapter.condition=If the resource's path ends in an extension registered by a script engine."
-    }
-)
+        service = {AdapterFactory.class, MimeTypeProvider.class},
+        property = {
+            Constants.SERVICE_VENDOR + "=The Apache Software Foundation",
+            Constants.SERVICE_DESCRIPTION + "=Default SlingScriptResolver",
+            "adaptables=org.apache.sling.api.resource.Resource",
+            "adapters=org.apache.sling.api.scripting.SlingScript",
+            "adapters=javax.servlet.Servlet",
+            "adapter.condition=If the resource's path ends in an extension registered by a script engine."
+        })
 public class SlingScriptAdapterFactory implements AdapterFactory, MimeTypeProvider {
 
     private BundleContext bundleContext;
@@ -104,9 +102,11 @@ public class SlingScriptAdapterFactory implements AdapterFactory, MimeTypeProvid
             engine = scriptEnginePicker.pickScriptEngine(engines, resource, extension);
         }
         if (engine != null) {
-            final Collection<BindingsValuesProvider> bindingsValuesProviders = bindingsValuesProviderTracker.getBindingsValuesProviders(engine.getFactory(), BINDINGS_CONTEXT);
+            final Collection<BindingsValuesProvider> bindingsValuesProviders =
+                    bindingsValuesProviderTracker.getBindingsValuesProviders(engine.getFactory(), BINDINGS_CONTEXT);
             // unchecked cast
-            return (A) new DefaultSlingScript(this.bundleContext, resource, engine, bindingsValuesProviders, this.serviceCache, scriptCache);
+            return (A) new DefaultSlingScript(
+                    this.bundleContext, resource, engine, bindingsValuesProviders, this.serviceCache, scriptCache);
         }
 
         return null;

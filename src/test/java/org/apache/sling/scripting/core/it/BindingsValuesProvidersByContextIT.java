@@ -1,20 +1,27 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.apache.sling.scripting.core.it;
+
+import javax.inject.Inject;
+import javax.script.Bindings;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,11 +31,6 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
-
-import javax.inject.Inject;
-import javax.script.Bindings;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineFactory;
 
 import org.apache.sling.scripting.api.BindingsValuesProvider;
 import org.apache.sling.scripting.api.BindingsValuesProvidersByContext;
@@ -74,9 +76,7 @@ public class BindingsValuesProvidersByContextIT extends ScriptingCoreTestSupport
 
     @Configuration
     public Option[] configuration() {
-        return options(
-            baseConfiguration()
-        );
+        return options(baseConfiguration());
     }
 
     private Dictionary<String, Object> getProperties(String context, String engineName) {
@@ -98,11 +98,11 @@ public class BindingsValuesProvidersByContextIT extends ScriptingCoreTestSupport
             }
 
             @Override
-            public void addBindings(Bindings b) {
-            }
+            public void addBindings(Bindings b) {}
         };
 
-        regs.add(bundleContext.registerService(BindingsValuesProvider.class.getName(), bvp, getProperties(context, engineName)));
+        regs.add(bundleContext.registerService(
+                BindingsValuesProvider.class.getName(), bvp, getProperties(context, engineName)));
     }
 
     private void addBVPWithServiceRanking(final String id, String context, String engineName, int serviceRanking) {
@@ -113,8 +113,7 @@ public class BindingsValuesProvidersByContextIT extends ScriptingCoreTestSupport
             }
 
             @Override
-            public void addBindings(Bindings b) {
-            }
+            public void addBindings(Bindings b) {}
         };
         final Dictionary<String, Object> properties = getProperties(context, engineName);
         properties.put(Constants.SERVICE_RANKING, serviceRanking);
@@ -252,7 +251,10 @@ public class BindingsValuesProvidersByContextIT extends ScriptingCoreTestSupport
         addBVP("o4", "python", null);
         addBVP("python", "python", "python");
         assertEquals("bar,foo,o3,r1,r2", asString(bvpProvider.getBindingsValuesProviders(factory("js"), "request")));
-        assertEquals("With default content", "bar,foo,o3,r1,r2", asString(bvpProvider.getBindingsValuesProviders(factory("js"), null)));
+        assertEquals(
+                "With default content",
+                "bar,foo,o3,r1,r2",
+                asString(bvpProvider.getBindingsValuesProviders(factory("js"), null)));
         assertEquals("o1,o2,o3", asString(bvpProvider.getBindingsValuesProviders(factory("js"), "other")));
         assertEquals("o4,python", asString(bvpProvider.getBindingsValuesProviders(factory("python"), "python")));
         assertEquals("", asString(bvpProvider.getBindingsValuesProviders(factory("js"), "unusedContext")));
@@ -272,8 +274,12 @@ public class BindingsValuesProvidersByContextIT extends ScriptingCoreTestSupport
         addMap("o3", "other,request", null);
         addBVP("o4", "python", null);
         addMap("python", "python", "python");
-        assertEquals("M_bar,M_o3,M_r1,M_r2,foo", asString(bvpProvider.getBindingsValuesProviders(factory("js"), "request")));
-        assertEquals("With default content", "M_bar,M_o3,M_r1,M_r2,foo", asString(bvpProvider.getBindingsValuesProviders(factory("js"), null)));
+        assertEquals(
+                "M_bar,M_o3,M_r1,M_r2,foo", asString(bvpProvider.getBindingsValuesProviders(factory("js"), "request")));
+        assertEquals(
+                "With default content",
+                "M_bar,M_o3,M_r1,M_r2,foo",
+                asString(bvpProvider.getBindingsValuesProviders(factory("js"), null)));
         assertEquals("M_o1,M_o3,o2", asString(bvpProvider.getBindingsValuesProviders(factory("js"), "other")));
         assertEquals("", asString(bvpProvider.getBindingsValuesProviders(factory("js"), "unusedContext")));
         assertEquals("M_python,o4", asString(bvpProvider.getBindingsValuesProviders(factory("python"), "python")));
@@ -306,7 +312,8 @@ public class BindingsValuesProvidersByContextIT extends ScriptingCoreTestSupport
         addBVPWithServiceRanking("genericTwo", "request", null, 0);
         addBVPWithServiceRanking("last", "request", "js", Integer.MAX_VALUE);
         addBVPWithServiceRanking("genericOne", "request", null, -42);
-        assertEquals("genericOne,genericTwo,genericThree,first,second,last", asString(bvpProvider.getBindingsValuesProviders(factory("js"), "request"), false));
+        assertEquals(
+                "genericOne,genericTwo,genericThree,first,second,last",
+                asString(bvpProvider.getBindingsValuesProviders(factory("js"), "request"), false));
     }
-
 }
