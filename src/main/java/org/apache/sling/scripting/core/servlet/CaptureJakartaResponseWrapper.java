@@ -20,16 +20,15 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServletResponseWrapper;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponseWrapper;
 
 /**
  * Extends the HttpServletResponse to wrap the response and capture the results.
- * @deprecated Use {@link CaptureJakartaResponseWrapper} instead.
+ * @since 1.1.0
  */
-@Deprecated
-public final class CaptureResponseWrapper extends HttpServletResponseWrapper {
+public final class CaptureJakartaResponseWrapper extends HttpServletResponseWrapper {
 
     private boolean isBinaryResponse = false;
 
@@ -42,7 +41,7 @@ public final class CaptureResponseWrapper extends HttpServletResponseWrapper {
      *
      * @param response the response to wrap
      */
-    public CaptureResponseWrapper(HttpServletResponse response) {
+    public CaptureJakartaResponseWrapper(HttpServletResponse response) {
         super(response);
     }
 
