@@ -38,6 +38,11 @@ public class ScriptingCoreTestSupport extends TestSupport {
 
     public ModifiableCompositeOption baseConfiguration() {
         return composite(
+                // update pax logging for SLF4J 2
+                mavenBundle()
+                        .groupId("org.ops4j.pax.logging")
+                        .artifactId("pax-logging-api")
+                        .version("2.3.0"),
                 super.baseConfiguration(),
                 newConfiguration("org.apache.felix.http")
                         .put("org.osgi.service.http.port", httpPort)
@@ -49,7 +54,7 @@ public class ScriptingCoreTestSupport extends TestSupport {
                 mavenBundle()
                         .groupId("org.apache.felix")
                         .artifactId("org.apache.felix.http.servlet-api")
-                        .version("3.0.0"),
+                        .version("6.1.0"),
                 mavenBundle()
                         .groupId("org.apache.felix")
                         .artifactId("org.apache.felix.http.jetty12")
