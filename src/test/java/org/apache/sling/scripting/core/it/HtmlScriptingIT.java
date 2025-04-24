@@ -43,6 +43,7 @@ import org.ops4j.pax.exam.util.Filter;
 import org.ops4j.pax.tinybundles.TinyBundle;
 import org.osgi.service.http.HttpService;
 
+import static org.apache.sling.testing.paxexam.SlingOptions.spifly;
 import static org.junit.Assert.assertEquals;
 import static org.ops4j.pax.exam.CoreOptions.composite;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
@@ -663,6 +664,7 @@ public class HtmlScriptingIT extends ScriptingCoreTestSupport {
         final String workingDirectory = workingDirectory();
         return options(composite(
                 super.baseConfiguration(),
+                spifly(),
                 mavenBundle()
                         .groupId("org.apache.sling")
                         .artifactId("org.apache.sling.commons.johnzon")
@@ -806,13 +808,13 @@ public class HtmlScriptingIT extends ScriptingCoreTestSupport {
     public void testHtlTitle() throws IOException {
         final String url = String.format("http://localhost:%s/scripting/htl.html", httpPort());
         final Document document = Jsoup.connect(url).get();
-        assertEquals(document.title(), "Sling Scripting HTL");
+        assertEquals("Sling Scripting HTL", document.title());
     }
 
     @Test
     public void testThymeleafTitle() throws IOException {
         final String url = String.format("http://localhost:%s/scripting/thymeleaf.html", httpPort());
         final Document document = Jsoup.connect(url).get();
-        assertEquals(document.title(), "Sling Scripting Thymeleaf");
+        assertEquals("Sling Scripting Thymeleaf", document.title());
     }
 }

@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.type.ResourceType;
 import org.apache.sling.commons.compiler.source.JavaEscapeHelper;
 import org.apache.sling.scripting.core.impl.ServiceCache;
@@ -73,7 +72,7 @@ public class BundleRenderUnitFinderImpl implements BundledRenderUnitFinder, Bund
                     capability.getExtension())) {
                 String scriptExtension = capability.getScriptExtension();
                 String scriptEngineName = capability.getScriptEngineName();
-                if (StringUtils.isNotEmpty(scriptExtension) && StringUtils.isNotEmpty(scriptEngineName)) {
+                if (scriptExtension != null && scriptEngineName != null) {
                     BundledRenderUnit executable = getExecutable(
                             context, provider.getBundle(), match, scriptEngineName, scriptExtension, allProviders);
                     if (executable != null) {
@@ -93,9 +92,7 @@ public class BundleRenderUnitFinderImpl implements BundledRenderUnitFinder, Bund
         String path = capability.getPath();
         String scriptEngineName = capability.getScriptEngineName();
         String scriptExtension = capability.getScriptExtension();
-        if (StringUtils.isNotEmpty(path)
-                && StringUtils.isNotEmpty(scriptEngineName)
-                && StringUtils.isNotEmpty(scriptExtension)) {
+        if (path != null && scriptEngineName != null && scriptExtension != null) {
             return findUnit(context, provider.getBundle(), path, scriptEngineName, scriptExtension, providers);
         }
         return null;
@@ -168,13 +165,13 @@ public class BundleRenderUnitFinderImpl implements BundledRenderUnitFinder, Bund
                     String base = resourceType.getType()
                             + (resourceType.getVersion() != null ? SLASH + resourceType.getVersion() + SLASH : SLASH)
                             + String.join(SLASH, Arrays.copyOf(selectors, i + 1));
-                    if (StringUtils.isNotEmpty(extension)) {
-                        if (StringUtils.isNotEmpty(method)) {
+                    if (extension != null) {
+                        if (method != null) {
                             matches.add(base + DOT + extension + DOT + method);
                         }
                         matches.add(base + DOT + extension);
                     }
-                    if (StringUtils.isNotEmpty(method)) {
+                    if (method != null) {
                         matches.add(base + DOT + method);
                         matches.add(base + SLASH + method);
                     }
@@ -182,19 +179,19 @@ public class BundleRenderUnitFinderImpl implements BundledRenderUnitFinder, Bund
                 }
             }
             String base = resourceType.getType()
-                    + (resourceType.getVersion() != null ? SLASH + resourceType.getVersion() : StringUtils.EMPTY);
+                    + (resourceType.getVersion() != null ? SLASH + resourceType.getVersion() : "");
 
-            if (StringUtils.isNotEmpty(extension)) {
-                if (StringUtils.isNotEmpty(method)) {
+            if (extension != null) {
+                if (method != null) {
                     matches.add(base + SLASH + resourceType.getResourceLabel() + DOT + extension + DOT + method);
                 }
                 matches.add(base + SLASH + resourceType.getResourceLabel() + DOT + extension);
             }
-            if (StringUtils.isNotEmpty(method)) {
+            if (method != null) {
                 matches.add(base + SLASH + method);
                 matches.add(base + SLASH + resourceType.getResourceLabel() + DOT + method);
             }
-            if (StringUtils.isNotEmpty(extension)) {
+            if (extension != null) {
                 matches.add(base + SLASH + extension);
             }
             matches.add(base + SLASH + resourceType.getResourceLabel());

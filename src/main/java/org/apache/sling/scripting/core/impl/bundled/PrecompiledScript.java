@@ -25,7 +25,6 @@ import javax.script.ScriptException;
 import java.io.StringReader;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.scripting.core.impl.ServiceCache;
 import org.apache.sling.scripting.spi.bundle.TypeProvider;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +33,7 @@ import org.osgi.framework.BundleContext;
 
 class PrecompiledScript extends AbstractBundledRenderUnit {
 
-    private static final StringReader EMPTY_READER = new StringReader(StringUtils.EMPTY);
+    private static final StringReader EMPTY_READER = new StringReader("");
     private final Class<?> clazz;
     private volatile Object instance;
 
