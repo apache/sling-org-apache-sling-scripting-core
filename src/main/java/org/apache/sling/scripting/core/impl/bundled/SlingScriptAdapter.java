@@ -21,11 +21,11 @@ package org.apache.sling.scripting.core.impl.bundled;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.SyntheticResource;
-import org.apache.sling.api.scripting.SlingBindings;
-import org.apache.sling.api.scripting.SlingScript;
+import org.apache.sling.api.scripting.SlingJakartaBindings;
+import org.apache.sling.api.scripting.SlingJakartaScript;
 import org.jetbrains.annotations.NotNull;
 
-class SlingScriptAdapter extends SyntheticResource implements SlingScript {
+class SlingScriptAdapter extends SyntheticResource implements SlingJakartaScript {
     SlingScriptAdapter(ResourceResolver resolver, String path, String type) {
         super(resolver, path, type);
     }
@@ -36,12 +36,12 @@ class SlingScriptAdapter extends SyntheticResource implements SlingScript {
     }
 
     @Override
-    public Object eval(@NotNull SlingBindings props) {
+    public Object eval(@NotNull SlingJakartaBindings props) {
         throw new IllegalStateException("Not implemented");
     }
 
     @Override
-    public Object call(@NotNull SlingBindings props, @NotNull String method, Object... args) {
+    public Object call(@NotNull SlingJakartaBindings props, @NotNull String method, Object... args) {
         throw new IllegalStateException("Not implemented");
     }
 }

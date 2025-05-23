@@ -23,6 +23,7 @@ import java.io.PrintWriter;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.wrappers.SlingHttpServletResponseWrapper;
 
+@SuppressWarnings("deprecation")
 public class OnDemandWriterResponse extends SlingHttpServletResponseWrapper {
 
     private PrintWriter writer;

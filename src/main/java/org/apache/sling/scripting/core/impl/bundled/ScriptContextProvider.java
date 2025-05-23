@@ -32,16 +32,16 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.sling.api.SlingHttpServletRequest;
-import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.SlingJakartaHttpServletRequest;
+import org.apache.sling.api.SlingJakartaHttpServletResponse;
 import org.apache.sling.api.scripting.LazyBindings;
-import org.apache.sling.api.scripting.SlingBindings;
+import org.apache.sling.api.scripting.SlingJakartaBindings;
 import org.apache.sling.api.scripting.SlingScriptConstants;
 import org.apache.sling.scripting.api.BindingsValuesProvider;
 import org.apache.sling.scripting.api.BindingsValuesProvidersByContext;
 import org.apache.sling.scripting.api.resource.ScriptingResourceResolverProvider;
-import org.apache.sling.scripting.core.ScriptHelper;
-import org.apache.sling.scripting.core.impl.InternalScriptHelper;
+import org.apache.sling.scripting.core.JakartaScriptHelper;
+import org.apache.sling.scripting.core.impl.InternalJakartaScriptHelper;
 import org.apache.sling.scripting.core.impl.helper.ProtectedBindings;
 import org.apache.sling.scripting.spi.bundle.BundledRenderUnit;
 import org.osgi.service.component.annotations.Component;
@@ -63,14 +63,14 @@ public class ScriptContextProvider {
                     + "general page rendering performance.";
 
     private static final Set<String> PROTECTED_BINDINGS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-            SlingBindings.REQUEST,
-            SlingBindings.RESPONSE,
-            SlingBindings.READER,
-            SlingBindings.RESOURCE,
-            SlingBindings.RESOLVER,
-            SlingBindings.OUT,
-            SlingBindings.LOG,
-            SlingBindings.SLING,
+            SlingJakartaBindings.REQUEST,
+            SlingJakartaBindings.RESPONSE,
+            SlingJakartaBindings.READER,
+            SlingJakartaBindings.RESOURCE,
+            SlingJakartaBindings.RESOLVER,
+            SlingJakartaBindings.OUT,
+            SlingJakartaBindings.LOG,
+            SlingJakartaBindings.SLING,
             ScriptEngine.FILENAME,
             BundledRenderUnit.VARIABLE)));
 
@@ -84,9 +84,9 @@ public class ScriptContextProvider {
     private ScriptingResourceResolverProvider scriptingResourceResolverProvider;
 
     public ExecutableContext prepareScriptContext(
-            SlingHttpServletRequest request, SlingHttpServletResponse response, ExecutableUnit executable)
+            SlingJakartaHttpServletRequest request, SlingJakartaHttpServletResponse response, ExecutableUnit executable)
             throws IOException {
-        InternalScriptHelper scriptHelper = new InternalScriptHelper(
+        InternalJakartaScriptHelper scriptHelper = new InternalJakartaScriptHelper(
                 executable.getBundleContext(),
                 new SlingScriptAdapter(request.getResourceResolver(), executable.getPath(), "sling/bundle/resource"),
                 request,
@@ -105,16 +105,17 @@ public class ScriptContextProvider {
         Bindings bindings = new LazyBindings();
         bindings.put("properties", (LazyBindings.Supplier)
                 () -> scriptHelper.getRequest().getResource().getValueMap());
-        bindings.put(SlingBindings.REQUEST, scriptHelper.getRequest());
-        bindings.put(SlingBindings.RESPONSE, scriptHelper.getResponse());
-        bindings.put(SlingBindings.READER, scriptHelper.getRequest().getReader());
-        bindings.put(SlingBindings.OUT, scriptHelper.getResponse().getWriter());
-        bindings.put(SlingBindings.RESOURCE, scriptHelper.getRequest().getResource());
+        bindings.put(SlingJakartaBindings.REQUEST, scriptHelper.getRequest());
+        bindings.put(SlingJakartaBindings.RESPONSE, scriptHelper.getResponse());
+        bindings.put(SlingJakartaBindings.READER, scriptHelper.getRequest().getReader());
+        bindings.put(SlingJakartaBindings.OUT, scriptHelper.getResponse().getWriter());
+        bindings.put(SlingJakartaBindings.RESOURCE, scriptHelper.getRequest().getResource());
         bindings.put(
-                SlingBindings.RESOLVER, scriptHelper.getRequest().getResource().getResourceResolver());
+                SlingJakartaBindings.RESOLVER,
+                scriptHelper.getRequest().getResource().getResourceResolver());
         Logger scriptLogger = LoggerFactory.getLogger(executable.getName());
-        bindings.put(SlingBindings.LOG, scriptLogger);
-        bindings.put(SlingBindings.SLING, scriptHelper);
+        bindings.put(SlingJakartaBindings.LOG, scriptLogger);
+        bindings.put(SlingJakartaBindings.SLING, scriptHelper);
         bindings.put(BundledRenderUnit.VARIABLE, executable);
         bindings.put(ScriptEngine.FILENAME, executable.getPath());
         bindings.put(ScriptEngine.FILENAME.replace(".", "_"), executable.getPath());
@@ -187,10 +188,10 @@ public class ScriptContextProvider {
 
         void clean() {
             Bindings engineBindings = scriptContext.getBindings(ScriptContext.ENGINE_SCOPE);
-            if (engineBindings != null && engineBindings.containsKey(SlingBindings.SLING)) {
-                Object scriptHelper = engineBindings.get(SlingBindings.SLING);
-                if (scriptHelper instanceof ScriptHelper) {
-                    ((ScriptHelper) scriptHelper).cleanup();
+            if (engineBindings != null && engineBindings.containsKey(SlingJakartaBindings.SLING)) {
+                Object scriptHelper = engineBindings.get(SlingJakartaBindings.SLING);
+                if (scriptHelper instanceof JakartaScriptHelper) {
+                    ((JakartaScriptHelper) scriptHelper).cleanup();
                 }
             }
         }

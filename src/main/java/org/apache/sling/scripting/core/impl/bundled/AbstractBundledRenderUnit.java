@@ -19,14 +19,16 @@
 package org.apache.sling.scripting.core.impl.bundled;
 
 import javax.script.ScriptException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.util.Set;
 
-import org.apache.sling.api.SlingHttpServletRequest;
-import org.apache.sling.api.SlingHttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.apache.sling.api.SlingJakartaHttpServletRequest;
+import org.apache.sling.api.SlingJakartaHttpServletResponse;
+import org.apache.sling.api.wrappers.JavaxToJakartaRequestWrapper;
+import org.apache.sling.api.wrappers.JavaxToJakartaResponseWrapper;
 import org.apache.sling.scripting.core.impl.ServiceCache;
 import org.apache.sling.scripting.spi.bundle.TypeProvider;
 import org.jetbrains.annotations.NotNull;
@@ -139,14 +141,24 @@ abstract class AbstractBundledRenderUnit implements ExecutableUnit {
             throws ScriptException {
         try {
             ScriptContextProvider.ExecutableContext executableContext = scriptContextProvider.prepareScriptContext(
-                    (SlingHttpServletRequest) request, (SlingHttpServletResponse) response, this);
+                    (SlingJakartaHttpServletRequest) request, (SlingJakartaHttpServletResponse) response, this);
             try {
                 executableContext.eval();
             } finally {
                 executableContext.clean();
             }
-        } catch (IOException ex) {
+        } catch (final IOException ex) {
             throw new ScriptException(ex);
         }
+    }
+
+    @Override
+    public void eval(
+            @NotNull javax.servlet.http.HttpServletRequest request,
+            @NotNull javax.servlet.http.HttpServletResponse response)
+            throws ScriptException {
+        this.eval(
+                JavaxToJakartaRequestWrapper.toJakartaRequest(request),
+                JavaxToJakartaResponseWrapper.toJakartaResponse(response));
     }
 }

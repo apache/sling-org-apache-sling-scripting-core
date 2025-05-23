@@ -790,6 +790,7 @@ public class HtmlScriptingIT extends ScriptingCoreTestSupport {
      * @param classes the classes to include in the OSGi bundle
      * @return the provisioning option
      */
+    @SuppressWarnings("rawtypes")
     public static UrlProvisionOption buildBundleWithBnd(final Class... classes) {
         final TinyBundle bundle = org.ops4j.pax.tinybundles.TinyBundles.bundle();
         for (final Class clazz : classes) {

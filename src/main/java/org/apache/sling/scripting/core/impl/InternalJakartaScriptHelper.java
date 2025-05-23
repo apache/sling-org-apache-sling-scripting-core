@@ -18,32 +18,32 @@
  */
 package org.apache.sling.scripting.core.impl;
 
-import org.apache.sling.api.SlingHttpServletRequest;
-import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.SlingJakartaHttpServletRequest;
+import org.apache.sling.api.SlingJakartaHttpServletResponse;
 import org.apache.sling.api.scripting.InvalidServiceFilterSyntaxException;
-import org.apache.sling.api.scripting.SlingScript;
-import org.apache.sling.scripting.core.ScriptHelper;
+import org.apache.sling.api.scripting.SlingJakartaScript;
+import org.apache.sling.scripting.core.JakartaScriptHelper;
 import org.osgi.framework.BundleContext;
 
 /**
  * Internal script helper
  */
-@Deprecated
-public class InternalScriptHelper extends ScriptHelper {
+public class InternalJakartaScriptHelper extends JakartaScriptHelper {
 
     private final ServiceCache serviceCache;
 
-    public InternalScriptHelper(
+    public InternalJakartaScriptHelper(
             final BundleContext ctx,
-            final SlingScript script,
-            final SlingHttpServletRequest request,
-            final SlingHttpServletResponse response,
+            final SlingJakartaScript script,
+            final SlingJakartaHttpServletRequest request,
+            final SlingJakartaHttpServletResponse response,
             final ServiceCache cache) {
         super(ctx, script, request, response);
         this.serviceCache = cache;
     }
 
-    public InternalScriptHelper(final BundleContext ctx, final SlingScript script, final ServiceCache cache) {
+    public InternalJakartaScriptHelper(
+            final BundleContext ctx, final SlingJakartaScript script, final ServiceCache cache) {
         super(ctx, script);
         this.serviceCache = cache;
     }

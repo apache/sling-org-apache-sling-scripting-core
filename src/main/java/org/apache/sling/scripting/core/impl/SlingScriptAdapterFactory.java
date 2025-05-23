@@ -25,6 +25,7 @@ import java.util.List;
 
 import org.apache.sling.api.adapter.AdapterFactory;
 import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.wrappers.JakartaToJavaxServletWrapper;
 import org.apache.sling.commons.mime.MimeTypeProvider;
 import org.apache.sling.scripting.api.BindingsValuesProvider;
 import org.apache.sling.scripting.api.BindingsValuesProvidersByContext;
@@ -48,6 +49,8 @@ import org.osgi.service.component.annotations.Reference;
             Constants.SERVICE_VENDOR + "=The Apache Software Foundation",
             Constants.SERVICE_DESCRIPTION + "=Default SlingScriptResolver",
             "adaptables=org.apache.sling.api.resource.Resource",
+            "adapters=org.apache.sling.api.scripting.SlingJakartaScript",
+            "adapters=jakarta.servlet.Servlet",
             "adapters=org.apache.sling.api.scripting.SlingScript",
             "adapters=javax.servlet.Servlet",
             "adapter.condition=If the resource's path ends in an extension registered by a script engine."
@@ -105,8 +108,12 @@ public class SlingScriptAdapterFactory implements AdapterFactory, MimeTypeProvid
             final Collection<BindingsValuesProvider> bindingsValuesProviders =
                     bindingsValuesProviderTracker.getBindingsValuesProviders(engine.getFactory(), BINDINGS_CONTEXT);
             // unchecked cast
-            return (A) new DefaultSlingScript(
+            final DefaultSlingScript script = new DefaultSlingScript(
                     this.bundleContext, resource, engine, bindingsValuesProviders, this.serviceCache, scriptCache);
+            if (type == javax.servlet.Servlet.class) {
+                return (A) JakartaToJavaxServletWrapper.toJavaxServlet(script);
+            }
+            return (A) script;
         }
 
         return null;

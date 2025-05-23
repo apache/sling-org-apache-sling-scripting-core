@@ -23,6 +23,7 @@ import java.io.BufferedReader;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.wrappers.SlingHttpServletRequestWrapper;
 
+@SuppressWarnings("deprecation")
 public class OnDemandReaderRequest extends SlingHttpServletRequestWrapper {
 
     private BufferedReader reader;

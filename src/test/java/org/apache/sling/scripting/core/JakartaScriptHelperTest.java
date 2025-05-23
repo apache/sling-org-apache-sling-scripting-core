@@ -32,18 +32,17 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
-@SuppressWarnings("deprecation")
-public class ScriptHelperTest {
+public class JakartaScriptHelperTest {
 
     @Rule
     public OsgiContext sling = new OsgiContext();
 
-    private ScriptHelper sh;
+    private JakartaScriptHelper sh;
     private final int[] RANKINGS = {42, 62, -12, 76, -123, 0, 7432, -21};
 
     @Before
     public void setup() {
-        sh = new ScriptHelper(sling.bundleContext(), null);
+        sh = new JakartaScriptHelper(sling.bundleContext(), null);
 
         for (int rank : RANKINGS) {
             final Integer svc = rank;
@@ -65,7 +64,7 @@ public class ScriptHelperTest {
 
     @Test
     public void testNullRefs() {
-        assertNull("Expecting null if no services found", sh.getService(ScriptHelperTest.class));
+        assertNull("Expecting null if no services found", sh.getService(JakartaScriptHelperTest.class));
     }
 
     @Test
