@@ -41,7 +41,7 @@ import org.apache.sling.api.request.builder.Builders;
 import org.apache.sling.api.resource.NonExistingResource;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
-import org.apache.sling.api.scripting.SlingJakartaBindings;
+import org.apache.sling.api.scripting.SlingBindings;
 import org.apache.sling.api.scripting.SlingScriptConstants;
 import org.apache.sling.scripting.api.BindingsValuesProvider;
 import org.apache.sling.scripting.api.BindingsValuesProvidersByContext;
@@ -243,9 +243,9 @@ public class ScriptingVariablesConsolePlugin extends HttpServlet {
                 null);
 
         // prepare the bindings (similar as in DefaultSlingScript#service)
-        final SlingJakartaBindings initalBindings = new SlingJakartaBindings();
-        initalBindings.setRequest(request);
-        initalBindings.setResponse(Builders.newResponseBuilder().buildJakartaResponseResult());
+        final SlingBindings initalBindings = new SlingBindings();
+        initalBindings.setJakartaRequest(request);
+        initalBindings.setJakartaResponse(Builders.newResponseBuilder().buildJakartaResponseResult());
         final Bindings bindings = defaultSlingScript.verifySlingBindings(initalBindings);
 
         // only thing being added in {DefaultSlingScript#call(...)} is resource resolver

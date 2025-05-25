@@ -51,8 +51,6 @@ import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import org.apache.sling.api.SlingException;
-import org.apache.sling.api.SlingHttpServletRequest;
-import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.SlingJakartaHttpServletRequest;
 import org.apache.sling.api.SlingJakartaHttpServletResponse;
 import org.apache.sling.api.resource.Resource;
@@ -63,13 +61,9 @@ import org.apache.sling.api.resource.SyntheticResource;
 import org.apache.sling.api.scripting.LazyBindings;
 import org.apache.sling.api.scripting.ScriptEvaluationException;
 import org.apache.sling.api.scripting.SlingBindings;
-import org.apache.sling.api.scripting.SlingJakartaBindings;
-import org.apache.sling.api.scripting.SlingJakartaScript;
-import org.apache.sling.api.scripting.SlingJakartaScriptHelper;
 import org.apache.sling.api.scripting.SlingScript;
 import org.apache.sling.api.scripting.SlingScriptConstants;
 import org.apache.sling.api.scripting.SlingScriptHelper;
-import org.apache.sling.api.wrappers.ScriptingWrapperSupport;
 import org.apache.sling.scripting.api.BindingsValuesProvider;
 import org.apache.sling.scripting.api.CachedScript;
 import org.apache.sling.scripting.api.ScriptCache;
@@ -80,18 +74,19 @@ import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.apache.sling.api.scripting.SlingJakartaBindings.FLUSH;
-import static org.apache.sling.api.scripting.SlingJakartaBindings.LOG;
-import static org.apache.sling.api.scripting.SlingJakartaBindings.OUT;
-import static org.apache.sling.api.scripting.SlingJakartaBindings.READER;
-import static org.apache.sling.api.scripting.SlingJakartaBindings.REQUEST;
-import static org.apache.sling.api.scripting.SlingJakartaBindings.RESOLVER;
-import static org.apache.sling.api.scripting.SlingJakartaBindings.RESOURCE;
-import static org.apache.sling.api.scripting.SlingJakartaBindings.RESPONSE;
-import static org.apache.sling.api.scripting.SlingJakartaBindings.SLING;
+import static org.apache.sling.api.scripting.SlingBindings.FLUSH;
+import static org.apache.sling.api.scripting.SlingBindings.JAKARTA_REQUEST;
+import static org.apache.sling.api.scripting.SlingBindings.JAKARTA_RESPONSE;
+import static org.apache.sling.api.scripting.SlingBindings.LOG;
+import static org.apache.sling.api.scripting.SlingBindings.OUT;
+import static org.apache.sling.api.scripting.SlingBindings.READER;
+import static org.apache.sling.api.scripting.SlingBindings.REQUEST;
+import static org.apache.sling.api.scripting.SlingBindings.RESOLVER;
+import static org.apache.sling.api.scripting.SlingBindings.RESOURCE;
+import static org.apache.sling.api.scripting.SlingBindings.RESPONSE;
+import static org.apache.sling.api.scripting.SlingBindings.SLING;
 
-@SuppressWarnings("deprecation")
-class DefaultSlingScript implements SlingScript, SlingJakartaScript, Servlet, ServletConfig {
+class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
 
     /** The logger. */
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultSlingScript.class);
@@ -108,8 +103,9 @@ class DefaultSlingScript implements SlingScript, SlingJakartaScript, Servlet, Se
     private static ThreadLocal<ResourceResolver> requestResourceResolver = new ThreadLocal<>();
 
     /** The set of protected keys. */
-    private static final Set<String> PROTECTED_KEYS =
-            new HashSet<>(Arrays.asList(REQUEST, RESPONSE, READER, SLING, RESOURCE, RESOLVER, OUT, LOG));
+    @SuppressWarnings("deprecation")
+    private static final Set<String> PROTECTED_KEYS = new HashSet<>(Arrays.asList(
+            REQUEST, RESPONSE, JAKARTA_REQUEST, JAKARTA_RESPONSE, READER, SLING, RESOURCE, RESOLVER, OUT, LOG));
 
     private static final Integer[] SCOPES = {
         SlingScriptConstants.SLING_SCOPE, Integer.valueOf(100), Integer.valueOf(200)
@@ -145,8 +141,6 @@ class DefaultSlingScript implements SlingScript, SlingJakartaScript, Servlet, Se
     /* The cache for compiled scripts. */
     private final ScriptCache scriptCache;
 
-    private final boolean isJakartaScriptEngine;
-
     /**
      * Constructor
      * @param bundleContext The bundle context
@@ -180,7 +174,6 @@ class DefaultSlingScript implements SlingScript, SlingJakartaScript, Servlet, Se
             encoding = "UTF-8";
         }
         this.scriptEncoding = encoding;
-        this.isJakartaScriptEngine = false;
     }
 
     // ---------- SlingScript interface ----------------------------------------
@@ -204,9 +197,6 @@ class DefaultSlingScript implements SlingScript, SlingJakartaScript, Servlet, Se
 
     @Override
     public Object call(final SlingBindings props, final String method, final Object... args) {
-        if (this.isJakartaScriptEngine) {
-            return this.call(ScriptingWrapperSupport.toJakartaBindings(props), method, args);
-        }
         Bindings bindings = null;
         Reader reader = null;
         boolean disposeScriptHelper = !props.containsKey(SLING);
@@ -350,9 +340,9 @@ class DefaultSlingScript implements SlingScript, SlingJakartaScript, Servlet, Se
             };
 
             // set the current resource resolver if a request is available from the bindings
-            if (props.getRequest() != null) {
+            if (props.getJakartaRequest() != null) {
                 oldResolver = requestResourceResolver.get();
-                requestResourceResolver.set(props.getRequest().getResourceResolver());
+                requestResourceResolver.set(props.getJakartaRequest().getResourceResolver());
             }
 
             // set the script resource resolver as an attribute
@@ -415,248 +405,7 @@ class DefaultSlingScript implements SlingScript, SlingJakartaScript, Servlet, Se
             throw new ScriptEvaluationException(this.scriptName, se.getMessage(), cause);
 
         } finally {
-            if (props.getRequest() != null) {
-                requestResourceResolver.set(oldResolver);
-            }
-
-            // close the script reader (SLING-380)
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException ignore) {
-                    // don't care
-                }
-            }
-
-            // dispose of the SlingScriptHelper
-            if (bindings != null && disposeScriptHelper) {
-                final InternalScriptHelper helper = (InternalScriptHelper) bindings.get(SLING);
-                if (helper != null) {
-                    helper.cleanup();
-                }
-            }
-        }
-    }
-
-    @Override
-    public Object eval(final SlingJakartaBindings props) {
-        return this.call(props, null);
-    }
-
-    @Override
-    public Object call(final SlingJakartaBindings props, final String method, final Object... args) {
-        if (!this.isJakartaScriptEngine) {
-            return this.call(ScriptingWrapperSupport.toJavaxBindings(props), method, args);
-        }
-        Bindings bindings = null;
-        Reader reader = null;
-        boolean disposeScriptHelper = !props.containsKey(SLING);
-        ResourceResolver oldResolver = null;
-        try {
-            bindings = verifySlingBindings(props);
-
-            // use final variable for inner class!
-            final Bindings b = bindings;
-            // create script context
-            final ScriptContext ctx = new ScriptContext() {
-
-                private Bindings globalScope;
-                private Bindings engineScope = b;
-                private Writer writer = (Writer) b.get(OUT);
-                private Writer errorWriter = new LogWriter((Logger) b.get(LOG));
-                private Reader reader = (Reader) b.get(READER);
-                private Bindings slingScope = new LazyBindings();
-
-                @Override
-                public void setBindings(final Bindings bindings, final int scope) {
-                    switch (scope) {
-                        case SlingScriptConstants.SLING_SCOPE:
-                            this.slingScope = bindings;
-                            break;
-                        case 100:
-                            if (bindings == null) throw new NullPointerException("Bindings for ENGINE scope is null");
-                            this.engineScope = bindings;
-                            break;
-                        case 200:
-                            this.globalScope = bindings;
-                            break;
-                        default:
-                            throw new IllegalArgumentException("Invalid scope");
-                    }
-                }
-
-                @Override
-                public Bindings getBindings(final int scope) {
-                    switch (scope) {
-                        case SlingScriptConstants.SLING_SCOPE:
-                            return slingScope;
-                        case 100:
-                            return this.engineScope;
-                        case 200:
-                            return this.globalScope;
-                        default:
-                            throw new IllegalArgumentException("Invalid scope");
-                    }
-                }
-
-                @Override
-                public void setAttribute(final String name, final Object value, final int scope) {
-                    if (name == null) throw new IllegalArgumentException("Name is null");
-                    final Bindings bindings = getBindings(scope);
-                    if (bindings != null) {
-                        bindings.put(name, value);
-                    }
-                }
-
-                @Override
-                public Object getAttribute(final String name, final int scope) {
-                    if (name == null) throw new IllegalArgumentException("Name is null");
-                    final Bindings bindings = getBindings(scope);
-                    if (bindings != null) {
-                        return bindings.get(name);
-                    }
-                    return null;
-                }
-
-                @Override
-                public Object removeAttribute(final String name, final int scope) {
-                    if (name == null) throw new IllegalArgumentException("Name is null");
-                    final Bindings bindings = getBindings(scope);
-                    if (bindings != null) {
-                        return bindings.remove(name);
-                    }
-                    return null;
-                }
-
-                @Override
-                public Object getAttribute(String name) {
-                    if (name == null) throw new IllegalArgumentException("Name is null");
-                    for (final int scope : SCOPES) {
-                        final Bindings bindings = getBindings(scope);
-                        if (bindings != null) {
-                            final Object o = bindings.get(name);
-                            if (o != null) {
-                                return o;
-                            }
-                        }
-                    }
-                    return null;
-                }
-
-                @Override
-                public int getAttributesScope(String name) {
-                    if (name == null) throw new IllegalArgumentException("Name is null");
-                    for (final int scope : SCOPES) {
-                        if ((getBindings(scope) != null) && (getBindings(scope).containsKey(name))) {
-                            return scope;
-                        }
-                    }
-                    return -1;
-                }
-
-                @Override
-                public List<Integer> getScopes() {
-                    return Arrays.asList(SCOPES);
-                }
-
-                @Override
-                public Writer getWriter() {
-                    return this.writer;
-                }
-
-                @Override
-                public Writer getErrorWriter() {
-                    return this.errorWriter;
-                }
-
-                @Override
-                public void setWriter(Writer writer) {
-                    this.writer = writer;
-                }
-
-                @Override
-                public void setErrorWriter(Writer writer) {
-                    this.errorWriter = writer;
-                }
-
-                @Override
-                public Reader getReader() {
-                    return this.reader;
-                }
-
-                @Override
-                public void setReader(Reader reader) {
-                    this.reader = reader;
-                }
-            };
-
-            // set the current resource resolver if a request is available from the bindings
-            if (props.getRequest() != null) {
-                oldResolver = requestResourceResolver.get();
-                requestResourceResolver.set(props.getRequest().getResourceResolver());
-            }
-
-            // set the script resource resolver as an attribute
-            ctx.setAttribute(
-                    SlingScriptConstants.ATTR_SCRIPT_RESOURCE_RESOLVER,
-                    this.scriptResource.getResourceResolver(),
-                    SlingScriptConstants.SLING_SCOPE);
-
-            reader = getScriptReader();
-            if (method != null && !(this.scriptEngine instanceof Invocable)) {
-                reader = getWrapperReader(reader, method, args);
-            }
-
-            // evaluate the script
-            final Object result;
-            if (method == null && this.scriptEngine instanceof Compilable) {
-                CachedScript cachedScript = scriptCache.getScript(scriptName);
-                if (cachedScript == null) {
-                    ScriptNameAwareReader snReader = new ScriptNameAwareReader(reader, scriptName);
-                    CompiledScript compiledScript = ((Compilable) scriptEngine).compile(snReader);
-                    cachedScript = new CachedScriptImpl(scriptName, compiledScript);
-                    scriptCache.putScript(cachedScript);
-                    LOGGER.debug("Adding {} to the script cache.", scriptName);
-                } else {
-                    LOGGER.debug("Script {} was already cached.", scriptName);
-                }
-                result = cachedScript.getCompiledScript().eval(ctx);
-            } else {
-                result = scriptEngine.eval(reader, ctx);
-            }
-
-            // call method - if supplied and script engine supports direct invocation
-            if (method != null && (this.scriptEngine instanceof Invocable)) {
-                try {
-                    ((Invocable) scriptEngine)
-                            .invokeFunction(method, Arrays.asList(args).toArray());
-                } catch (NoSuchMethodException e) {
-                    throw new ScriptEvaluationException(
-                            this.scriptName, "Method " + method + " not found in script.", e);
-                }
-            }
-            // optional flush the output channel
-            Object flushObject = bindings.get(FLUSH);
-            if (Boolean.TRUE.equals(flushObject)) {
-                ctx.getWriter().flush();
-            }
-
-            // allways flush the error channel
-            ctx.getErrorWriter().flush();
-
-            return result;
-
-        } catch (IOException ioe) {
-            throw new ScriptEvaluationException(this.scriptName, ioe.getMessage(), ioe);
-
-        } catch (ScriptEvaluationException see) {
-            throw see;
-        } catch (ScriptException se) {
-            Throwable cause = (se.getCause() == null) ? se : se.getCause();
-            throw new ScriptEvaluationException(this.scriptName, se.getMessage(), cause);
-
-        } finally {
-            if (props.getRequest() != null) {
+            if (props.getJakartaRequest() != null) {
                 requestResourceResolver.set(oldResolver);
             }
 
@@ -701,9 +450,9 @@ class DefaultSlingScript implements SlingScript, SlingJakartaScript, Servlet, Se
 
         try {
             // prepare the properties for the script
-            final SlingJakartaBindings props = new SlingJakartaBindings();
-            props.setRequest(request);
-            props.setResponse((SlingJakartaHttpServletResponse) res);
+            final SlingBindings props = new SlingBindings();
+            props.setJakartaRequest(request);
+            props.setJakartaResponse((SlingJakartaHttpServletResponse) res);
 
             // try to set content type (unless included)
             if (request.getAttribute(RequestDispatcher.INCLUDE_SERVLET_PATH) == null) {
@@ -851,148 +600,12 @@ class DefaultSlingScript implements SlingScript, SlingJakartaScript, Servlet, Se
         };
     }
 
-    Bindings verifySlingBindings(final SlingJakartaBindings slingBindings) throws IOException {
-
-        final Bindings bindings = new LazyBindings();
-
-        final SlingJakartaHttpServletRequest request = slingBindings.getRequest();
-
-        // check sling object
-        Object slingObject = slingBindings.get(SLING);
-        if (slingObject == null) {
-
-            if (request != null) {
-                slingObject = new InternalJakartaScriptHelper(
-                        this.bundleContext, this, request, slingBindings.getResponse(), this.cache);
-            } else {
-                slingObject = new InternalScriptHelper(this.bundleContext, this, this.cache);
-            }
-        } else if (!(slingObject instanceof SlingJakartaScriptHelper)) {
-            throw fail(SLING, "Wrong type");
-        }
-        final SlingJakartaScriptHelper sling = (SlingJakartaScriptHelper) slingObject;
-        bindings.put(SLING, sling);
-
-        if (request != null) {
-            final SlingJakartaHttpServletResponse response = slingBindings.getResponse();
-            if (response == null) {
-                throw fail(RESPONSE, "Missing or wrong type");
-            }
-
-            Object resourceObject = slingBindings.get(RESOURCE);
-            if (resourceObject != null && !(resourceObject instanceof Resource)) {
-                throw fail(RESOURCE, "Wrong type");
-            }
-
-            Object resolverObject = slingBindings.get(RESOLVER);
-            if (resolverObject != null && !(resolverObject instanceof ResourceResolver)) {
-                throw fail(RESOLVER, "Wrong type");
-            }
-
-            Object writerObject = slingBindings.get(OUT);
-            if (writerObject != null && !(writerObject instanceof PrintWriter)) {
-                throw fail(OUT, "Wrong type");
-            }
-
-            // if there is a provided sling script helper, check arguments
-            if (slingBindings.get(SLING) != null) {
-
-                if (sling.getRequest() != request) {
-                    throw fail(REQUEST, "Not the same as request field of SlingScriptHelper");
-                }
-
-                if (sling.getResponse() != response) {
-                    throw fail(RESPONSE, "Not the same as response field of SlingScriptHelper");
-                }
-
-                if (resourceObject != null && sling.getRequest().getResource() != resourceObject) {
-                    throw fail(RESOURCE, "Not the same as resource of the SlingScriptHelper request");
-                }
-
-                if (resolverObject != null && sling.getRequest().getResourceResolver() != resolverObject) {
-                    throw fail(
-                            RESOLVER,
-                            "Not the same as the resource resolver of the SlingScriptHelper request's resolver");
-                }
-
-                if (writerObject != null && sling.getResponse().getWriter() != writerObject) {
-                    throw fail(OUT, "Not the same as writer of the SlingScriptHelper response");
-                }
-            }
-
-            // set base variables when executing inside a request
-            bindings.put(REQUEST, sling.getRequest());
-            bindings.put(READER, sling.getRequest().getReader());
-            bindings.put(RESPONSE, sling.getResponse());
-            bindings.put(RESOURCE, sling.getRequest().getResource());
-            bindings.put(RESOLVER, sling.getRequest().getResourceResolver());
-            bindings.put(OUT, sling.getResponse().getWriter());
-        }
-
-        Object logObject = slingBindings.get(LOG);
-        if (logObject == null) {
-            logObject = LoggerFactory.getLogger(getLoggerName());
-        } else if (!(logObject instanceof Logger)) {
-            throw fail(LOG, "Wrong type");
-        }
-        bindings.put(LOG, logObject);
-
-        // copy non-base variables
-        for (Map.Entry<String, Object> entry : slingBindings.entrySet()) {
-            if (!bindings.containsKey(entry.getKey())) {
-                bindings.put(entry.getKey(), entry.getValue());
-            }
-        }
-
-        if (!bindingsValuesProviders.isEmpty()) {
-            Set<String> protectedKeys = new HashSet<>();
-            protectedKeys.addAll(PROTECTED_KEYS);
-            ProtectedBindings protectedBindings = new ProtectedBindings(bindings, protectedKeys);
-
-            long inclusionStart = System.nanoTime();
-            for (BindingsValuesProvider provider : bindingsValuesProviders) {
-                long start = System.nanoTime();
-                provider.addBindings(protectedBindings);
-                long stop = System.nanoTime();
-                LOGGER.trace(
-                        "Invoking addBindings() of {} took {} nanoseconds",
-                        provider.getClass().getName(),
-                        stop - start);
-                if (stop - start > WARN_LIMIT_FOR_BVP_NANOS) {
-                    // SLING-11182 - make this work with older implementations of the Sling API
-                    if (request != null && request.getRequestProgressTracker() != null) {
-                        request.getRequestProgressTracker()
-                                .log(String.format(
-                                        BINDINGS_THRESHOLD_MESSAGE,
-                                        provider.getClass().getName(),
-                                        (stop - start) / 1000,
-                                        WARN_LIMIT_FOR_BVP_NANOS / 1000));
-                    } else {
-                        if (LOGGER.isInfoEnabled()) {
-                            LOGGER.info(String.format(
-                                    BINDINGS_THRESHOLD_MESSAGE,
-                                    provider.getClass().getName(),
-                                    (stop - start) / 1000,
-                                    WARN_LIMIT_FOR_BVP_NANOS / 1000));
-                        }
-                    }
-                }
-            }
-            // SLING-11182 - make this work with older implementations of the Sling API
-            if (request != null && request.getRequestProgressTracker() != null) {
-                long duration = (System.nanoTime() - inclusionStart) / 1000;
-                request.getRequestProgressTracker().log("Adding bindings took " + duration + " microseconds");
-            }
-        }
-
-        return bindings;
-    }
-
+    @SuppressWarnings("deprecation")
     Bindings verifySlingBindings(final SlingBindings slingBindings) throws IOException {
 
         final Bindings bindings = new LazyBindings();
 
-        final SlingHttpServletRequest request = slingBindings.getRequest();
+        final SlingJakartaHttpServletRequest request = slingBindings.getJakartaRequest();
 
         // check sling object
         Object slingObject = slingBindings.get(SLING);
@@ -1000,20 +613,20 @@ class DefaultSlingScript implements SlingScript, SlingJakartaScript, Servlet, Se
 
             if (request != null) {
                 slingObject = new InternalScriptHelper(
-                        this.bundleContext, this, request, slingBindings.getResponse(), this.cache);
+                        this.bundleContext, this, request, slingBindings.getJakartaResponse(), this.cache);
             } else {
                 slingObject = new InternalScriptHelper(this.bundleContext, this, this.cache);
             }
-        } else if (!(slingObject instanceof SlingJakartaScriptHelper)) {
+        } else if (!(slingObject instanceof SlingScriptHelper)) {
             throw fail(SLING, "Wrong type");
         }
         final SlingScriptHelper sling = (SlingScriptHelper) slingObject;
         bindings.put(SLING, sling);
 
         if (request != null) {
-            final SlingHttpServletResponse response = slingBindings.getResponse();
+            final SlingJakartaHttpServletResponse response = slingBindings.getJakartaResponse();
             if (response == null) {
-                throw fail(RESPONSE, "Missing or wrong type");
+                throw fail(JAKARTA_RESPONSE, "Missing or wrong type");
             }
 
             Object resourceObject = slingBindings.get(RESOURCE);
@@ -1034,36 +647,38 @@ class DefaultSlingScript implements SlingScript, SlingJakartaScript, Servlet, Se
             // if there is a provided sling script helper, check arguments
             if (slingBindings.get(SLING) != null) {
 
-                if (sling.getRequest() != request) {
-                    throw fail(REQUEST, "Not the same as request field of SlingScriptHelper");
+                if (sling.getJakartaRequest() != request) {
+                    throw fail(JAKARTA_REQUEST, "Not the same as request field of SlingScriptHelper");
                 }
 
-                if (sling.getResponse() != response) {
-                    throw fail(RESPONSE, "Not the same as response field of SlingScriptHelper");
+                if (sling.getJakartaResponse() != response) {
+                    throw fail(JAKARTA_RESPONSE, "Not the same as response field of SlingScriptHelper");
                 }
 
-                if (resourceObject != null && sling.getRequest().getResource() != resourceObject) {
+                if (resourceObject != null && sling.getJakartaRequest().getResource() != resourceObject) {
                     throw fail(RESOURCE, "Not the same as resource of the SlingScriptHelper request");
                 }
 
-                if (resolverObject != null && sling.getRequest().getResourceResolver() != resolverObject) {
+                if (resolverObject != null && sling.getJakartaRequest().getResourceResolver() != resolverObject) {
                     throw fail(
                             RESOLVER,
                             "Not the same as the resource resolver of the SlingScriptHelper request's resolver");
                 }
 
-                if (writerObject != null && sling.getResponse().getWriter() != writerObject) {
+                if (writerObject != null && sling.getJakartaResponse().getWriter() != writerObject) {
                     throw fail(OUT, "Not the same as writer of the SlingScriptHelper response");
                 }
             }
 
             // set base variables when executing inside a request
+            bindings.put(JAKARTA_REQUEST, sling.getJakartaRequest());
+            bindings.put(JAKARTA_RESPONSE, sling.getJakartaResponse());
             bindings.put(REQUEST, sling.getRequest());
-            bindings.put(READER, sling.getRequest().getReader());
             bindings.put(RESPONSE, sling.getResponse());
-            bindings.put(RESOURCE, sling.getRequest().getResource());
-            bindings.put(RESOLVER, sling.getRequest().getResourceResolver());
-            bindings.put(OUT, sling.getResponse().getWriter());
+            bindings.put(READER, sling.getJakartaRequest().getReader());
+            bindings.put(RESOURCE, sling.getJakartaRequest().getResource());
+            bindings.put(RESOLVER, sling.getJakartaRequest().getResourceResolver());
+            bindings.put(OUT, sling.getJakartaResponse().getWriter());
         }
 
         Object logObject = slingBindings.get(LOG);

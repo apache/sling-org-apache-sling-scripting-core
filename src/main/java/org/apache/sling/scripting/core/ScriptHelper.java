@@ -18,9 +18,6 @@
  */
 package org.apache.sling.scripting.core;
 
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
-
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -31,18 +28,30 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletException;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.SlingIOException;
+import org.apache.sling.api.SlingJakartaHttpServletRequest;
+import org.apache.sling.api.SlingJakartaHttpServletResponse;
 import org.apache.sling.api.SlingServletException;
 import org.apache.sling.api.request.RequestDispatcherOptions;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.scripting.InvalidServiceFilterSyntaxException;
 import org.apache.sling.api.scripting.SlingScript;
 import org.apache.sling.api.scripting.SlingScriptHelper;
+import org.apache.sling.api.wrappers.JakartaToJavaxRequestWrapper;
+import org.apache.sling.api.wrappers.JakartaToJavaxResponseWrapper;
+import org.apache.sling.api.wrappers.JavaxToJakartaRequestWrapper;
+import org.apache.sling.api.wrappers.JavaxToJakartaResponseWrapper;
 import org.apache.sling.api.wrappers.SlingHttpServletRequestWrapper;
 import org.apache.sling.api.wrappers.SlingHttpServletResponseWrapper;
+import org.apache.sling.api.wrappers.SlingJakartaHttpServletRequestWrapper;
+import org.apache.sling.api.wrappers.SlingJakartaHttpServletResponseWrapper;
+import org.apache.sling.scripting.core.impl.helper.OnDemandReaderJakartaRequest;
 import org.apache.sling.scripting.core.impl.helper.OnDemandReaderRequest;
+import org.apache.sling.scripting.core.impl.helper.OnDemandWriterJakartaResponse;
 import org.apache.sling.scripting.core.impl.helper.OnDemandWriterResponse;
 import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.BundleContext;
@@ -58,19 +67,25 @@ import org.slf4j.LoggerFactory;
  *
  * Client code using this object should take care to call {@link #cleanup()}
  * when the object is not used anymore!
- * @deprecated Use {@link JakartaScriptHelper} instead.
  */
-@Deprecated
 public class ScriptHelper implements SlingScriptHelper {
 
     /** The corresponding script. */
     private final SlingScript script;
 
     /** The current request or <code>null</code>. */
-    private final SlingHttpServletRequest request;
+    @SuppressWarnings("deprecation")
+    private SlingHttpServletRequest request;
 
     /** The current response or <code>null</code>. */
-    private final SlingHttpServletResponse response;
+    @SuppressWarnings("deprecation")
+    private SlingHttpServletResponse response;
+
+    /** The current request or <code>null</code>. */
+    private final SlingJakartaHttpServletRequest jakartaRequest;
+
+    /** The current response or <code>null</code>. */
+    private final SlingJakartaHttpServletResponse jakartaResponse;
 
     /** The bundle context. */
     protected final BundleContext bundleContext;
@@ -88,12 +103,47 @@ public class ScriptHelper implements SlingScriptHelper {
         if (ctx == null) {
             throw new IllegalArgumentException("Bundle context must not be null.");
         }
-        this.request = null;
-        this.response = null;
+        this.jakartaRequest = null;
+        this.jakartaResponse = null;
         this.script = script;
         this.bundleContext = ctx;
     }
 
+    /**
+     * Creates a new script helper instance.
+     *
+     * @param ctx The bundle context, must not be <code>null</code>.
+     * @param script The script, must not be <code>null</code>.
+     * @param request The request, may be <code>null</code>.
+     * @param response The response, may be <code>null</code>.
+     * @param jakartaRequest The Jakarta request, may be <code>null</code>.
+     * @param jakartaResponse The Jakarta response, may be <code>null</code>.
+     * @since 2.2.0
+     */
+    public ScriptHelper(
+            final BundleContext ctx,
+            final SlingScript script,
+            final SlingJakartaHttpServletRequest jakartaRequest,
+            final SlingJakartaHttpServletResponse jakartaResponse) {
+        if (ctx == null) {
+            throw new IllegalArgumentException("Bundle context must not be null.");
+        }
+        this.script = script;
+        this.jakartaRequest = wrapIfNeeded(jakartaRequest);
+        this.jakartaResponse = wrapIfNeeded(jakartaResponse);
+        this.bundleContext = ctx;
+    }
+
+    /**
+     * Creates a new script helper instance.
+     *
+     * @param ctx The bundle context, must not be <code>null</code>.
+     * @param script The script, must not be <code>null</code>.
+     * @param request The request, may be <code>null</code>.
+     * @param response The response, may be <code>null</code>.
+     * @deprecated Use {@link #ScriptHelper(BundleContext, SlingScript, SlingHttpServletRequest, SlingHttpServletResponse, SlingJakartaHttpServletRequest, SlingJakartaHttpServletResponse)}
+     */
+    @Deprecated
     public ScriptHelper(
             final BundleContext ctx,
             final SlingScript script,
@@ -105,6 +155,8 @@ public class ScriptHelper implements SlingScriptHelper {
         this.script = script;
         this.request = wrapIfNeeded(request);
         this.response = wrapIfNeeded(response);
+        this.jakartaRequest = JavaxToJakartaRequestWrapper.toJakartaRequest(this.request);
+        this.jakartaResponse = JavaxToJakartaResponseWrapper.toJakartaResponse(this.response);
         this.bundleContext = ctx;
     }
 
@@ -116,16 +168,38 @@ public class ScriptHelper implements SlingScriptHelper {
     }
 
     /**
+     * @see org.apache.sling.api.scripting.SlingScriptHelper#getJakartaRequest()
+     */
+    public SlingJakartaHttpServletRequest getJakartaRequest() {
+        return jakartaRequest;
+    }
+
+    /**
+     * @see org.apache.sling.api.scripting.SlingScriptHelper#getJakartaResponse()
+     */
+    public SlingJakartaHttpServletResponse getJakartaResponse() {
+        return jakartaResponse;
+    }
+
+    /**
      * @see org.apache.sling.api.scripting.SlingScriptHelper#getRequest()
      */
+    @SuppressWarnings("deprecation")
     public SlingHttpServletRequest getRequest() {
+        if (this.request == null && this.jakartaRequest != null) {
+            this.request = JakartaToJavaxRequestWrapper.toJavaxRequest(this.jakartaRequest);
+        }
         return request;
     }
 
     /**
      * @see org.apache.sling.api.scripting.SlingScriptHelper#getResponse()
      */
+    @SuppressWarnings("deprecation")
     public SlingHttpServletResponse getResponse() {
+        if (this.response == null && this.jakartaResponse != null) {
+            this.response = JakartaToJavaxResponseWrapper.toJavaxResponse(this.jakartaResponse);
+        }
         return response;
     }
 
@@ -147,11 +221,11 @@ public class ScriptHelper implements SlingScriptHelper {
      * @see org.apache.sling.api.scripting.SlingScriptHelper#include(java.lang.String, org.apache.sling.api.request.RequestDispatcherOptions)
      */
     public void include(String path, RequestDispatcherOptions options) {
-        final RequestDispatcher dispatcher = getRequest().getRequestDispatcher(path, options);
+        final RequestDispatcher dispatcher = getJakartaRequest().getRequestDispatcher(path, options);
 
         if (dispatcher != null) {
             try {
-                dispatcher.include(getRequest(), getResponse());
+                dispatcher.include(getJakartaRequest(), getJakartaResponse());
             } catch (IOException ioe) {
                 throw new SlingIOException(ioe);
             } catch (ServletException se) {
@@ -178,11 +252,11 @@ public class ScriptHelper implements SlingScriptHelper {
      * @see org.apache.sling.api.scripting.SlingScriptHelper#forward(java.lang.String, org.apache.sling.api.request.RequestDispatcherOptions)
      */
     public void forward(String path, RequestDispatcherOptions options) {
-        final RequestDispatcher dispatcher = getRequest().getRequestDispatcher(path, options);
+        final RequestDispatcher dispatcher = getJakartaRequest().getRequestDispatcher(path, options);
 
         if (dispatcher != null) {
             try {
-                dispatcher.forward(getRequest(), getResponse());
+                dispatcher.forward(getJakartaRequest(), getJakartaResponse());
             } catch (IOException ioe) {
                 throw new SlingIOException(ioe);
             } catch (ServletException se) {
@@ -300,11 +374,11 @@ public class ScriptHelper implements SlingScriptHelper {
      * @see org.apache.sling.api.scripting.SlingScriptHelper#forward(org.apache.sling.api.resource.Resource, org.apache.sling.api.request.RequestDispatcherOptions)
      */
     public void forward(Resource resource, RequestDispatcherOptions options) {
-        final RequestDispatcher dispatcher = getRequest().getRequestDispatcher(resource, options);
+        final RequestDispatcher dispatcher = getJakartaRequest().getRequestDispatcher(resource, options);
 
         if (dispatcher != null) {
             try {
-                dispatcher.forward(getRequest(), getResponse());
+                dispatcher.forward(getJakartaRequest(), getJakartaResponse());
             } catch (IOException ioe) {
                 throw new SlingIOException(ioe);
             } catch (ServletException se) {
@@ -331,11 +405,11 @@ public class ScriptHelper implements SlingScriptHelper {
      * @see org.apache.sling.api.scripting.SlingScriptHelper#include(org.apache.sling.api.resource.Resource, org.apache.sling.api.request.RequestDispatcherOptions)
      */
     public void include(Resource resource, RequestDispatcherOptions options) {
-        final RequestDispatcher dispatcher = getRequest().getRequestDispatcher(resource, options);
+        final RequestDispatcher dispatcher = getJakartaRequest().getRequestDispatcher(resource, options);
 
         if (dispatcher != null) {
             try {
-                dispatcher.include(getRequest(), getResponse());
+                dispatcher.include(getJakartaRequest(), getJakartaResponse());
             } catch (IOException ioe) {
                 throw new SlingIOException(ioe);
             } catch (ServletException se) {
@@ -344,24 +418,133 @@ public class ScriptHelper implements SlingScriptHelper {
         }
     }
 
-    private SlingHttpServletRequest wrapIfNeeded(@NotNull SlingHttpServletRequest request) {
-        SlingHttpServletRequest initialRequest = request;
+    @SuppressWarnings("deprecation")
+    private SlingHttpServletRequest findOnDemandReader(final @NotNull SlingHttpServletRequest initialRequest) {
+        SlingHttpServletRequest request = initialRequest;
         while (request instanceof SlingHttpServletRequestWrapper) {
             if (request instanceof OnDemandReaderRequest) {
-                return initialRequest;
+                return null;
             }
             request = ((SlingHttpServletRequestWrapper) request).getSlingRequest();
+        }
+        if (request instanceof JakartaToJavaxRequestWrapper) {
+            final SlingJakartaHttpServletRequest initialJakartaRequest =
+                    (SlingJakartaHttpServletRequest) ((JakartaToJavaxRequestWrapper) request).getRequest();
+            final SlingJakartaHttpServletRequest entry = findOnDemandReader(initialJakartaRequest);
+            if (entry == null) {
+                return null;
+            }
+            if (entry instanceof JavaxToJakartaRequestWrapper) {
+                request = (SlingHttpServletRequest) ((JavaxToJakartaRequestWrapper) entry).getRequest();
+                return this.findOnDemandReader(request);
+            }
+        }
+        return request;
+    }
+
+    private SlingJakartaHttpServletRequest findOnDemandReader(
+            final @NotNull SlingJakartaHttpServletRequest initialRequest) {
+        SlingJakartaHttpServletRequest request = initialRequest;
+        while (request instanceof SlingJakartaHttpServletRequestWrapper) {
+            if (request instanceof OnDemandReaderJakartaRequest) {
+                return null;
+            }
+            request = ((SlingJakartaHttpServletRequestWrapper) request).getSlingRequest();
+        }
+        if (request instanceof JavaxToJakartaRequestWrapper) {
+            @SuppressWarnings("deprecation")
+            final SlingHttpServletRequest initialJavaxRequest =
+                    (SlingHttpServletRequest) ((JavaxToJakartaRequestWrapper) request).getRequest();
+            @SuppressWarnings("deprecation")
+            final SlingHttpServletRequest entry = findOnDemandReader(initialJavaxRequest);
+            if (entry == null) {
+                return null;
+            }
+            if (entry instanceof JakartaToJavaxRequestWrapper) {
+                request = (SlingJakartaHttpServletRequest) ((JakartaToJavaxRequestWrapper) entry).getRequest();
+                return this.findOnDemandReader(request);
+            }
+        }
+        return request;
+    }
+
+    @SuppressWarnings("deprecation")
+    private SlingHttpServletResponse findOnDemandWriter(final @NotNull SlingHttpServletResponse initialResponse) {
+        SlingHttpServletResponse response = initialResponse;
+        while (response instanceof SlingHttpServletResponseWrapper) {
+            if (response instanceof OnDemandWriterResponse) {
+                return null;
+            }
+            response = ((SlingHttpServletResponseWrapper) response).getSlingResponse();
+        }
+        if (response instanceof JakartaToJavaxResponseWrapper) {
+            final SlingJakartaHttpServletResponse initialJakartaResponse =
+                    (SlingJakartaHttpServletResponse) ((JakartaToJavaxResponseWrapper) response).getResponse();
+            final SlingJakartaHttpServletResponse entry = findOnDemandWriter(initialJakartaResponse);
+            if (entry == null) {
+                return null;
+            }
+            if (entry instanceof JakartaToJavaxResponseWrapper) {
+                response = (SlingHttpServletResponse) ((JakartaToJavaxResponseWrapper) entry).getResponse();
+                return this.findOnDemandWriter(response);
+            }
+        }
+        return response;
+    }
+
+    private SlingJakartaHttpServletResponse findOnDemandWriter(
+            final @NotNull SlingJakartaHttpServletResponse initialResponse) {
+        SlingJakartaHttpServletResponse response = initialResponse;
+        while (response instanceof SlingJakartaHttpServletResponseWrapper) {
+            if (response instanceof OnDemandWriterJakartaResponse) {
+                return null;
+            }
+            response = ((SlingJakartaHttpServletResponseWrapper) response).getSlingResponse();
+        }
+        if (response instanceof JavaxToJakartaResponseWrapper) {
+            @SuppressWarnings("deprecation")
+            final SlingHttpServletResponse initialJavaxResponse =
+                    (SlingHttpServletResponse) ((JavaxToJakartaResponseWrapper) response).getResponse();
+            @SuppressWarnings("deprecation")
+            final SlingHttpServletResponse entry = findOnDemandWriter(initialJavaxResponse);
+            if (entry == null) {
+                return null;
+            }
+            if (entry instanceof JakartaToJavaxResponseWrapper) {
+                response = (SlingJakartaHttpServletResponse) ((JakartaToJavaxResponseWrapper) entry).getResponse();
+                return this.findOnDemandWriter(response);
+            }
+        }
+        return response;
+    }
+
+    private SlingJakartaHttpServletRequest wrapIfNeeded(final @NotNull SlingJakartaHttpServletRequest initialRequest) {
+        if (this.findOnDemandReader(initialRequest) == null) {
+            return initialRequest;
+        }
+        return new OnDemandReaderJakartaRequest(initialRequest);
+    }
+
+    private SlingJakartaHttpServletResponse wrapIfNeeded(
+            final @NotNull SlingJakartaHttpServletResponse initialResponse) {
+        if (this.findOnDemandWriter(initialResponse) == null) {
+            return initialResponse;
+        }
+        return new OnDemandWriterJakartaResponse(initialResponse);
+    }
+
+    @SuppressWarnings("deprecation")
+    private SlingHttpServletRequest wrapIfNeeded(final @NotNull SlingHttpServletRequest initialRequest) {
+        if (this.findOnDemandReader(initialRequest) == null) {
+            return initialRequest;
         }
         return new OnDemandReaderRequest(initialRequest);
     }
 
-    private SlingHttpServletResponse wrapIfNeeded(@NotNull SlingHttpServletResponse response) {
-        SlingHttpServletResponse initialResponse = response;
-        while (response instanceof SlingHttpServletResponseWrapper) {
-            if (response instanceof OnDemandWriterResponse) {
-                return initialResponse;
-            }
-            response = ((SlingHttpServletResponseWrapper) response).getSlingResponse();
+    @SuppressWarnings("deprecation")
+    private SlingHttpServletResponse wrapIfNeeded(final @NotNull SlingHttpServletResponse initialResponse) {
+        if (this.findOnDemandWriter(initialResponse) == null) {
+            return initialResponse;
         }
         return new OnDemandWriterResponse(initialResponse);
     }
