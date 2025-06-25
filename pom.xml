@@ -28,7 +28,7 @@
     </parent>
 
     <artifactId>org.apache.sling.scripting.core</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>3.0.0</version>
 
     <name>Apache Sling Scripting Core</name>
     <description>Sling Scripting core functionality</description>
@@ -36,14 +36,14 @@
     <scm>
         <connection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-scripting-core.git</connection>
         <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-scripting-core.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>org.apache.sling.scripting.core-3.0.0</tag>
         <url>https://github.com/apache/sling-org-apache-sling-scripting-core.git</url>
     </scm>
 
     <properties>
         <org.ops4j.pax.exam.version>4.14.0</org.ops4j.pax.exam.version>
         <sling.java.version>17</sling.java.version>
-        <project.build.outputTimestamp>1725252814</project.build.outputTimestamp>
+        <project.build.outputTimestamp>1750835912</project.build.outputTimestamp>
     </properties>
 
     <dependencies>
