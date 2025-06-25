@@ -116,21 +116,19 @@ public class ScriptHelper implements SlingScriptHelper {
      * @param script The script, must not be <code>null</code>.
      * @param request The request, may be <code>null</code>.
      * @param response The response, may be <code>null</code>.
-     * @param jakartaRequest The Jakarta request, may be <code>null</code>.
-     * @param jakartaResponse The Jakarta response, may be <code>null</code>.
      * @since 2.2.0
      */
     public ScriptHelper(
             final BundleContext ctx,
             final SlingScript script,
-            final SlingJakartaHttpServletRequest jakartaRequest,
-            final SlingJakartaHttpServletResponse jakartaResponse) {
+            final SlingJakartaHttpServletRequest request,
+            final SlingJakartaHttpServletResponse response) {
         if (ctx == null) {
             throw new IllegalArgumentException("Bundle context must not be null.");
         }
         this.script = script;
-        this.jakartaRequest = wrapIfNeeded(jakartaRequest);
-        this.jakartaResponse = wrapIfNeeded(jakartaResponse);
+        this.jakartaRequest = wrapIfNeeded(request);
+        this.jakartaResponse = wrapIfNeeded(response);
         this.bundleContext = ctx;
     }
 
@@ -141,7 +139,7 @@ public class ScriptHelper implements SlingScriptHelper {
      * @param script The script, must not be <code>null</code>.
      * @param request The request, may be <code>null</code>.
      * @param response The response, may be <code>null</code>.
-     * @deprecated Use {@link #ScriptHelper(BundleContext, SlingScript, SlingHttpServletRequest, SlingHttpServletResponse, SlingJakartaHttpServletRequest, SlingJakartaHttpServletResponse)}
+     * @deprecated Use {@link #ScriptHelper(BundleContext, SlingScript, SlingJakartaHttpServletRequest, SlingJakartaHttpServletResponse)}
      */
     @Deprecated
     public ScriptHelper(
