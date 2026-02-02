@@ -104,17 +104,19 @@ public class ScriptContextProvider {
                         executable.getScriptEngineName(), executable.getScriptExtension(), executable.getPath()));
             }
         }
-        // prepare the SlingBindings
-        Bindings bindings = new LazyBindings();
+        // prepare the bindings; use SlingBindings to ensure that the REQUEST/RESPONSE and
+        // JAKARTA_REQUEST/JAKARTA_RESPONSE values are kept in sync
+        Bindings bindings = new SlingBindings();
         bindings.put("properties", (LazyBindings.Supplier)
-                () -> scriptHelper.getRequest().getResource().getValueMap());
-        bindings.put(SlingBindings.REQUEST, scriptHelper.getRequest());
-        bindings.put(SlingBindings.RESPONSE, scriptHelper.getResponse());
-        bindings.put(SlingBindings.READER, scriptHelper.getRequest().getReader());
-        bindings.put(SlingBindings.OUT, scriptHelper.getResponse().getWriter());
-        bindings.put(SlingBindings.RESOURCE, scriptHelper.getRequest().getResource());
+                () -> scriptHelper.getJakartaRequest().getResource().getValueMap());
+        bindings.put(SlingBindings.JAKARTA_REQUEST, scriptHelper.getJakartaRequest());
+        bindings.put(SlingBindings.JAKARTA_RESPONSE, scriptHelper.getJakartaResponse());
+        bindings.put(SlingBindings.READER, scriptHelper.getJakartaRequest().getReader());
+        bindings.put(SlingBindings.OUT, scriptHelper.getJakartaResponse().getWriter());
+        bindings.put(SlingBindings.RESOURCE, scriptHelper.getJakartaRequest().getResource());
         bindings.put(
-                SlingBindings.RESOLVER, scriptHelper.getRequest().getResource().getResourceResolver());
+                SlingBindings.RESOLVER,
+                scriptHelper.getJakartaRequest().getResource().getResourceResolver());
         Logger scriptLogger = LoggerFactory.getLogger(executable.getName());
         bindings.put(SlingBindings.LOG, scriptLogger);
         bindings.put(SlingBindings.SLING, scriptHelper);
