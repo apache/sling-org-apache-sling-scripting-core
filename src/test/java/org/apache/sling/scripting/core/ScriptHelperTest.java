@@ -107,10 +107,11 @@ public class ScriptHelperTest {
         assertSame(request, scriptHelper.getJakartaRequest());
 
         assertNotNull(scriptHelper.getRequest());
-        assertTrue(scriptHelper.getRequest() instanceof JakartaToJavaxRequestWrapper);
-        assertSame(
-                scriptHelper.getJakartaRequest(),
-                ((JakartaToJavaxRequestWrapper) scriptHelper.getRequest()).getRequest());
+        assertTrue(scriptHelper.getRequest() instanceof SlingHttpServletRequestWrapper);
+        SlingHttpServletRequest delegate =
+                ((SlingHttpServletRequestWrapper) scriptHelper.getRequest()).getSlingRequest();
+        assertTrue(delegate instanceof JakartaToJavaxRequestWrapper);
+        assertSame(scriptHelper.getJakartaRequest(), ((JakartaToJavaxRequestWrapper) delegate).getRequest());
 
         assertNotNull(scriptHelper.getJakartaResponse());
         assertSame(response, scriptHelper.getJakartaResponse());
@@ -163,10 +164,11 @@ public class ScriptHelperTest {
         assertSame(request, ((OnDemandReaderJakartaRequest) scriptHelper.getJakartaRequest()).getRequest());
 
         assertNotNull(scriptHelper.getRequest());
-        assertTrue(scriptHelper.getRequest() instanceof JakartaToJavaxRequestWrapper);
-        assertSame(
-                scriptHelper.getJakartaRequest(),
-                ((JakartaToJavaxRequestWrapper) scriptHelper.getRequest()).getRequest());
+        assertTrue(scriptHelper.getRequest() instanceof SlingHttpServletRequestWrapper);
+        SlingHttpServletRequest delegate =
+                ((SlingHttpServletRequestWrapper) scriptHelper.getRequest()).getSlingRequest();
+        assertTrue(delegate instanceof JakartaToJavaxRequestWrapper);
+        assertSame(scriptHelper.getJakartaRequest(), ((JakartaToJavaxRequestWrapper) delegate).getRequest());
 
         assertNotNull(scriptHelper.getJakartaResponse());
         assertTrue(scriptHelper.getJakartaResponse() instanceof OnDemandWriterJakartaResponse);
@@ -224,10 +226,11 @@ public class ScriptHelperTest {
         assertSame(request, scriptHelper.getJakartaRequest());
 
         assertNotNull(scriptHelper.getRequest());
-        assertTrue(scriptHelper.getRequest() instanceof JakartaToJavaxRequestWrapper);
-        assertSame(
-                scriptHelper.getJakartaRequest(),
-                ((JakartaToJavaxRequestWrapper) scriptHelper.getRequest()).getRequest());
+        assertTrue(scriptHelper.getRequest() instanceof SlingHttpServletRequestWrapper);
+        SlingHttpServletRequest delegate =
+                ((SlingHttpServletRequestWrapper) scriptHelper.getRequest()).getSlingRequest();
+        assertTrue(delegate instanceof JakartaToJavaxRequestWrapper);
+        assertSame(scriptHelper.getJakartaRequest(), ((JakartaToJavaxRequestWrapper) delegate).getRequest());
 
         assertNotNull(scriptHelper.getJakartaResponse());
         assertSame(response, scriptHelper.getJakartaResponse());
@@ -288,10 +291,11 @@ public class ScriptHelperTest {
         assertSame(request, scriptHelper.getJakartaRequest());
 
         assertNotNull(scriptHelper.getRequest());
-        assertTrue(scriptHelper.getRequest() instanceof JakartaToJavaxRequestWrapper);
-        assertSame(
-                scriptHelper.getJakartaRequest(),
-                ((JakartaToJavaxRequestWrapper) scriptHelper.getRequest()).getRequest());
+        assertTrue(scriptHelper.getRequest() instanceof SlingHttpServletRequestWrapper);
+        SlingHttpServletRequest delegate =
+                ((SlingHttpServletRequestWrapper) scriptHelper.getRequest()).getSlingRequest();
+        assertTrue(delegate instanceof JakartaToJavaxRequestWrapper);
+        assertSame(scriptHelper.getJakartaRequest(), ((JakartaToJavaxRequestWrapper) delegate).getRequest());
 
         assertNotNull(scriptHelper.getJakartaResponse());
         assertSame(response, scriptHelper.getJakartaResponse());
@@ -356,10 +360,11 @@ public class ScriptHelperTest {
         assertSame(request, scriptHelper.getJakartaRequest());
 
         assertNotNull(scriptHelper.getRequest());
-        assertTrue(scriptHelper.getRequest() instanceof JakartaToJavaxRequestWrapper);
-        assertSame(
-                scriptHelper.getJakartaRequest(),
-                ((JakartaToJavaxRequestWrapper) scriptHelper.getRequest()).getRequest());
+        assertTrue(scriptHelper.getRequest() instanceof SlingHttpServletRequestWrapper);
+        SlingHttpServletRequest delegate =
+                ((SlingHttpServletRequestWrapper) scriptHelper.getRequest()).getSlingRequest();
+        assertTrue(delegate instanceof JakartaToJavaxRequestWrapper);
+        assertSame(scriptHelper.getJakartaRequest(), ((JakartaToJavaxRequestWrapper) delegate).getRequest());
 
         assertNotNull(scriptHelper.getJakartaResponse());
         assertSame(response, scriptHelper.getJakartaResponse());
@@ -427,10 +432,11 @@ public class ScriptHelperTest {
         assertSame(request, ((OnDemandReaderJakartaRequest) scriptHelper.getJakartaRequest()).getRequest());
 
         assertNotNull(scriptHelper.getRequest());
-        assertTrue(scriptHelper.getRequest() instanceof JakartaToJavaxRequestWrapper);
-        assertSame(
-                scriptHelper.getJakartaRequest(),
-                ((JakartaToJavaxRequestWrapper) scriptHelper.getRequest()).getRequest());
+        assertTrue(scriptHelper.getRequest() instanceof SlingHttpServletRequestWrapper);
+        SlingHttpServletRequest delegate =
+                ((SlingHttpServletRequestWrapper) scriptHelper.getRequest()).getSlingRequest();
+        assertTrue(delegate instanceof JakartaToJavaxRequestWrapper);
+        assertSame(scriptHelper.getJakartaRequest(), ((JakartaToJavaxRequestWrapper) delegate).getRequest());
 
         assertNotNull(scriptHelper.getJakartaResponse());
         assertTrue(scriptHelper.getJakartaResponse() instanceof OnDemandWriterJakartaResponse);
