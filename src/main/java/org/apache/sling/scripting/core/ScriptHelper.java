@@ -38,6 +38,7 @@ import org.apache.sling.api.SlingJakartaHttpServletResponse;
 import org.apache.sling.api.SlingServletException;
 import org.apache.sling.api.request.RequestDispatcherOptions;
 import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.scripting.InvalidServiceFilterSyntaxException;
 import org.apache.sling.api.scripting.SlingScript;
 import org.apache.sling.api.scripting.SlingScriptHelper;
@@ -185,7 +186,17 @@ public class ScriptHelper implements SlingScriptHelper {
     @SuppressWarnings("deprecation")
     public SlingHttpServletRequest getRequest() {
         if (this.request == null && this.jakartaRequest != null) {
-            this.request = JakartaToJavaxRequestWrapper.toJavaxRequest(this.jakartaRequest);
+            SlingHttpServletRequest javaxRequest = JakartaToJavaxRequestWrapper.toJavaxRequest(this.jakartaRequest);
+            this.request = new SlingHttpServletRequestWrapper(javaxRequest) {
+                @Override
+                public ResourceResolver getResourceResolver() {
+                    Resource resource = getResource();
+                    if (resource != null) {
+                        return resource.getResourceResolver();
+                    }
+                    return super.getResourceResolver();
+                }
+            };
         }
         return request;
     }

@@ -659,10 +659,11 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
                     throw fail(RESOURCE, "Not the same as resource of the SlingScriptHelper request");
                 }
 
-                if (resolverObject != null && sling.getJakartaRequest().getResourceResolver() != resolverObject) {
+                if (resolverObject != null
+                        && sling.getJakartaRequest().getResource().getResourceResolver() != resolverObject) {
                     throw fail(
                             RESOLVER,
-                            "Not the same as the resource resolver of the SlingScriptHelper request's resolver");
+                            "Not the same as the resource resolver of the SlingScriptHelper request's resource");
                 }
 
                 if (writerObject != null && sling.getJakartaResponse().getWriter() != writerObject) {
@@ -677,7 +678,7 @@ class DefaultSlingScript implements SlingScript, Servlet, ServletConfig {
             bindings.put(RESPONSE, sling.getResponse());
             bindings.put(READER, sling.getJakartaRequest().getReader());
             bindings.put(RESOURCE, sling.getJakartaRequest().getResource());
-            bindings.put(RESOLVER, sling.getJakartaRequest().getResourceResolver());
+            bindings.put(RESOLVER, sling.getJakartaRequest().getResource().getResourceResolver());
             bindings.put(OUT, sling.getJakartaResponse().getWriter());
         }
 
