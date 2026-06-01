@@ -30,7 +30,6 @@ import java.util.Collection;
 import java.util.Map;
 
 import jakarta.servlet.Servlet;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -114,61 +113,73 @@ public class ScriptingVariablesConsolePlugin extends HttpServlet {
     }
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        final String path = request.getPathInfo();
-        if (FORWARD_PATH.equals(path)) {
-            @SuppressWarnings("resource")
-            final ResourceResolver resolver =
-                    (ResourceResolver) request.getAttribute("org.apache.sling.auth.core.ResourceResolver");
-            if (resolver == null) {
-                log("Access forbidden as the request was not authenticated through the web console");
-                if (!response.isCommitted()) {
-                    response.sendError(HttpServletResponse.SC_FORBIDDEN);
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            final String path = request.getPathInfo();
+            if (FORWARD_PATH.equals(path)) {
+                @SuppressWarnings("resource")
+                final ResourceResolver resolver =
+                        (ResourceResolver) request.getAttribute("org.apache.sling.auth.core.ResourceResolver");
+                if (resolver == null) {
+                    log("Access forbidden as the request was not authenticated through the web console");
+                    if (!response.isCommitted()) {
+                        response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                    }
+                    return;
                 }
+                final String resourcePath = request.getParameter(PARAMETER_PATH);
+                final String extension = request.getParameter(PARAMETER_EXTENSION);
+                // resolve is used to get non existing resources as well
+                final Resource resource = resolver.resolve(resourcePath);
+                final SlingJakartaHttpServletRequest slingRequest = Builders.newRequestBuilder(resource)
+                        .useServletContextFrom(request)
+                        .useAttributesFrom(request)
+                        .buildJakartaRequest();
+                this.showBindings(slingRequest, response, extension);
                 return;
             }
-            final String resourcePath = request.getParameter(PARAMETER_PATH);
-            final String extension = request.getParameter(PARAMETER_EXTENSION);
-            // resolve is used to get non existing resources as well
-            final Resource resource = resolver.resolve(resourcePath);
-            final SlingJakartaHttpServletRequest slingRequest = Builders.newRequestBuilder(resource)
-                    .useServletContextFrom(request)
-                    .useAttributesFrom(request)
-                    .buildJakartaRequest();
-            this.showBindings(slingRequest, response, extension);
-            return;
-        }
-        final PrintWriter pw = response.getWriter();
-        pw.append("<script type='text/javascript' src='").append(JS_RES_PATH).append("'></script>");
-        pw.append("<div id='content'>");
-        pw.append("<table class='content'  cellpadding='0' cellspacing='0' width='100%'>");
-        pw.append("<tr><th colspan='3' class='content container'>Sling Scripting Variables</th></tr>");
-        pw.append(
-                "<tr class='content'><td class='content' colspan='3'>Provide a resource path url and script engine (via extension) and then click on 'Retrieve Variables' to expose all script bindings variables for context 'request' which are available for that resource and script engine.</td></tr>");
-        pw.append("<tr class='content'>");
-        pw.append("<td class='content'>Resource Url (without selectors and extension)</td> ");
-        pw.append(
-                "<td class='content' colspan='2'><input type ='text' name='form.path' placeholder='path' required='required' value='/' ");
-        pw.append("class='input ui-state-default ui-corner-all inputText' size='50' pattern='^/{1}.*'></td></tr>");
-        pw.append("<tr class='content'>");
-        pw.append("<td class='content'>Script Engine</td> ");
-        pw.append("<td class='content' colspan='2'><select name='form.extension'>");
-        for (ScriptEngineFactory factory : scriptEngineManager.getEngineFactories()) {
-            for (String extension : factory.getExtensions()) {
-                pw.append("<option value='" + extension + "'>" + extension + " (" + factory.getEngineName()
-                        + ")</option>");
+            final PrintWriter pw = response.getWriter();
+            pw.append("<script type='text/javascript' src='")
+                    .append(JS_RES_PATH)
+                    .append("'></script>");
+            pw.append("<div id='content'>");
+            pw.append("<table class='content'  cellpadding='0' cellspacing='0' width='100%'>");
+            pw.append("<tr><th colspan='3' class='content container'>Sling Scripting Variables</th></tr>");
+            pw.append(
+                    "<tr class='content'><td class='content' colspan='3'>Provide a resource path url and script engine (via extension) and then click on 'Retrieve Variables' to expose all script bindings variables for context 'request' which are available for that resource and script engine.</td></tr>");
+            pw.append("<tr class='content'>");
+            pw.append("<td class='content'>Resource Url (without selectors and extension)</td> ");
+            pw.append(
+                    "<td class='content' colspan='2'><input type ='text' name='form.path' placeholder='path' required='required' value='/' ");
+            pw.append("class='input ui-state-default ui-corner-all inputText' size='50' pattern='^/{1}.*'></td></tr>");
+            pw.append("<tr class='content'>");
+            pw.append("<td class='content'>Script Engine</td> ");
+            pw.append("<td class='content' colspan='2'><select name='form.extension'>");
+            for (ScriptEngineFactory factory : scriptEngineManager.getEngineFactories()) {
+                for (String extension : factory.getExtensions()) {
+                    pw.append("<option value='" + extension + "'>" + extension + " (" + factory.getEngineName()
+                            + ")</option>");
+                }
+            }
+            pw.append("<option value=''>all (unfiltered)</option>");
+            pw.append("</select> ");
+            pw.append("<button type='button' id='submitButton'> Retrieve Variables </button></td></tr></table>");
+            pw.append("<div id='response'></div>");
+        } catch (final IOException | RuntimeException e) {
+            log("Unable to serve scripting variables console request", e);
+            if (!response.isCommitted()) {
+                try {
+                    response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+                } catch (final IOException ioe) {
+                    log("Unable to send error response", ioe);
+                }
             }
         }
-        pw.append("<option value=''>all (unfiltered)</option>");
-        pw.append("</select> ");
-        pw.append("<button type='button' id='submitButton'> Retrieve Variables </button></td></tr></table>");
-        pw.append("<div id='response'></div>");
     }
 
     protected void showBindings(
             SlingJakartaHttpServletRequest request, HttpServletResponse response, final String requestedExtension)
-            throws ServletException, IOException {
+            throws IOException {
         response.setContentType("application/json");
         JSONWriter jsonWriter = new JSONWriter(response.getWriter());
         jsonWriter.array();
