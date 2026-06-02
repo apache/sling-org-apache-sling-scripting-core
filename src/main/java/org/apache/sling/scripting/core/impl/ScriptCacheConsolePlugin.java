@@ -24,6 +24,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
 
@@ -110,33 +111,60 @@ public class ScriptCacheConsolePlugin extends AbstractWebConsolePlugin {
     }
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        if (request.getRequestURI().endsWith(RESOURCES + "/" + SCRIPTCACHE_JS)) {
-            response.setContentType(CTYPE_JAVASCRIPT);
-            IOUtils.copy(
-                    getClass().getResourceAsStream("/" + RESOURCES + "/" + SCRIPTCACHE_JS), response.getOutputStream());
-        } else {
-            super.doGet(request, response);
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            if (request.getRequestURI().endsWith(RESOURCES + "/" + SCRIPTCACHE_JS)) {
+                response.setContentType(CTYPE_JAVASCRIPT);
+                try (final InputStream stream =
+                        getClass().getResourceAsStream("/" + RESOURCES + "/" + SCRIPTCACHE_JS)) {
+                    if (stream == null) {
+                        response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                        return;
+                    }
+                    IOUtils.copy(stream, response.getOutputStream());
+                }
+            } else {
+                super.doGet(request, response);
+            }
+        } catch (final IOException | ServletException | RuntimeException e) {
+            log("Unable to serve script cache GET request", e);
+            if (!response.isCommitted()) {
+                try {
+                    response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+                } catch (final IOException ioe) {
+                    log("Unable to send error response", ioe);
+                }
+            }
         }
     }
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String script = req.getParameter(POST_SCRIPT);
-        if (script != null && !script.isEmpty()) {
-            if ("all".equals(script)) {
-                scriptCache.clear();
-                renderContent(req, resp);
-            } else {
-                boolean success = scriptCache.removeScript(script);
-                if (success) {
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) {
+        try {
+            String script = req.getParameter(POST_SCRIPT);
+            if (script != null && !script.isEmpty()) {
+                if ("all".equals(script)) {
+                    scriptCache.clear();
                     renderContent(req, resp);
+                } else {
+                    boolean success = scriptCache.removeScript(script);
+                    if (success) {
+                        renderContent(req, resp);
+                    }
+                }
+                resp.setStatus(HttpServletResponse.SC_OK);
+            } else {
+                resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            }
+        } catch (final IOException | ServletException | RuntimeException e) {
+            log("Unable to serve script cache POST request", e);
+            if (!resp.isCommitted()) {
+                try {
+                    resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+                } catch (final IOException ioe) {
+                    log("Unable to send error response", ioe);
                 }
             }
-            resp.setStatus(HttpServletResponse.SC_OK);
-        } else {
-            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
 }
