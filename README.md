@@ -6,4 +6,34 @@
 
 This module is part of the [Apache Sling](https://sling.apache.org) project.
 
-Sling Scripting core functionality
+The Apache Sling Scripting Core bundle provides core scripting runtime functionality for Sling, including script engine integration, script caching, bindings support, and bundled script handling.
+
+## Current baseline
+
+- Java 17 (`<sling.java.version>17</sling.java.version>`)
+- Parent POM: `org.apache.sling:sling-bundle-parent:66`
+- Current module version: `3.0.3-SNAPSHOT`
+
+## Servlet API support
+
+This module supports both servlet namespaces used in Sling deployments:
+
+- `javax.servlet-api` 4.0.1
+- `jakarta.servlet-api` 6.1.0
+
+Recent updates include Jakarta-oriented scripting context handling fixes and hardened Web Console plugin error handling.
+
+## Build and test
+
+Run a full local build (including unit and integration tests):
+
+```bash
+mvn clean verify
+```
+
+## Repository structure
+
+- `src/main/java` - production code
+- `src/main/resources` - OSGi metadata and resources
+- `src/test/java` - unit and integration tests
+- `src/test/resources` - test resources
